@@ -3,6 +3,7 @@ import socket
 import time
 from pathlib import Path
 
+from simrace_agent.codes import describe_flag, describe_penalty
 from simrace_agent.models import Sample
 from simrace_agent.sender import BatchSender
 from simrace_agent.sources.acc import AccSharedMemorySource
@@ -49,6 +50,19 @@ def _probe() -> None:
                 f"   carburant {sample.fuel_l} L  conso {sample.fuel_per_lap_l} L/tour  "
                 f"TC {sample.tc_level}  ABS {sample.abs_level}  "
                 f"G lat {sample.g_lat} vert {sample.g_vert} long {sample.g_long}"
+            )
+            print(
+                f"   drapeau {describe_flag(sample.flag)}  penalite {describe_penalty(sample.penalty_code)}  "
+                f"temps de penalite {sample.penalty_time_s} s"
+            )
+            print(
+                f"   TC cut {sample.tc_cut_level}  map {sample.engine_map}  BB {sample.brake_bias}  "
+                f"tour valide {sample.is_valid_lap}  tours de carburant {sample.fuel_estimated_laps}  "
+                f"drapeaux {sample.track_flags}"
+            )
+            print(
+                f"   air {sample.air_temp_c} C  piste {sample.road_temp_c} C  "
+                f"vent {sample.wind_speed} dir {sample.wind_direction}"
             )
 
 

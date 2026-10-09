@@ -45,7 +45,7 @@ def test_decode_sample():
 
 
 def test_graphics_page_covers_the_player_car_id():
-    assert layout.GRAPHICS_SIZE == 1284 + 4
+    assert layout.GRAPHICS_SIZE >= 1284 + 4
 
 
 def test_sample_carries_the_player_position():
@@ -183,3 +183,72 @@ def test_non_finite_g_is_dropped():
     struct.pack_into("<3f", buf, 44, float("nan"), 0.0, 0.0)
     sample = layout.decode_sample(bytes(buf), make_graphics(), t_ms=0)
     assert (sample.g_lat, sample.g_vert, sample.g_long) == (None, None, None)
+
+
+def test_sample_carries_flag_and_penalty():
+    graphics = make_graphics_with(
+        {1220: ("<f", 10.0), 1224: ("<i", 2), 1228: ("<i", 8)}
+    )
+    sample = layout.decode_sample(make_physics(), graphics, t_ms=0)
+    assert (sample.flag, sample.penalty_code, sample.penalty_time_s) == (2, 8, 10.0)
+
+
+def test_no_flag_no_penalty_is_zero():
+    sample = layout.decode_sample(make_physics(), make_graphics(), t_ms=0)
+    assert (sample.flag, sample.penalty_code, sample.penalty_time_s) == (0, 0, 0.0)
+
+
+def test_negative_or_non_finite_penalty_time_is_dropped():
+    for bad in (-1.0, float("nan")):
+        graphics = make_graphics_with({1220: ("<f", bad)})
+        assert layout.decode_sample(make_physics(), graphics, t_ms=0).penalty_time_s is None
+
+
+def test_sample_carries_settings_and_lap_validity():
+    graphics = make_graphics_with({1272: ("<i", 6), 1276: ("<i", 7), 1408: ("<i", 1),
+                                   1412: ("<f", 20.0)})
+    buf = bytearray(make_physics())
+    struct.pack_into("<f", buf, 564, 54.0)
+    sample = layout.decode_sample(bytes(buf), graphics, t_ms=0)
+    assert sample.tc_cut_level == 6
+    assert sample.engine_map == 8  # ACC compte a partir de 0, SimHub affiche +1
+    assert sample.brake_bias == 54.0
+    assert sample.is_valid_lap is True
+    assert sample.fuel_estimated_laps == 20.0
+
+
+def test_missing_brake_bias_and_fuel_laps_are_none():
+    sample = layout.decode_sample(make_physics(), make_graphics(), t_ms=0)
+    assert sample.brake_bias is None and sample.fuel_estimated_laps is None
+    assert sample.is_valid_lap is False
+
+
+def test_global_flags_are_named_in_structure_order():
+    graphics = make_graphics_with({1500: ("<i", 1), 1504: ("<i", 1), 1520: ("<i", 1)})
+    assert layout.decode_sample(make_physics(), graphics, t_ms=0).track_flags == [
+        "yellow", "yellow_s1", "green",
+    ]
+
+
+def test_no_global_flag_is_an_empty_list():
+    assert layout.decode_sample(make_physics(), make_graphics(), t_ms=0).track_flags == []
+
+
+def test_graphics_page_covers_the_global_flags():
+    assert layout.GRAPHICS_SIZE == 1528 + 4
+
+
+def test_sample_carries_the_weather():
+    buf = bytearray(make_physics())
+    struct.pack_into("<f", buf, 288, 27.0)
+    struct.pack_into("<f", buf, 292, 28.4)
+    graphics = make_graphics_with({1248: ("<f", 3.5), 1252: ("<f", 180.0)})
+    sample = layout.decode_sample(bytes(buf), graphics, t_ms=0)
+    assert (sample.air_temp_c, sample.road_temp_c) == (27.0, 28.4)
+    assert (sample.wind_speed, sample.wind_direction) == (3.5, 180.0)
+
+
+def test_zero_temperature_means_no_data_but_calm_wind_is_zero():
+    sample = layout.decode_sample(make_physics(), make_graphics(), t_ms=0)
+    assert (sample.air_temp_c, sample.road_temp_c) == (None, None)
+    assert (sample.wind_speed, sample.wind_direction) == (0.0, 0.0)

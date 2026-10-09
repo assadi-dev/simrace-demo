@@ -1,7 +1,7 @@
 """Contrat de donnees avec l'agent.
 
 A garder aligne champ par champ avec agent/src/simrace_agent/models.py (decision 0009).
-`x`, `z` (0011), pneus et freins (0013), carburant et aides (0014), forces G (0015) sont optionnels.
+`x`, `z` (0011), pneus et freins (0013), carburant et aides (0014), forces G (0015), drapeaux (0016) sont optionnels.
 """
 
 import math
@@ -12,6 +12,11 @@ from pydantic import BaseModel, Field, field_validator
 
 _MAX_LAP_MS = 3_600_000
 _MAX_COORD_M = 100_000
+
+# Drapeaux globaux d'ACC (a garder alignes avec agent codes.TRACK_FLAGS)
+_TRACK_FLAGS = frozenset(
+    {"yellow", "yellow_s1", "yellow_s2", "yellow_s3", "white", "green", "chequered", "red"}
+)
 
 # Quatre mesures (avant gauche, avant droit, arriere gauche, arriere droit), chacune bornee.
 _PerWheel = Annotated[list[float], Field(min_length=4, max_length=4)]
@@ -87,3 +92,26 @@ class Sample(BaseModel):
     g_lat: float | None = Field(default=None, ge=-20, le=20, allow_inf_nan=False)
     g_vert: float | None = Field(default=None, ge=-20, le=20, allow_inf_nan=False)
     g_long: float | None = Field(default=None, ge=-20, le=20, allow_inf_nan=False)
+    # drapeau et penalite (decision 0016): codes d'ACC, la table de noms est cote agent et front
+    flag: int | None = Field(default=None, ge=0, le=20)
+    penalty_code: int | None = Field(default=None, ge=0, le=99)
+    penalty_time_s: float | None = Field(default=None, ge=0, le=3600, allow_inf_nan=False)
+    # reglages et etat de piste (decision 0016)
+    tc_cut_level: int | None = Field(default=None, ge=0, le=30)
+    engine_map: int | None = Field(default=None, ge=0, le=30)
+    brake_bias: float | None = Field(default=None, ge=0, le=100, allow_inf_nan=False)
+    is_valid_lap: bool | None = None
+    fuel_estimated_laps: float | None = Field(default=None, ge=0, le=10_000, allow_inf_nan=False)
+    track_flags: list[str] | None = Field(default=None, max_length=len(_TRACK_FLAGS))
+
+    @field_validator("track_flags")
+    @classmethod
+    def _known_flags(cls, flags: list[str] | None) -> list[str] | None:
+        if flags is not None and not set(flags) <= _TRACK_FLAGS:
+            raise ValueError("drapeau inconnu")
+        return flags
+    # meteo (decision 0016)
+    air_temp_c: float | None = Field(default=None, ge=-50, le=100, allow_inf_nan=False)
+    road_temp_c: float | None = Field(default=None, ge=-50, le=150, allow_inf_nan=False)
+    wind_speed: float | None = Field(default=None, ge=0, le=500, allow_inf_nan=False)
+    wind_direction: float | None = Field(default=None, ge=-360, le=720, allow_inf_nan=False)
