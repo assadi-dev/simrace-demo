@@ -7,9 +7,10 @@ le PC Windows qui a Assetto Corsa Competizione.
 
 | Brique | État | Vérifié comment |
 |---|---|---|
-| `server/` ingestion, doublons, trous, rejets, `/stations`, `/stream` | fait, postes **en mémoire**, architecture `features/` + `shared/` en POO (décision 0010) | 147 tests pytest + essai de bout en bout avec un vrai `uvicorn` |
-| `server/` enregistrement des tracés (`/tracks`, `/recorder/status`) | fait, un fichier JSON par tour dans `server/data/`, **inactif tant que l'agent n'envoie pas `x` et `z`** (décision 0011) | tests + essai de bout en bout avec des tours synthétiques |
-| `agent/` lecture de `x`, `z` (`carCoordinates`) | **à faire** : l'agent n'a pas été modifié | |
+| `server/` ingestion, doublons, trous, rejets, `/stations`, `/stream` | fait, postes **en mémoire**, architecture `features/` + `shared/` en POO (décision 0010) | 197 tests pytest + essai de bout en bout avec un vrai `uvicorn` |
+| `server/` enregistrement des tracés (`/tracks`, `/recorder/status`) | fait : un fichier JSON par tour valide, et **un par morceau** (secteur franchi, pause, stands, fin de tour) dans `server/data/` (décisions 0011 et 0012). 5 vrais tours déjà enregistrés | tests + essai avec ta session réelle : le tour de sortie des stands est conservé en morceau (4783 m) |
+| `agent/` lecture de `x`, `z` (`carCoordinates`, `playerCarID`) | fait, **vérifié avec `probe` sur un tour réel** (937 échantillons, aucun saut, distance mesurée / attendue = 1,01) | 15 tests agent + rejeu de la session réelle vers un vrai serveur |
+| Tour complet enregistré depuis un vrai ACC | **à faire** : la session de test n'avait qu'un tour de sortie (refusé `started_mid_lap`, comme prévu) | rouler 2 tours propres après le tour de sortie, voir `GET /recorder/status` |
 | `agent/` décodage des pages ACC (`layout.py`) | fait | 4 tests avec tampons synthétiques seulement |
 | `agent/` lecture réelle d'ACC (`sources/acc.py`) | écrit, **jamais lancé** | non vérifié, Windows requis |
 | `agent/` enregistrement et rejeu | fait | test aller-retour + essai de bout en bout |
@@ -26,7 +27,7 @@ les recrée. Il n'y a pas de dépôt git pour l'instant : transfert par copie du
 
 1. Installer uv (`winget install astral-sh.uv`) et, si besoin, Docker Desktop.
 2. `cd agent` puis `uv sync`, `uv run pytest` (5 tests doivent passer).
-3. `cd ..\server` puis `uv sync`, `uv run pytest` (147 tests doivent passer).
+3. `cd ..\server` puis `uv sync`, `uv run pytest` (197 tests doivent passer).
 4. Lancer ACC, entrer en session (essais libres), rouler.
 5. `cd ..\agent` puis `uv run simrace-agent probe`.
 
@@ -57,9 +58,12 @@ Objectif : confirmer que `probe` affiche des valeurs cohérentes avec le jeu.
 0. **Fait le 2026-10-09** : lecture d'ACC vérifiée avec `probe` (physique, graphique, statique :
    vitesse, pédales, rapport, tr/min, tour, temps, `pos`, statut, circuit, voiture). Reste non
    vérifié : temps du dernier et du meilleur tour, passage aux stands.
-1. **Agent : lire `x` et `z`** (page graphique, `carCoordinates[60][3]` à l'offset 256 et
-   `playerCarID` à 1216, à confirmer avec `probe`), les ajouter à `Sample` côté agent. Le serveur
-   les accepte déjà (optionnels). C'est ce qui met en marche l'enregistrement des tracés.
+1. **Enregistrer un vrai tracé** : `x` et `z` sont vérifiés (voir l'état ci-dessus). Serveur lancé,
+   `uv run simrace-agent run --server http://localhost:8000`, sortir des stands, puis rouler
+   **2 tours propres sans quitter la piste** (le tour de sortie est refusé, c'est voulu) et
+   regarder `GET /recorder/status` (`laps_saved`, et les raisons de refus), puis `GET /tracks`.
+   Si un tour propre est refusé, la raison est comptée : `data_gap` (lots perdus),
+   `position_jump`, `pit_involved`, etc. (`tracks/strategy.py`).
 2. Lire la validité du tour (champ `isValidLap` de la page graphique d'ACC, offset à trouver dans
    `SharedFileOut.h`), l'ajouter à `Sample` côté agent **et** côté serveur.
 3. Persistance PostgreSQL (SQLAlchemy 2 async + Alembic) :
@@ -83,6 +87,14 @@ Objectif : confirmer que `probe` affiche des valeurs cohérentes avec le jeu.
 - Les postes (`InMemoryStationRepository`) et le hub SSE sont en mémoire. Les tracés sont des
   fichiers (`server/data/tracks/<circuit>/<poste>-<run>-lap<N>.json`, ignorés par git) ; lister
   les tours relit les fichiers.
+- Le morceau de trace en cours est perdu si le serveur s'arrête avant qu'un déclencheur le ferme.
+- **À corriger** : le numéro d'un tour dans son nom de fichier est son rang depuis le début du run.
+  Si le serveur redémarre pendant que l'agent continue (même `run_id`), le rang repart de 0 : les
+  nouveaux tours portent le nom de tours déjà écrits et sont comptés comme doublons (donc perdus,
+  mais visibles dans `duplicate_laps`). Les morceaux ne sont pas concernés (nom basé sur l'horloge de
+  l'agent). Correctif possible : nommer aussi les tours avec leur heure de début.
+- Le champ `sector` d'ACC n'a pas été lu sur un vrai jeu : `GET /recorder/status` montre si le
+  déclencheur « secteur » (`pieces_by_trigger.sector`) se produit réellement.
 - Rejouer un enregistrement avec un nouveau `run_id` crée de nouveaux fichiers de tours.
   `SIMRACE_RECORD_TRACKS=false` désactive l'enregistrement.
 - La validité du tour d'ACC n'est pas lue : un tour avec sortie de piste mais sans arrêt ni trou

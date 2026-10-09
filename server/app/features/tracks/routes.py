@@ -2,6 +2,8 @@ from app.features.tracks.controller import RecorderController, TrackController
 from app.features.tracks.schemas import (
     LapOut,
     LapSummaryOut,
+    PieceOut,
+    PieceSummaryOut,
     RecorderStatusOut,
     TrackMapOut,
     TrackSummaryOut,
@@ -24,5 +26,9 @@ class TrackRoutes(BaseRoutes):
             response_model=list[LapSummaryOut])
         add("/tracks/{track}/laps/{lap_id}", self._tracks.get_lap, methods=["GET"],
             response_model=LapOut)
+        add("/tracks/{track}/pieces", self._tracks.list_pieces, methods=["GET"],
+            response_model=list[PieceSummaryOut])
+        add("/tracks/{track}/pieces/{piece_id}", self._tracks.get_piece, methods=["GET"],
+            response_model=PieceOut)
         add("/recorder/status", self._recorder.status, methods=["GET"],
             response_model=RecorderStatusOut)

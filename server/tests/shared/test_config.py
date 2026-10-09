@@ -10,6 +10,7 @@ def test_defaults():
     settings = Settings.from_env({})
     assert settings.online_window_s == 5.0
     assert settings.record_tracks is True
+    assert settings.record_pieces is True
     assert settings.reference_strategy == "best_time"
     assert settings.data_dir == Path("data")
 
@@ -21,6 +22,7 @@ def test_reads_environment_variables():
             "SIMRACE_DATA_DIR": "/tmp/simrace",
             "SIMRACE_ONLINE_WINDOW_S": "10",
             "SIMRACE_RECORD_TRACKS": "false",
+            "SIMRACE_RECORD_PIECES": "0",
             "SIMRACE_REFERENCE_STRATEGY": "latest",
             "SIMRACE_TRACK_POINTS": "500",
         }
@@ -28,6 +30,7 @@ def test_reads_environment_variables():
     assert settings.cors_origins == ["http://a.test", "http://b.test"]
     assert settings.online_window_s == 10
     assert settings.record_tracks is False
+    assert settings.record_pieces is False
     assert settings.reference_strategy == "latest"
     assert settings.track_points == 500
 

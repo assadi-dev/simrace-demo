@@ -1,17 +1,26 @@
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
+from math import hypot
+from typing import Protocol
 
 from app.features.tracks.domain import LapCandidate, LapPoint, LapSummary, TracePoint
 from app.shared.errors import DomainError
 
-# --- Validation d'un tour: une regle = une raison de refus --------------------------------------
+# --- Validation d'un tour ou d'un morceau: une regle = une raison de refus ----------------------
+
+
+class HasPoints(Protocol):
+    """Ce que les regles lisent: un tour candidat ou un morceau candidat."""
+
+    @property
+    def points(self) -> Sequence[LapPoint]: ...
 
 
 class LapRule(ABC):
     reason: str
 
     @abstractmethod
-    def is_satisfied(self, lap: LapCandidate) -> bool: ...
+    def is_satisfied(self, lap: HasPoints) -> bool: ...
 
 
 class MinimumPointsRule(LapRule):
@@ -20,7 +29,7 @@ class MinimumPointsRule(LapRule):
     def __init__(self, minimum: int = 300) -> None:
         self._minimum = minimum
 
-    def is_satisfied(self, lap: LapCandidate) -> bool:
+    def is_satisfied(self, lap: HasPoints) -> bool:
         return len(lap.points) >= self._minimum
 
 
@@ -30,7 +39,7 @@ class HasCoordinatesRule(LapRule):
     def __init__(self, min_ratio: float = 0.98) -> None:
         self._min_ratio = min_ratio
 
-    def is_satisfied(self, lap: LapCandidate) -> bool:
+    def is_satisfied(self, lap: HasPoints) -> bool:
         if not lap.points:
             return False
         with_xz = sum(1 for p in lap.points if p.x is not None and p.z is not None)
@@ -45,7 +54,7 @@ class StartsAtLineRule(LapRule):
     def __init__(self, max_start_pos: float = 0.02) -> None:
         self._max_start_pos = max_start_pos
 
-    def is_satisfied(self, lap: LapCandidate) -> bool:
+    def is_satisfied(self, lap: HasPoints) -> bool:
         return bool(lap.points) and lap.points[0].track_pos <= self._max_start_pos
 
 
@@ -55,14 +64,14 @@ class EndsAtLineRule(LapRule):
     def __init__(self, min_end_pos: float = 0.98) -> None:
         self._min_end_pos = min_end_pos
 
-    def is_satisfied(self, lap: LapCandidate) -> bool:
+    def is_satisfied(self, lap: HasPoints) -> bool:
         return bool(lap.points) and lap.points[-1].track_pos >= self._min_end_pos
 
 
 class NoPitRule(LapRule):
     reason = "pit_involved"
 
-    def is_satisfied(self, lap: LapCandidate) -> bool:
+    def is_satisfied(self, lap: HasPoints) -> bool:
         return not any(p.in_pit for p in lap.points)
 
 
@@ -74,7 +83,7 @@ class NoDataGapRule(LapRule):
     def __init__(self, max_gap_ms: int = 1000) -> None:
         self._max_gap_ms = max_gap_ms
 
-    def is_satisfied(self, lap: LapCandidate) -> bool:
+    def is_satisfied(self, lap: HasPoints) -> bool:
         return all(
             cur.t_ms - prev.t_ms <= self._max_gap_ms
             for prev, cur in zip(lap.points, lap.points[1:], strict=False)
@@ -89,7 +98,7 @@ class ForwardProgressRule(LapRule):
     def __init__(self, max_backward: float = 0.002) -> None:
         self._max_backward = max_backward
 
-    def is_satisfied(self, lap: LapCandidate) -> bool:
+    def is_satisfied(self, lap: HasPoints) -> bool:
         return all(
             cur.track_pos >= prev.track_pos - self._max_backward
             for prev, cur in zip(lap.points, lap.points[1:], strict=False)
@@ -99,13 +108,13 @@ class ForwardProgressRule(LapRule):
 class KnownLapTimeRule(LapRule):
     reason = "unknown_lap_time"
 
-    def is_satisfied(self, lap: LapCandidate) -> bool:
+    def is_satisfied(self, lap: LapCandidate) -> bool:  # propre aux tours, pas aux morceaux
         return lap.lap_time_ms > 0
 
 
 class LapValidationStrategy(ABC):
     @abstractmethod
-    def first_failure(self, lap: LapCandidate) -> str | None:
+    def first_failure(self, lap: HasPoints) -> str | None:
         """Raison du premier refus, ou None si le tour est valide."""
 
 
@@ -113,7 +122,7 @@ class AllRulesStrategy(LapValidationStrategy):
     def __init__(self, rules: Sequence[LapRule]) -> None:
         self._rules = tuple(rules)
 
-    def first_failure(self, lap: LapCandidate) -> str | None:
+    def first_failure(self, lap: HasPoints) -> str | None:
         return next((rule.reason for rule in self._rules if not rule.is_satisfied(lap)), None)
 
 
@@ -171,6 +180,29 @@ class TrackPositionBinResampler(ResamplingStrategy):
         x1, z1 = means[(index + forward) % n]
         t = back / (back + forward)
         return round(x0 + (x1 - x0) * t, 2), round(z0 + (z1 - z0) * t, 2)
+
+
+class DistanceThinningResampler(ResamplingStrategy):
+    """Pour un morceau: garde un point tous les `min_step_m` metres, plus toujours le dernier.
+
+    Un morceau ne couvre qu'une partie du tour: on ne peut pas le decouper en tranches de
+    position comme un tour complet.
+    """
+
+    def __init__(self, min_step_m: float) -> None:
+        self._min_step_m = min_step_m
+
+    def resample(self, points: Sequence[LapPoint]) -> tuple[TracePoint, ...]:
+        with_xz = [(p.x, p.z) for p in points if p.x is not None and p.z is not None]
+        if not with_xz:
+            raise ResamplingError("aucun point avec coordonnees")
+        kept = [with_xz[0]]
+        for x, z in with_xz[1:]:
+            if hypot(x - kept[-1][0], z - kept[-1][1]) >= self._min_step_m:
+                kept.append((x, z))
+        if kept[-1] != with_xz[-1]:
+            kept.append(with_xz[-1])
+        return tuple((round(x, 2), round(z, 2)) for x, z in kept)
 
 
 # --- Choix de la carte de reference d'un circuit -------------------------------------------------

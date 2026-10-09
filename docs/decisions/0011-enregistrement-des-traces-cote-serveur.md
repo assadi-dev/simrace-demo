@@ -1,6 +1,7 @@
 # 0011 Enregistrement des tracés de circuit côté serveur
 
-Statut : Acceptée, avec un écart temporaire de contrat (voir plus bas). Date : 2026-10-09.
+Statut : Acceptée. Écart de contrat résolu le 2026-10-09 (l'agent envoie maintenant `x` et `z`),
+**offsets de `carCoordinates` à vérifier sur un vrai jeu**. Date : 2026-10-09.
 
 ## Contexte
 
@@ -28,12 +29,32 @@ téléchargement. On construit donc la carte avec la trajectoire de tours propre
   chemin : ils passent par `Slug` (`a-z`, `0-9`, `_`, `-`), puis le chemin final est vérifié
   contre le dossier racine.
 
-## Écart temporaire de contrat (décision 0009)
+## Contrat (décision 0009)
 
-`x` et `z` sont ajoutés comme champs **optionnels** dans `app/shared/contract.py` (serveur) mais
-pas encore dans l'agent, qui reste inchangé à la demande de l'utilisateur. Tant que l'agent ne les
-envoie pas, aucun tour n'est enregistré (raison `no_coordinates` comptée). À faire ensuite côté
-agent : lire `carCoordinates` et `playerCarID` (page graphique), puis aligner `models.py`.
+`x` et `z` sont des champs **optionnels** des deux côtés : `app/shared/contract.py` (serveur) et
+`agent/src/simrace_agent/models.py`. Ils sont optionnels pour que les anciens enregistrements
+restent rejouables (alors aucun tour n'est enregistré, raison `no_coordinates` comptée).
+
+Côté agent (`layout.py`), la position du joueur est lue dans la page graphique : `activeCars` à
+252, `carCoordinates[60][3]` à 256 (x, y, z ; y est la hauteur), `carID[60]` à 976, `playerCarID`
+à 1216. La voiture du joueur est celle dont l'id vaut `playerCarID`. Position absente (`None`) si
+le joueur n'est pas dans la liste, si une valeur n'est pas finie, ou si ACC renvoie l'origine.
+Ces offsets viennent du calcul de la structure `SharedFileOut.h`, comme les autres : à confirmer
+avec `probe`.
+
+## Détection de la fin d'un tour
+
+Constat sur un vrai ACC (2026-10-09) : au passage de la ligne après un tour de sortie des stands,
+la position boucle (0,999 puis 0,000) et le chrono repart de zéro, mais `completed_laps` **reste à
+0**. Le serveur reconnaît donc un passage de ligne de deux façons : le compteur qui avance de 1,
+ou la position qui boucle (de plus de 0,9 vers moins de 0,1, après la moitié du tour). Un compteur
+qui rattrape un passage déjà détecté (dans les 30 premiers points) ne crée pas de tour fantôme.
+Le numéro d'un tour (`lap_number`) est son rang depuis le début du run, pas le compteur d'ACC.
+
+## Complément
+
+Les tours interrompus (pause, stands) ne sont pas perdus : voir la décision 0012, qui enregistre
+aussi des morceaux de trace sans attendre la fin du tour.
 
 ## Conséquences
 

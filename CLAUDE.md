@@ -89,15 +89,16 @@ PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` 
 - **Contrat agent/serveur** : `agent/src/simrace_agent/models.py` (`Sample`, `SessionInfo`) et
   `server/app/shared/contract.py` doivent rester alignés champ par champ. Il n'y a volontairement
   pas de package partagé (voir décision 0009). Si tu changes l'un, change l'autre et les tests des
-  deux. **Écart connu** : `x` et `z` (optionnels) existent côté serveur, pas encore côté agent
-  (décision 0011).
+  deux. `x` et `z` (position monde du joueur, optionnels) existent des deux côtés (décision 0011).
 - **Serveur en POO** : tout est classe (entités, services, contrôleurs, routes, dépôts, fabriques,
   stratégies), dépendances passées au constructeur, composition dans `app/container.py`. Un dépôt
   ou une stratégie est une classe abstraite avec une implémentation concrète séparée. Les
   contrôleurs qui touchent à l'état partagé sont `async` (boucle d'évènements, pas de thread).
   Cette règle ne concerne pas l'agent.
-- **Tracés de circuit** : le serveur enregistre un fichier JSON par tour, jamais écrasé. Un nom
-  venu de l'agent (circuit, poste, run) ne devient jamais un chemin sans passer par `Slug`.
+- **Tracés de circuit** : le serveur enregistre un fichier JSON par tour valide, et un par
+  **morceau** de trace (secteur franchi, pause, entrée aux stands, fin de tour : décision 0012),
+  jamais écrasés. Un nom venu de l'agent (circuit, poste, run) ne devient jamais un chemin sans
+  passer par `Slug`.
 - **Ne crée jamais une page de mémoire partagée côté agent** : lecture seule avec
   `OpenFileMappingW`, jamais `CreateFileMapping` (voir décision 0007).
 - **Ne persiste pas chaque paquet** : ACC émet ~60 paquets/s. Stocke les tours complets et un
@@ -114,7 +115,15 @@ PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` 
 
 ## Ce qui n'est pas vérifié
 
-La lecture d'ACC (`agent/src/simrace_agent/sources/acc.py` et les offsets de `layout.py`) n'a
-**jamais été exécutée sur un vrai jeu**. Les offsets viennent de la documentation communautaire.
-Tout le reste (serveur, rejeu, envoi par lots) a été testé de bout en bout sur macOS avec un
-enregistrement rejoué. Voir le détail dans [docs/HANDOFF.md](docs/HANDOFF.md).
+Vérifié sur un vrai ACC le 2026-10-09 avec `probe` : la physique (vitesse, pédales, rapport,
+tr/min), le tour, son temps, `pos`, le statut, et le circuit, la voiture et le pilote.
+
+La position monde (`x`, `z`, offsets 252, 256, 976 et 1216 de `layout.py`) a été lue avec `probe`
+sur un tour réel : pas de saut, distance cohérente avec la vitesse. À noter : ACC ne fait pas
+avancer `completed_laps` au passage de ligne du tour de sortie des stands (décision 0011).
+
+Le tour de sortie des stands d'une vraie session est enregistré en morceau (4783 m, 603 points).
+
+**Jamais vu sur un vrai jeu** : le champ `sector` d'ACC (déclencheur « secteur » des morceaux), un
+passage aux stands, le temps du dernier et du meilleur tour. Le serveur, le rejeu et l'envoi par lots sont testés de bout en bout avec
+des enregistrements rejoués. Voir le détail dans [docs/HANDOFF.md](docs/HANDOFF.md).

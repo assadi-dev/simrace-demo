@@ -1,7 +1,16 @@
+from itertools import pairwise
 from math import hypot
 from typing import ClassVar
 
-from app.features.tracks.domain import Lap, LapCandidate, LapSummary, TracePoint
+from app.features.tracks.domain import (
+    Lap,
+    LapCandidate,
+    LapSummary,
+    Piece,
+    PieceCandidate,
+    PieceSummary,
+    TracePoint,
+)
 from app.features.tracks.strategy import (
     AllRulesStrategy,
     BestLapTimeStrategy,
@@ -69,6 +78,45 @@ class ValidationStrategyFactory:
                 KnownLapTimeRule(),
             ]
         )
+
+
+    @staticmethod
+    def for_pieces() -> LapValidationStrategy:
+        """Un morceau n'a ni depart ni arrivee sur la ligne: seules les regles de continuite."""
+        return AllRulesStrategy(
+            [MinimumPointsRule(30), HasCoordinatesRule(), NoDataGapRule(), ForwardProgressRule()]
+        )
+
+
+class PieceFactory:
+    """Transforme un morceau candidat valide en morceau enregistrable."""
+
+    def __init__(self, thinner: ResamplingStrategy, clock: Clock) -> None:
+        self._thinner = thinner
+        self._clock = clock
+
+    def create(self, candidate: PieceCandidate, track: Slug) -> Piece:
+        points = self._thinner.resample(candidate.points)
+        station = Slug.from_untrusted(candidate.station_id, max_length=24)
+        run = Slug.from_untrusted(candidate.run_id, max_length=12)
+        summary = PieceSummary(
+            # le debut du morceau (horloge de l'agent) rend l'identifiant stable: un morceau
+            # rejoue apres un redemarrage du serveur retombe sur le meme fichier
+            piece_id=Slug(f"{station}-{run}-p{candidate.start_ms}"),
+            track=track,
+            station_id=candidate.station_id,
+            car=candidate.car,
+            lap_number=candidate.lap_number,
+            piece_index=candidate.piece_index,
+            reason=candidate.reason,
+            sector=candidate.sector,
+            start_pos=candidate.points[0].track_pos,
+            end_pos=candidate.points[-1].track_pos,
+            point_count=len(points),
+            length_m=round(sum(hypot(b[0] - a[0], b[1] - a[1]) for a, b in pairwise(points)), 1),
+            recorded_at=self._clock.now(),
+        )
+        return Piece(summary=summary, run_id=candidate.run_id, points=points)
 
 
 class ReferenceStrategyFactory:

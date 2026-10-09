@@ -17,17 +17,25 @@ from app.features.telemetry.services import LiveFeedService
 from app.features.tracks.controller import RecorderController, TrackController
 from app.features.tracks.factory import (
     LapFactory,
+    PieceFactory,
     ReferenceStrategyFactory,
     ValidationStrategyFactory,
 )
-from app.features.tracks.repository import JsonLapRepository, LapRepository
+from app.features.tracks.repository import (
+    JsonLapRepository,
+    JsonPieceRepository,
+    LapRepository,
+    PieceRepository,
+)
 from app.features.tracks.routes import TrackRoutes
-from app.features.tracks.services import LapRecorderService, TrackQueryService
-from app.features.tracks.strategy import TrackPositionBinResampler
+from app.features.tracks.services import LapRecorderService, PieceRecorder, TrackQueryService
+from app.features.tracks.strategy import DistanceThinningResampler, TrackPositionBinResampler
 from app.shared.api import HealthRoutes
 from app.shared.clock import Clock, SystemClock
 from app.shared.config import Settings
 from app.shared.events import EventBus
+
+PIECE_MIN_STEP_M = 5.0  # un point de morceau tous les 5 m, comme un tour de 1000 points sur 5 km
 
 
 class ApplicationContainer:
@@ -42,6 +50,7 @@ class ApplicationContainer:
         clock: Clock | None = None,
         station_repository: StationRepository | None = None,
         lap_repository: LapRepository | None = None,
+        piece_repository: PieceRepository | None = None,
     ) -> None:
         self.settings = settings
         self.clock = clock or SystemClock()
@@ -67,15 +76,22 @@ class ApplicationContainer:
 
         # tracks (enregistrement et lecture des traces)
         laps = lap_repository or JsonLapRepository(settings.data_dir)
+        pieces = piece_repository or JsonPieceRepository(settings.data_dir)
+        piece_recorder = PieceRecorder(
+            pieces,
+            ValidationStrategyFactory.for_pieces(),
+            PieceFactory(DistanceThinningResampler(PIECE_MIN_STEP_M), self.clock),
+        )
         self.lap_recorder = LapRecorderService(
             laps,
             ValidationStrategyFactory.default(),
             LapFactory(TrackPositionBinResampler(settings.track_points), self.clock),
+            piece_recorder if settings.record_pieces else None,
         )
         if settings.record_tracks:
             self.event_bus.subscribe(SamplesAccepted, self.lap_recorder.on_samples_accepted)
         self.track_queries = TrackQueryService(
-            laps, ReferenceStrategyFactory.create(settings.reference_strategy)
+            laps, ReferenceStrategyFactory.create(settings.reference_strategy), pieces
         )
 
     def routers(self) -> list[APIRouter]:

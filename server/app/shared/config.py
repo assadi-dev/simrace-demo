@@ -13,6 +13,7 @@ class Settings(BaseModel):
     data_dir: Path = Path("data")
     online_window_s: float = Field(default=5.0, gt=0, le=3600)
     record_tracks: bool = True
+    record_pieces: bool = True  # morceaux de tour (pause, stands, secteur), en plus des tours
     reference_strategy: Literal["best_time", "latest"] = "best_time"
     track_points: int = Field(default=1000, ge=100, le=5000)
 
@@ -23,6 +24,7 @@ class Settings(BaseModel):
             "SIMRACE_DATA_DIR": "data_dir",
             "SIMRACE_ONLINE_WINDOW_S": "online_window_s",
             "SIMRACE_RECORD_TRACKS": "record_tracks",
+            "SIMRACE_RECORD_PIECES": "record_pieces",
             "SIMRACE_REFERENCE_STRATEGY": "reference_strategy",
             "SIMRACE_TRACK_POINTS": "track_points",
         }

@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visionneuse de tracé</title>
+<style>
+  :root {
+    --bg: #f4efe6; --card: #ffffffb0; --ink: #1f1c18; --muted: #66615a; --line: #1f1c1824;
+    --accent: #e27100; --ok: #0b6e34; --bad: #a91f2f; --track: #2d2c2a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); background: var(--bg); }
+  header { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--card); }
+  h1 { font-size: 16px; margin: 0 8px 0 0; }
+  label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
+  input[type=text], select, button { font: inherit; min-height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); }
+  input[type=text] { width: 230px; }
+  button { cursor: pointer; font-weight: 600; }
+  button.primary { background: var(--track); color: #fff; border-color: var(--track); }
+  button.small { min-height: 28px; padding: 0 8px; font-size: 12px; }
+  main { display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; }
+  .map { flex: 2 1 520px; min-width: 0; }
+  .side { flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  .card h2 { margin: 0 0 8px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  canvas { width: 100%; height: 66vh; min-height: 360px; display: block; background: #fffdf8; border: 1px solid var(--line); border-radius: 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; border-top: 0; }
+  tr.lap { cursor: pointer; }
+  tr.lap:hover { background: #e271000f; }
+  tr.lap.active { background: #e2710022; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .pill.ok { background: #1fbf5e1f; color: var(--ok); }
+  .pill.bad { background: #e5484d1a; color: var(--bad); }
+  .pill.idle { background: var(--line); color: var(--muted); }
+  .muted { color: var(--muted); }
+  .hint { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+  ul { margin: 0; padding-left: 18px; }
+  .scroll { max-height: 260px; overflow: auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Visionneuse de tracé</h1>
+  <label>Serveur <input id="base" type="text" value="http://localhost:8000"></label>
+  <button id="load" class="primary" type="button">Charger</button>
+  <label>Circuit <select id="track"></select></label>
+  <label><input id="flip" type="checkbox" checked> Inverser l'axe vertical</label>
+  <span id="stream" class="pill idle">Flux direct : en attente</span>
+</header>
+
+<main>
+  <section class="map">
+    <canvas id="map" aria-label="Tracé du circuit"></canvas>
+    <p id="mapnote" class="hint"></p>
+  </section>
+
+  <aside class="side">
+    <div class="card">
+      <h2>Tracé affiché</h2>
+      <div id="info" class="muted">Aucun tracé chargé.</div>
+    </div>
+    <div class="card">
+      <h2>Trajectoires de ce navigateur
+        <button id="clear" class="small" type="button">Tout effacer</button>
+      </h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Voir</th><th>Trajectoire</th><th>Points</th><th></th></tr></thead>
+          <tbody id="trails"><tr><td colspan="4" class="muted">Aucune.</td></tr></tbody>
+        </table>
+      </div>
+      <p class="hint">Un tour = une trajectoire, conservée même après actualisation de la page. Rien n'est jamais écrasé.</p>
+      <p id="trailnote" class="hint"></p>
+    </div>
+    <div class="card">
+      <h2>Tours enregistrés par le serveur</h2>
+      <table>
+        <thead><tr><th>Tour</th><th>Temps</th><th>Poste</th><th>Longueur</th></tr></thead>
+        <tbody id="laps"><tr><td colspan="4" class="muted">Aucun.</td></tr></tbody>
+      </table>
+      <p class="hint">Clique sur un tour pour l'afficher. Le meilleur tour est la référence.</p>
+    </div>
+    <div class="card">
+      <h2>Enregistreur</h2>
+      <div id="recorder" class="muted">En attente du serveur.</div>
+    </div>
+  </aside>
+</main>
+
+<script>
+"use strict";
+
+// <TrailStore>
+/**
+ * Trajectoires dessinees en direct, une par tour, gardees dans le stockage du navigateur.
+ * Sans dependance au DOM: `storage` ressemble a localStorage (getItem / setItem).
+ * Regles: une nouvelle trajectoire commence quand la position boucle (passage de ligne), quand le
+ * poste ou le circuit change, ou quand la voiture saute de plus de JUMP_M (retour aux stands,
+ * session relancee). Une trajectoire trop courte est jetee. Aucune trajectoire n'est ecrasee.
+ */
+class TrailStore {
+  static KEY = "simrace.viewer.trails.v1";
+  static MAX_TRAILS = 30;
+  static MAX_POINTS = 30000;
+  static MIN_STEP_M = 2;      // on ne garde pas deux points a moins de 2 m
+  static MIN_KEEP_POINTS = 60; // en dessous, ce n'est pas un tour: on jette
+  static JUMP_M = 300;
+
+  constructor(storage, now = () => Date.now()) {
+    this.storage = storage;
+    this.now = now;
+    this.trails = [];
+    this.current = null;
+    this.dirty = false;
+    this.lastPos = null;
+    this.notice = "";
+    this._counter = 0;
+  }
+
+  load() {
+    try {
+      const raw = JSON.parse(this.storage.getItem(TrailStore.KEY) || "[]");
+      this.trails = Array.isArray(raw)
+        ? raw.filter((t) => t && typeof t.id === "string" && Array.isArray(t.points))
+        : [];
+    } catch {
+      this.trails = [];
+    }
+    this.current = null; // une trajectoire d'une session precedente est toujours terminee
+  }
+
+  save() {
+    for (let attempt = 0; attempt < 6; attempt++) {
+      try {
+        this.storage.setItem(TrailStore.KEY, JSON.stringify(this.trails));
+        this.dirty = false;
+        return true;
+      } catch {
+        // stockage plein: on retire la plus ancienne trajectoire terminee, jamais la courante
+        const index = this.trails.findIndex((t) => t !== this.current);
+        if (index < 0) break;
+        this.trails.splice(index, 1);
+        this.notice = "Stockage du navigateur plein : la plus ancienne trajectoire a été supprimée.";
+      }
+    }
+    return false;
+  }
+
+  /** Ajoute un echantillon. Retourne true si quelque chose a change. */
+  add(stationId, track, trackPos, x, z) {
+    const key = stationId + "|" + track;
+    let changed = false;
+    const previousPos = this.lastPos;
+    this.lastPos = trackPos;
+
+    const cur = this.current;
+    if (cur) {
+      const last = cur.points[cur.points.length - 1];
+      const wrapped = previousPos !== null && previousPos >= 0.9 && trackPos <= 0.1
+        && cur.points.length > TrailStore.MIN_KEEP_POINTS;
+      const jumped = last && Math.hypot(x - last[0], z - last[1]) > TrailStore.JUMP_M;
+      if (cur.key !== key || wrapped || jumped) {
+        this.closeCurrent();
+        changed = true;
+      }
+    }
+    if (!this.current) {
+      this.current = {
+        id: this.now() + "-" + this._counter++, key, station: stationId, track,
+        startedAt: this.now(), visible: true, points: [],
+      };
+      this.trails.push(this.current);
+      this._trim();
+      changed = true;
+    }
+
+    const points = this.current.points;
+    const last = points[points.length - 1];
+    if (!last || Math.hypot(x - last[0], z - last[1]) >= TrailStore.MIN_STEP_M) {
+      points.push([Math.round(x * 10) / 10, Math.round(z * 10) / 10]);
+      this.dirty = true;
+      changed = true;
+      if (points.length >= TrailStore.MAX_POINTS) this.closeCurrent();
+    }
+    return changed;
+  }
+
+  closeCurrent() {
+    const cur = this.current;
+    this.current = null;
+    if (cur && cur.points.length < TrailStore.MIN_KEEP_POINTS) {
+      this.trails = this.trails.filter((t) => t !== cur);
+    }
+    this.dirty = true;
+  }
+
+  remove(id) {
+    if (this.current && this.current.id === id) this.current = null;
+    this.trails = this.trails.filter((t) => t.id !== id);
+    this.dirty = true;
+  }
+
+  clear() {
+    this.trails = [];
+    this.current = null;
+    this.dirty = true;
+  }
+
+  setVisible(id, visible) {
+    const trail = this.trails.find((t) => t.id === id);
+    if (trail) { trail.visible = visible; this.dirty = true; }
+  }
+
+  _trim() {
+    while (this.trails.length > TrailStore.MAX_TRAILS) {
+      const index = this.trails.findIndex((t) => t !== this.current);
+      if (index < 0) return;
+      this.trails.splice(index, 1);
+    }
+  }
+}
+// </TrailStore>
+
+const $ = (id) => document.getElementById(id);
+const canvas = $("map");
+const ctx = canvas.getContext("2d");
+
+const state = {
+  base: "",
+  trace: null,        // [[x, z], ...] du tour du serveur affiche
+  traceLapId: null,
+  car: null,          // derniere position en direct
+  source: null,       // EventSource
+};
+
+function safeStorage() {
+  try { return window.localStorage; } catch { return { getItem: () => null, setItem: () => { throw new Error("indisponible"); } }; }
+}
+const store = new TrailStore(safeStorage());
+store.load();
+
+const fmtTime = (ms) => {
+  const m = Math.floor(ms / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  const r = String(ms % 1000).padStart(3, "0");
+  return m + ":" + String(s).padStart(2, "0") + "," + r;
+};
+const fmtKm = (m) => (m / 1000).toFixed(2).replace(".", ",") + " km";
+const fmtClock = (ts) => new Date(ts).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const text = (value) => String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+async function api(path) {
+  const response = await fetch(state.base + path);
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(response.status + " " + (error.error || response.statusText));
+  }
+  return response.json();
+}
+
+/* ---------- dessin ---------- */
+
+let drawQueued = false;
+function scheduleDraw() {
+  if (drawQueued) return;
+  drawQueued = true;
+  requestAnimationFrame(() => { drawQueued = false; draw(); });
+}
+
+function resize() {
+  const ratio = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = Math.round(rect.width * ratio);
+  canvas.height = Math.round(rect.height * ratio);
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  draw();
+}
+
+function draw() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  ctx.clearRect(0, 0, w, h);
+
+  const reference = state.trace && state.trace.length ? state.trace : null;
+  const shown = store.trails.filter((t) => t.visible && t.points.length > 1);
+  const all = [];
+  if (reference) all.push(...reference);
+  for (const t of shown) all.push(...t.points);
+  if (state.car) all.push(state.car);
+
+  if (all.length < 2) {
+    ctx.fillStyle = "#66615a";
+    ctx.font = "14px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("Aucun tracé. Roule : la trajectoire se dessine en direct.", w / 2, h / 2);
+    return;
+  }
+
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  for (const [x, z] of all) {
+    if (x < minX) minX = x; if (x > maxX) maxX = x;
+    if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+  }
+  const pad = 28;
+  const spanX = Math.max(maxX - minX, 1), spanZ = Math.max(maxZ - minZ, 1);
+  const scale = Math.min((w - 2 * pad) / spanX, (h - 2 * pad) / spanZ);
+  const offX = (w - spanX * scale) / 2, offY = (h - spanZ * scale) / 2;
+  const flip = $("flip").checked;
+  const project = ([x, z]) => [
+    offX + (x - minX) * scale,
+    flip ? h - offY - (z - minZ) * scale : offY + (z - minZ) * scale,
+  ];
+
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  if (reference) {
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = "#1f1c1818";
+    path(reference, project, true);
+    ctx.stroke();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#2d2c2a";
+    path(reference, project, true);
+    ctx.stroke();
+
+    // ligne de depart / arrivee: le premier point du tour est a la position 0
+    const [sx, sy] = project(reference[0]);
+    ctx.fillStyle = "#e27100";
+    ctx.beginPath();
+    ctx.arc(sx, sy, 6, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.fillStyle = "#1f1c18";
+    ctx.font = "12px system-ui, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("Départ / arrivée", sx + 10, sy - 8);
+  }
+
+  // trajectoires gardees: les anciennes en gris, la trajectoire en cours en orange
+  for (const trail of shown) {
+    const live = trail === store.current;
+    ctx.lineWidth = live ? 3 : 2;
+    ctx.strokeStyle = live ? "#e27100" : "#3b8fef99";
+    path(trail.points, project, false);
+    ctx.stroke();
+  }
+
+  if (state.car) {
+    const [cx, cy] = project(state.car);
+    ctx.fillStyle = "#e27100";
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 8, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+  }
+}
+
+function path(points, project, close) {
+  const stride = Math.max(1, Math.ceil(points.length / 4000)); // allege le dessin des longues traces
+  ctx.beginPath();
+  for (let i = 0; i < points.length; i += stride) {
+    const [px, py] = project(points[i]);
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  if (close) ctx.closePath();
+}
+
+/* ---------- trajectoires du navigateur ---------- */
+
+function renderTrails() {
+  if (!store.trails.length) {
+    $("trails").innerHTML = '<tr><td colspan="4" class="muted">Aucune.</td></tr>';
+  } else {
+    $("trails").innerHTML = store.trails.slice().reverse().map((t) =>
+      '<tr data-id="' + text(t.id) + '">' +
+      '<td><input type="checkbox" data-act="toggle" aria-label="Afficher cette trajectoire"' + (t.visible ? " checked" : "") + "></td>" +
+      "<td>" + text(fmtClock(t.startedAt)) + "<br><span class=\"muted\">" + text(t.track) + " · " + text(t.station) +
+      (t === store.current ? " · en cours" : "") + "</span></td>" +
+      "<td>" + t.points.length + "</td>" +
+      '<td><button class="small" type="button" data-act="delete">Supprimer</button></td></tr>'
+    ).join("");
+  }
+  $("trailnote").textContent = store.notice;
+}
+
+$("trails").addEventListener("change", (event) => {
+  const row = event.target.closest("tr[data-id]");
+  if (!row || event.target.dataset.act !== "toggle") return;
+  store.setVisible(row.dataset.id, event.target.checked);
+  scheduleDraw();
+});
+$("trails").addEventListener("click", (event) => {
+  const row = event.target.closest("tr[data-id]");
+  if (!row || event.target.dataset.act !== "delete") return;
+  store.remove(row.dataset.id);
+  renderTrails();
+  scheduleDraw();
+});
+$("clear").addEventListener("click", () => {
+  if (!store.trails.length || !window.confirm("Supprimer toutes les trajectoires gardées dans ce navigateur ?")) return;
+  store.clear();
+  renderTrails();
+  scheduleDraw();
+});
+
+// sauvegarde reguliere et a la fermeture de la page: l'actualisation ne perd rien
+setInterval(() => { if (store.dirty) { store.save(); renderTrails(); } }, 2000);
+window.addEventListener("pagehide", () => { if (store.dirty) store.save(); });
+
+/* ---------- donnees du serveur ---------- */
+
+async function loadRecorder() {
+  try {
+    const r = await api("/recorder/status");
+    const reasons = Object.entries(r.rejected).map(([k, v]) => "<li>" + text(k) + " : " + v + "</li>").join("");
+    const dropped = Object.entries(r.discarded).map(([k, v]) => "<li>" + text(k) + " : " + v + "</li>").join("");
+    $("recorder").innerHTML =
+      '<span class="pill ' + (r.enabled ? "ok" : "bad") + '">' + (r.enabled ? "Actif" : "Désactivé") + "</span>" +
+      "<p>Tours enregistrés : <b>" + r.laps_saved + "</b>, déjà connus : " + r.duplicate_laps + "</p>" +
+      (reasons ? "<p>Tours refusés :</p><ul>" + reasons + "</ul>" : '<p class="muted">Aucun tour refusé.</p>') +
+      (dropped ? "<p>Tours abandonnés :</p><ul>" + dropped + "</ul>" : "");
+  } catch (error) {
+    $("recorder").textContent = "Indisponible : " + error.message;
+  }
+}
+
+async function loadTracks(keep) {
+  const tracks = await api("/tracks");
+  const select = $("track");
+  select.innerHTML = tracks.map((t) =>
+    '<option value="' + text(t.track) + '">' + text(t.track) + " (" + t.lap_count + " tours)</option>").join("");
+  if (!tracks.length) {
+    state.trace = null;
+    $("laps").innerHTML = '<tr><td colspan="4" class="muted">Aucun.</td></tr>';
+    $("info").textContent = "Aucun tracé enregistré par le serveur pour l'instant.";
+    $("mapnote").textContent = "Roule 2 tours propres après le tour de sortie des stands. Tes trajectoires en direct sont déjà gardées ci-contre.";
+    scheduleDraw();
+    return;
+  }
+  if (keep && tracks.some((t) => t.track === keep)) select.value = keep;
+  await loadTrack(select.value);
+}
+
+async function loadTrack(track) {
+  const [laps, reference] = await Promise.all([
+    api("/tracks/" + encodeURIComponent(track) + "/laps"),
+    api("/tracks/" + encodeURIComponent(track) + "/reference"),
+  ]);
+  renderLaps(track, laps, reference.lap_id);
+  showLap(reference, "référence : " + reference.strategy);
+}
+
+function renderLaps(track, laps, activeId) {
+  $("laps").innerHTML = laps.map((l) =>
+    '<tr class="lap' + (l.lap_id === activeId ? " active" : "") + '" data-track="' + text(track) + '" data-id="' + text(l.lap_id) + '">' +
+    "<td>" + l.lap_number + "</td><td>" + fmtTime(l.lap_time_ms) + "</td><td>" + text(l.station_id) + "</td><td>" + fmtKm(l.length_m) + "</td></tr>"
+  ).join("");
+}
+
+function showLap(lap, label) {
+  state.trace = lap.points;
+  state.traceLapId = lap.lap_id;
+  $("info").innerHTML =
+    "<b>" + text(lap.track) + "</b> (" + text(label) + ")<br>" +
+    "Tour " + lap.lap_number + " : " + fmtTime(lap.lap_time_ms) + ", " + fmtKm(lap.length_m) + "<br>" +
+    '<span class="muted">' + text(lap.car) + " sur " + text(lap.station_id) + ", " + lap.points.length + " points</span>";
+  $("mapnote").textContent = "Noir : tracé du serveur, point orange = ligne de départ. Bleu : trajectoires gardées. Orange : tour en cours.";
+  document.querySelectorAll("#laps tr.lap").forEach((row) =>
+    row.classList.toggle("active", row.dataset.id === lap.lap_id));
+  scheduleDraw();
+}
+
+$("laps").addEventListener("click", async (event) => {
+  const row = event.target.closest("tr.lap");
+  if (!row) return;
+  try {
+    const lap = await api("/tracks/" + encodeURIComponent(row.dataset.track) + "/laps/" + encodeURIComponent(row.dataset.id));
+    showLap(lap, "tour choisi");
+  } catch (error) {
+    $("info").textContent = "Erreur : " + error.message;
+  }
+});
+
+/* ---------- flux en direct ---------- */
+
+function connectStream() {
+  if (state.source) state.source.close();
+  const pill = $("stream");
+  state.source = new EventSource(state.base + "/stream");
+  state.source.onopen = () => { pill.className = "pill ok"; pill.textContent = "Flux direct : connecté"; };
+  state.source.onerror = () => { pill.className = "pill bad"; pill.textContent = "Flux direct : reconnexion…"; };
+  state.source.addEventListener("samples", (event) => {
+    const batch = JSON.parse(event.data);
+    let structure = false;
+    for (const s of batch.samples) {
+      if (s.x == null || s.z == null || s.status !== 2) continue; // en conduite seulement
+      state.car = [s.x, s.z];
+      if (store.add(batch.station_id, batch.session.track, s.track_pos, s.x, s.z)) structure = true;
+    }
+    pill.className = "pill ok";
+    pill.textContent = "Flux direct : " + batch.station_id;
+    if (structure) renderTrails();
+    scheduleDraw();
+  });
+}
+
+/* ---------- demarrage ---------- */
+
+async function start() {
+  state.base = $("base").value.replace(/\/+$/, "");
+  try {
+    await loadRecorder();
+    await loadTracks(state.trace ? $("track").value : null);
+  } catch (error) {
+    $("info").textContent = "Impossible de joindre le serveur : " + error.message;
+  }
+  connectStream(); // les trajectoires gardees ne sont jamais videes par un rechargement
+}
+
+$("load").addEventListener("click", start);
+$("track").addEventListener("change", (e) => loadTrack(e.target.value).catch((err) => { $("info").textContent = "Erreur : " + err.message; }));
+$("flip").addEventListener("change", scheduleDraw);
+window.addEventListener("resize", resize);
+setInterval(loadRecorder, 4000);
+
+renderTrails();
+resize();
+start();
+</script>
+</body>
+</html>
