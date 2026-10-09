@@ -116,7 +116,10 @@ PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` 
 Vérifié sur un vrai ACC le 2026-10-09 avec `probe` : la physique (vitesse, pédales, rapport,
 tr/min), le tour, son temps, `pos`, le statut, et le circuit, la voiture et le pilote.
 
-**Jamais lu sur un vrai jeu** : la position monde du joueur (`x`, `z`, offsets 252, 256, 976 et
-1216 de `layout.py`, donc l'enregistrement des tracés), le temps du dernier et du meilleur tour,
-un passage aux stands. Le serveur, le rejeu et l'envoi par lots sont testés de bout en bout avec
+La position monde (`x`, `z`, offsets 252, 256, 976 et 1216 de `layout.py`) a été lue avec `probe`
+sur un tour réel : pas de saut, distance cohérente avec la vitesse. À noter : ACC ne fait pas
+avancer `completed_laps` au passage de ligne du tour de sortie des stands (décision 0011).
+
+**Jamais vu sur un vrai jeu** : un tour complet enregistré par le serveur à partir d'ACC, le temps
+du dernier et du meilleur tour, un passage aux stands. Le serveur, le rejeu et l'envoi par lots sont testés de bout en bout avec
 des enregistrements rejoués. Voir le détail dans [docs/HANDOFF.md](docs/HANDOFF.md).

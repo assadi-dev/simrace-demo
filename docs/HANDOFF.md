@@ -9,7 +9,8 @@ le PC Windows qui a Assetto Corsa Competizione.
 |---|---|---|
 | `server/` ingestion, doublons, trous, rejets, `/stations`, `/stream` | fait, postes **en mémoire**, architecture `features/` + `shared/` en POO (décision 0010) | 147 tests pytest + essai de bout en bout avec un vrai `uvicorn` |
 | `server/` enregistrement des tracés (`/tracks`, `/recorder/status`) | fait, un fichier JSON par tour dans `server/data/`, **inactif tant que l'agent n'envoie pas `x` et `z`** (décision 0011) | tests + essai de bout en bout avec des tours synthétiques |
-| `agent/` lecture de `x`, `z` (`carCoordinates`, `playerCarID`) | écrit, **offsets jamais lus sur un vrai jeu** | 15 tests agent (tampons synthétiques) + essai de bout en bout : rejeu d'un enregistrement avec `x`, `z` vers un vrai serveur, 2 tours enregistrés |
+| `agent/` lecture de `x`, `z` (`carCoordinates`, `playerCarID`) | fait, **vérifié avec `probe` sur un tour réel** (937 échantillons, aucun saut, distance mesurée / attendue = 1,01) | 15 tests agent + rejeu de la session réelle vers un vrai serveur |
+| Tour complet enregistré depuis un vrai ACC | **à faire** : la session de test n'avait qu'un tour de sortie (refusé `started_mid_lap`, comme prévu) | rouler 2 tours propres après le tour de sortie, voir `GET /recorder/status` |
 | `agent/` décodage des pages ACC (`layout.py`) | fait | 4 tests avec tampons synthétiques seulement |
 | `agent/` lecture réelle d'ACC (`sources/acc.py`) | écrit, **jamais lancé** | non vérifié, Windows requis |
 | `agent/` enregistrement et rejeu | fait | test aller-retour + essai de bout en bout |
@@ -57,16 +58,12 @@ Objectif : confirmer que `probe` affiche des valeurs cohérentes avec le jeu.
 0. **Fait le 2026-10-09** : lecture d'ACC vérifiée avec `probe` (physique, graphique, statique :
    vitesse, pédales, rapport, tr/min, tour, temps, `pos`, statut, circuit, voiture). Reste non
    vérifié : temps du dernier et du meilleur tour, passage aux stands.
-1. **Vérifier `x` et `z` sur un vrai jeu** (code écrit, voir la décision 0011). `uv run
-   simrace-agent probe` en roulant : la fin de chaque ligne doit afficher `x ... z ...` qui
-   changent avec la voiture (de l'ordre de plusieurs centaines à milliers de mètres, pas 0).
-   - `x,z n.d.` en conduite : `playerCarID` (offset 1216) n'est pas dans `carID` (976) ou
-     `activeCars` (252) est faux. Corriger les offsets de `layout.py` (`_ACTIVE_CARS_OFFSET`,
-     `_COORDINATES_OFFSET`, `_CAR_IDS_OFFSET`, `_PLAYER_ID_OFFSET`) et `test_layout.py`.
-   - Valeurs qui sautent ou restent figées : mauvais offset de `carCoordinates`.
-   Puis, serveur lancé, `uv run simrace-agent run --server http://localhost:8000` pendant **2 tours
-   propres** (le premier tour sorti des stands est refusé, c'est voulu) et regarder
-   `GET /recorder/status` (`laps_saved`, et les raisons de refus), puis `GET /tracks`.
+1. **Enregistrer un vrai tracé** : `x` et `z` sont vérifiés (voir l'état ci-dessus). Serveur lancé,
+   `uv run simrace-agent run --server http://localhost:8000`, sortir des stands, puis rouler
+   **2 tours propres sans quitter la piste** (le tour de sortie est refusé, c'est voulu) et
+   regarder `GET /recorder/status` (`laps_saved`, et les raisons de refus), puis `GET /tracks`.
+   Si un tour propre est refusé, la raison est comptée : `data_gap` (lots perdus),
+   `position_jump`, `pit_involved`, etc. (`tracks/strategy.py`).
 2. Lire la validité du tour (champ `isValidLap` de la page graphique d'ACC, offset à trouver dans
    `SharedFileOut.h`), l'ajouter à `Sample` côté agent **et** côté serveur.
 3. Persistance PostgreSQL (SQLAlchemy 2 async + Alembic) :

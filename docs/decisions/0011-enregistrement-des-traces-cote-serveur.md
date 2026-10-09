@@ -42,6 +42,15 @@ le joueur n'est pas dans la liste, si une valeur n'est pas finie, ou si ACC renv
 Ces offsets viennent du calcul de la structure `SharedFileOut.h`, comme les autres : à confirmer
 avec `probe`.
 
+## Détection de la fin d'un tour
+
+Constat sur un vrai ACC (2026-10-09) : au passage de la ligne après un tour de sortie des stands,
+la position boucle (0,999 puis 0,000) et le chrono repart de zéro, mais `completed_laps` **reste à
+0**. Le serveur reconnaît donc un passage de ligne de deux façons : le compteur qui avance de 1,
+ou la position qui boucle (de plus de 0,9 vers moins de 0,1, après la moitié du tour). Un compteur
+qui rattrape un passage déjà détecté (dans les 30 premiers points) ne crée pas de tour fantôme.
+Le numéro d'un tour (`lap_number`) est son rang depuis le début du run, pas le compteur d'ACC.
+
 ## Conséquences
 
 - La validité du tour d'ACC (`isValidLap`) n'est pas encore lue : un tour avec sortie de piste
