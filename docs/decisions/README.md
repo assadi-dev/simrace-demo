@@ -22,3 +22,4 @@ Format d'un fichier : Statut, Date, Contexte, Décision, Raisons, Conséquences.
 | [0012](0012-sauvegarde-progressive-des-traces-par-morceaux.md) | Sauvegarde progressive des tracés, par morceaux | Acceptée |
 | [0013](0013-lecture-des-pneus-et-des-freins.md) | Lecture des pneus et des freins (pression, températures, usure) | Acceptée, offsets à vérifier |
 | [0014](0014-carburant-et-aides-a-la-conduite.md) | Carburant (litres, capacité, consommation) et réglages TC et ABS | Acceptée |
+| [0015](0015-forces-g-acceleration-et-freinage.md) | Forces G (accélération, freinage, virage) | Acceptée |

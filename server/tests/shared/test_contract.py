@@ -70,3 +70,11 @@ def test_fuel_and_aids_are_optional_then_validated():
 def test_bad_fuel_or_aid_values_are_rejected(bad):
     with pytest.raises(ValidationError):
         Sample.model_validate(sample(**bad))
+
+
+def test_g_forces_are_optional_then_bounded():
+    assert Sample.model_validate(sample()).g_long is None
+    assert Sample.model_validate(sample(g_lat=1.2, g_vert=1.0, g_long=-1.4)).g_long == -1.4
+    for bad in ({"g_lat": 50.0}, {"g_long": -50.0}, {"g_vert": float("nan")}):
+        with pytest.raises(ValidationError):
+            Sample.model_validate(sample(**bad))

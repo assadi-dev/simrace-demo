@@ -50,3 +50,7 @@ class Sample:
 
     def to_dict(self) -> dict:
         return asdict(self)
+    # forces G subies par la voiture (accG d'ACC); None si ACC ne les donne pas
+    g_lat: float | None = None  # laterale
+    g_vert: float | None = None  # verticale
+    g_long: float | None = None  # longitudinale: positive en acceleration, negative au freinage

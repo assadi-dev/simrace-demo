@@ -41,6 +41,7 @@ _MAX_FUEL_OFFSET = 416  # page statique: capacite du reservoir en litres
 _MAX_CARS = 60
 # Pneus et freins (page physique), 4 flottants chacun, ordre des roues: avant gauche, avant droit,
 # arriere gauche, arriere droit. Offsets calcules depuis SharedFileOut.h, a verifier avec `probe`.
+_ACC_G_OFFSET = 44  # accG[3] (physique): lateral, vertical, longitudinal, en G
 _TYRE_PRESSURE_OFFSET = 88  # wheelsPressure, psi
 _TYRE_CORE_TEMP_OFFSET = 152  # tyreCoreTemperature, degres C
 _BRAKE_TEMP_OFFSET = 348  # brakeTemp, degres C
@@ -71,6 +72,13 @@ def decode_wheels(physics: bytes, offset: int) -> list[float] | None:
     if not all(math.isfinite(v) for v in values) or not any(values):
         return None
     return [round(v, 2) for v in values]
+
+
+def _decode_g(physics: bytes) -> tuple[float, float, float] | None:
+    values = struct.unpack_from("<3f", physics, _ACC_G_OFFSET)
+    if not all(math.isfinite(v) for v in values):
+        return None
+    return round(values[0], 3), round(values[1], 3), round(values[2], 3)
 
 
 def _fuel_per_lap(graphics: bytes) -> float | None:
@@ -126,6 +134,7 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
     ) = _GRAPHICS_LAPS.unpack_from(graphics, _LAPS_OFFSET)
     track_pos = struct.unpack_from("<f", graphics, _TRACK_POS_OFFSET)[0]
     position = decode_player_position(graphics)
+    g = _decode_g(physics)
     return Sample(
         t_ms=t_ms,
         packet_id=packet_id,
@@ -154,4 +163,7 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
         fuel_per_lap_l=_fuel_per_lap(graphics),
         tc_level=struct.unpack_from("<i", graphics, _TC_LEVEL_OFFSET)[0],
         abs_level=struct.unpack_from("<i", graphics, _ABS_LEVEL_OFFSET)[0],
+        g_lat=g[0] if g else None,
+        g_vert=g[1] if g else None,
+        g_long=g[2] if g else None,
     )

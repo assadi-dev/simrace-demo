@@ -164,3 +164,22 @@ def test_session_carries_the_tank_capacity():
     struct.pack_into("<f", static, 416, 120.0)
     assert layout.decode_session(bytes(static)).fuel_capacity_l == 120.0
     assert layout.decode_session(bytes(layout.STATIC_SIZE)).fuel_capacity_l is None
+
+
+def test_sample_carries_the_g_forces():
+    buf = bytearray(make_physics())
+    struct.pack_into("<3f", buf, 44, 0.5, 1.0, -1.4)
+    sample = layout.decode_sample(bytes(buf), make_graphics(), t_ms=0)
+    assert (sample.g_lat, sample.g_vert, sample.g_long) == (0.5, 1.0, -1.4)
+
+
+def test_standstill_is_zero_g_not_missing():
+    sample = layout.decode_sample(make_physics(), make_graphics(), t_ms=0)
+    assert (sample.g_lat, sample.g_vert, sample.g_long) == (0.0, 0.0, 0.0)
+
+
+def test_non_finite_g_is_dropped():
+    buf = bytearray(make_physics())
+    struct.pack_into("<3f", buf, 44, float("nan"), 0.0, 0.0)
+    sample = layout.decode_sample(bytes(buf), make_graphics(), t_ms=0)
+    assert (sample.g_lat, sample.g_vert, sample.g_long) == (None, None, None)
