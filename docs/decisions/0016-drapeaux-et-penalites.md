@@ -63,9 +63,8 @@ graphique. Lus sur un vrai ACC, le jeu en piste affiche `green`, comme le dashbo
 |---|---|---|---|
 | `air_temp_c` | physique `airTemp` | 288 | oui : 27,1 °C, SimHub affiche 27° |
 | `road_temp_c` | physique `roadTemp` | 292 | oui : 27,9 °C, SimHub affiche 28° |
-| `wind_speed` | graphique `windSpeed` | 1248 | **non** : lit toujours 0,0 (temps calme ou donnée absente), unité inconnue |
-| `wind_direction` | graphique `windDirection` | 1252 | **non** : lit toujours 0,0, unité inconnue |
 
 - Une température à 0 est traitée comme « pas de donnée » (`None`), car la page physique vaut 0 en
-  pause. Un vent à 0 est gardé (0 = temps calme est une valeur valide).
-- ACC ne fournit ni pression de l'air ni pression du vent : seulement vitesse et direction.
+  pause.
+- Le vent (`windSpeed`, `windDirection`, graphique 1248 et 1252) est **abandonné** : il lisait toujours
+  0,0 et la météo utile se limite aux deux températures. Il n'est ni dans le contrat ni dans l'agent.

@@ -60,10 +60,7 @@ def _probe() -> None:
                 f"tour valide {sample.is_valid_lap}  tours de carburant {sample.fuel_estimated_laps}  "
                 f"drapeaux {sample.track_flags}"
             )
-            print(
-                f"   air {sample.air_temp_c} C  piste {sample.road_temp_c} C  "
-                f"vent {sample.wind_speed} dir {sample.wind_direction}"
-            )
+            print(f"   air {sample.air_temp_c} C  piste {sample.road_temp_c} C")
 
 
 def _stream(source: Source, sender: BatchSender, batch_ms: int) -> None:
