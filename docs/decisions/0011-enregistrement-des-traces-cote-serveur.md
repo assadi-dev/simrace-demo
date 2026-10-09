@@ -51,6 +51,11 @@ ou la position qui boucle (de plus de 0,9 vers moins de 0,1, après la moitié d
 qui rattrape un passage déjà détecté (dans les 30 premiers points) ne crée pas de tour fantôme.
 Le numéro d'un tour (`lap_number`) est son rang depuis le début du run, pas le compteur d'ACC.
 
+## Complément
+
+Les tours interrompus (pause, stands) ne sont pas perdus : voir la décision 0012, qui enregistre
+aussi des morceaux de trace sans attendre la fin du tour.
+
 ## Conséquences
 
 - La validité du tour d'ACC (`isValidLap`) n'est pas encore lue : un tour avec sortie de piste

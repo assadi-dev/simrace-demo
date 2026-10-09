@@ -95,8 +95,10 @@ PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` 
   ou une stratégie est une classe abstraite avec une implémentation concrète séparée. Les
   contrôleurs qui touchent à l'état partagé sont `async` (boucle d'évènements, pas de thread).
   Cette règle ne concerne pas l'agent.
-- **Tracés de circuit** : le serveur enregistre un fichier JSON par tour, jamais écrasé. Un nom
-  venu de l'agent (circuit, poste, run) ne devient jamais un chemin sans passer par `Slug`.
+- **Tracés de circuit** : le serveur enregistre un fichier JSON par tour valide, et un par
+  **morceau** de trace (secteur franchi, pause, entrée aux stands, fin de tour : décision 0012),
+  jamais écrasés. Un nom venu de l'agent (circuit, poste, run) ne devient jamais un chemin sans
+  passer par `Slug`.
 - **Ne crée jamais une page de mémoire partagée côté agent** : lecture seule avec
   `OpenFileMappingW`, jamais `CreateFileMapping` (voir décision 0007).
 - **Ne persiste pas chaque paquet** : ACC émet ~60 paquets/s. Stocke les tours complets et un
@@ -120,6 +122,8 @@ La position monde (`x`, `z`, offsets 252, 256, 976 et 1216 de `layout.py`) a ét
 sur un tour réel : pas de saut, distance cohérente avec la vitesse. À noter : ACC ne fait pas
 avancer `completed_laps` au passage de ligne du tour de sortie des stands (décision 0011).
 
-**Jamais vu sur un vrai jeu** : un tour complet enregistré par le serveur à partir d'ACC, le temps
-du dernier et du meilleur tour, un passage aux stands. Le serveur, le rejeu et l'envoi par lots sont testés de bout en bout avec
+Le tour de sortie des stands d'une vraie session est enregistré en morceau (4783 m, 603 points).
+
+**Jamais vu sur un vrai jeu** : le champ `sector` d'ACC (déclencheur « secteur » des morceaux), un
+passage aux stands, le temps du dernier et du meilleur tour. Le serveur, le rejeu et l'envoi par lots sont testés de bout en bout avec
 des enregistrements rejoués. Voir le détail dans [docs/HANDOFF.md](docs/HANDOFF.md).

@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ValidationError
 
-from app.features.tracks.domain import Lap, LapSummary
+from app.features.tracks.domain import Lap, LapSummary, Piece, PieceReason, PieceSummary
 from app.shared.errors import ConflictError, InvalidSlugError
 from app.shared.slug import Slug
 
@@ -19,8 +19,15 @@ class LapAlreadyExistsError(ConflictError):
     pass
 
 
+class PieceAlreadyExistsError(ConflictError):
+    pass
+
+
 class CorruptLapError(Exception):
-    """Un fichier de tour est illisible. Erreur serveur (500), pas une erreur du client."""
+    """Un fichier de tour ou de morceau est illisible. Erreur serveur (500), pas du client."""
+
+
+# --- Tours complets -------------------------------------------------------------------------------
 
 
 class LapRepository(ABC):
@@ -93,8 +100,8 @@ class LapDocument(BaseModel):
         return Lap(summary=summary, run_id=self.run_id, points=tuple(self.points))
 
 
-class JsonLapRepository(LapRepository):
-    """Un fichier JSON par tour: <racine>/tracks/<circuit>/<tour>.json.
+class JsonStore:
+    """Dossier de fichiers JSON: <racine>/tracks/<circuit>/... Ecriture sans ecrasement.
 
     L'ecriture passe par un fichier temporaire puis `os.link` vers le nom final: elle echoue si le
     fichier existe (pas d'ecrasement) et aucun lecteur ne voit un fichier a moitie ecrit.
@@ -103,22 +110,40 @@ class JsonLapRepository(LapRepository):
     def __init__(self, root: Path) -> None:
         self._root = Path(root).resolve() / "tracks"
 
-    def save(self, lap: Lap) -> None:
-        final = self._lap_path(lap.summary.track, lap.summary.lap_id)
+    def _write_new(self, final: Path, payload: str) -> None:
+        """Ecrit un nouveau fichier. Leve FileExistsError s'il existe deja."""
         final.parent.mkdir(parents=True, exist_ok=True)
-        payload = LapDocument.from_lap(lap).model_dump_json()
         temp = final.parent / f".{final.name}.{uuid4().hex}.tmp"
         temp.write_text(payload, encoding="utf-8")
         try:
             try:
                 os.link(temp, final)
             except FileExistsError:
-                raise LapAlreadyExistsError(f"tour deja enregistre: {lap.summary.lap_id}") from None
+                raise
             except OSError:
                 # systeme de fichiers sans lien physique: creation exclusive directe
-                self._write_exclusive(final, payload, lap)
+                with open(final, "x", encoding="utf-8") as handle:
+                    handle.write(payload)
         finally:
             temp.unlink(missing_ok=True)
+
+    def _checked(self, path: Path) -> Path:
+        """Ceinture et bretelles: les Slug suffisent, on verifie quand meme le chemin final."""
+        resolved = path.resolve()
+        if not resolved.is_relative_to(self._root):
+            raise ConflictError("chemin hors du dossier de donnees")
+        return resolved
+
+
+class JsonLapRepository(JsonStore, LapRepository):
+    """Un fichier JSON par tour: <racine>/tracks/<circuit>/<tour>.json."""
+
+    def save(self, lap: Lap) -> None:
+        final = self._lap_path(lap.summary.track, lap.summary.lap_id)
+        try:
+            self._write_new(final, LapDocument.from_lap(lap).model_dump_json())
+        except FileExistsError:
+            raise LapAlreadyExistsError(f"tour deja enregistre: {lap.summary.lap_id}") from None
 
     def get(self, track: Slug, lap_id: Slug) -> Lap | None:
         path = self._lap_path(track, lap_id)
@@ -128,7 +153,7 @@ class JsonLapRepository(LapRepository):
 
     def list_summaries(self, track: Slug) -> list[LapSummary]:
         summaries: list[LapSummary] = []
-        for path in sorted(self._track_dir(track).glob("*.json")):
+        for path in sorted(self._checked(self._root / str(track)).glob("*.json")):
             try:
                 summaries.append(self._read(path).summary)
             except CorruptLapError:
@@ -147,26 +172,8 @@ class JsonLapRepository(LapRepository):
                     continue
         return tracks
 
-    @staticmethod
-    def _write_exclusive(final: Path, payload: str, lap: Lap) -> None:
-        try:
-            with open(final, "x", encoding="utf-8") as handle:
-                handle.write(payload)
-        except FileExistsError:
-            raise LapAlreadyExistsError(f"tour deja enregistre: {lap.summary.lap_id}") from None
-
-    def _track_dir(self, track: Slug) -> Path:
-        return self._checked(self._root / str(track))
-
     def _lap_path(self, track: Slug, lap_id: Slug) -> Path:
         return self._checked(self._root / str(track) / f"{lap_id}.json")
-
-    def _checked(self, path: Path) -> Path:
-        """Ceinture et bretelles: les Slug suffisent, on verifie quand meme le chemin final."""
-        resolved = path.resolve()
-        if not resolved.is_relative_to(self._root):
-            raise ConflictError("chemin hors du dossier de donnees")
-        return resolved
 
     @staticmethod
     def _read(path: Path) -> Lap:
@@ -174,3 +181,133 @@ class JsonLapRepository(LapRepository):
             return LapDocument.model_validate_json(path.read_text(encoding="utf-8")).to_lap()
         except (OSError, ValidationError, ValueError, InvalidSlugError) as exc:
             raise CorruptLapError(f"fichier de tour illisible: {path.name}") from exc
+
+
+# --- Morceaux de tour (enregistres avant la fin du tour) ------------------------------------------
+
+
+class PieceRepository(ABC):
+    """Stockage des morceaux de tour. Un morceau n'est jamais ecrase."""
+
+    @abstractmethod
+    def save(self, piece: Piece) -> None:
+        """Enregistre un morceau. Leve PieceAlreadyExistsError s'il existe deja."""
+
+    @abstractmethod
+    def get(self, track: Slug, piece_id: Slug) -> Piece | None: ...
+
+    @abstractmethod
+    def list_summaries(self, track: Slug) -> list[PieceSummary]: ...
+
+    @abstractmethod
+    def list_tracks(self) -> list[Slug]: ...
+
+
+class InMemoryPieceRepository(PieceRepository):
+    def __init__(self) -> None:
+        self._pieces: dict[tuple[Slug, Slug], Piece] = {}
+
+    def save(self, piece: Piece) -> None:
+        key = (piece.summary.track, piece.summary.piece_id)
+        if key in self._pieces:
+            raise PieceAlreadyExistsError(f"morceau deja enregistre: {piece.summary.piece_id}")
+        self._pieces[key] = piece
+
+    def get(self, track: Slug, piece_id: Slug) -> Piece | None:
+        return self._pieces.get((track, piece_id))
+
+    def list_summaries(self, track: Slug) -> list[PieceSummary]:
+        return [piece.summary for (t, _), piece in self._pieces.items() if t == track]
+
+    def list_tracks(self) -> list[Slug]:
+        return sorted({t for t, _ in self._pieces}, key=str)
+
+
+class PieceDocument(BaseModel):
+    """Format du fichier d'un morceau (version 1): points (x, z) en metres, dans l'ordre roule."""
+
+    version: Literal[1] = 1
+    piece_id: str
+    track: str
+    station_id: str
+    run_id: str
+    car: str
+    lap_number: int
+    piece_index: int
+    reason: PieceReason
+    sector: int | None
+    start_pos: float
+    end_pos: float
+    length_m: float
+    recorded_at: datetime
+    points: list[tuple[float, float]]
+
+    @classmethod
+    def from_piece(cls, piece: Piece) -> "PieceDocument":
+        s = piece.summary
+        return cls(
+            piece_id=str(s.piece_id), track=str(s.track), station_id=s.station_id,
+            run_id=piece.run_id, car=s.car, lap_number=s.lap_number, piece_index=s.piece_index,
+            reason=s.reason, sector=s.sector, start_pos=s.start_pos, end_pos=s.end_pos,
+            length_m=s.length_m, recorded_at=s.recorded_at, points=list(piece.points),
+        )
+
+    def to_piece(self) -> Piece:
+        summary = PieceSummary(
+            piece_id=Slug(self.piece_id), track=Slug(self.track), station_id=self.station_id,
+            car=self.car, lap_number=self.lap_number, piece_index=self.piece_index,
+            reason=self.reason, sector=self.sector, start_pos=self.start_pos,
+            end_pos=self.end_pos, point_count=len(self.points), length_m=self.length_m,
+            recorded_at=self.recorded_at,
+        )
+        return Piece(summary=summary, run_id=self.run_id, points=tuple(self.points))
+
+
+class JsonPieceRepository(JsonStore, PieceRepository):
+    """Un fichier JSON par morceau: <racine>/tracks/<circuit>/pieces/<morceau>.json."""
+
+    def save(self, piece: Piece) -> None:
+        final = self._piece_path(piece.summary.track, piece.summary.piece_id)
+        try:
+            self._write_new(final, PieceDocument.from_piece(piece).model_dump_json())
+        except FileExistsError:
+            raise PieceAlreadyExistsError(
+                f"morceau deja enregistre: {piece.summary.piece_id}"
+            ) from None
+
+    def get(self, track: Slug, piece_id: Slug) -> Piece | None:
+        path = self._piece_path(track, piece_id)
+        if not path.is_file():
+            return None
+        return self._read(path)
+
+    def list_summaries(self, track: Slug) -> list[PieceSummary]:
+        summaries: list[PieceSummary] = []
+        for path in sorted(self._checked(self._root / str(track) / "pieces").glob("*.json")):
+            try:
+                summaries.append(self._read(path).summary)
+            except CorruptLapError:
+                logger.warning("fichier de morceau ignore (illisible): %s", path)
+        return summaries
+
+    def list_tracks(self) -> list[Slug]:
+        if not self._root.is_dir():
+            return []
+        tracks = []
+        for entry in sorted(self._root.iterdir()):
+            if entry.is_dir() and any((entry / "pieces").glob("*.json")):
+                try:
+                    tracks.append(Slug(entry.name))
+                except InvalidSlugError:
+                    continue
+        return tracks
+
+    def _piece_path(self, track: Slug, piece_id: Slug) -> Path:
+        return self._checked(self._root / str(track) / "pieces" / f"{piece_id}.json")
+
+    @staticmethod
+    def _read(path: Path) -> Piece:
+        try:
+            return PieceDocument.model_validate_json(path.read_text(encoding="utf-8")).to_piece()
+        except (OSError, ValidationError, ValueError, InvalidSlugError) as exc:
+            raise CorruptLapError(f"fichier de morceau illisible: {path.name}") from exc

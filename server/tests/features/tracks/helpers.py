@@ -49,6 +49,19 @@ def accepted(raw_samples: list[dict], station_id: str = "sim-1", run_id: str = "
     )
 
 
+def piece(piece_id: str = "sim-1-run-1-p1000", track: str = "monza", reason: str = "sector",
+          minute: int = 0, pts: tuple = ((0.0, 0.0), (5.0, 0.0), (10.0, 0.0))):
+    from app.features.tracks.domain import Piece, PieceReason, PieceSummary
+
+    summary = PieceSummary(
+        piece_id=Slug(piece_id), track=Slug(track), station_id="sim-1", car="c", lap_number=0,
+        piece_index=0, reason=PieceReason(reason), sector=0, start_pos=0.0, end_pos=0.1,
+        point_count=len(pts), length_m=10.0,
+        recorded_at=datetime(2026, 10, 9, 12, minute, tzinfo=UTC),
+    )
+    return Piece(summary=summary, run_id="run-1", points=pts)
+
+
 def lap(lap_id: str = "sim-1-run-1-lap001", lap_time_ms: int = 9600, minute: int = 0,
         track: str = "monza", pts: tuple = ((0.0, 0.0), (1.0, 0.0), (1.0, 1.0))) -> Lap:
     summary = LapSummary(

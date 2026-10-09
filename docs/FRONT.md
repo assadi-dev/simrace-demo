@@ -16,9 +16,10 @@ rejeu d'un enregistrement sur 2 ou 3 postes (`--source replay --station-id sim-N
 | `GET /stations` | Liste des postes : `station_id`, `machine` (nom du PC, affiché en gris), `run_id`, `online`, `last_seen`, `session` (circuit, voiture, pilote), `last_seq`, `batches`, `samples`, `rejected`, `duplicates`, `gaps`, `reject_reasons` | Interrogation toutes les 2 s |
 | `GET /stream` (SSE) | Évènement `samples` : `{ station_id, session, samples: Sample[] }`, un évènement par lot accepté | Un lot toutes les 200 ms par poste, environ 12 échantillons |
 | `GET /stations/{id}` | Un poste (même contenu), 404 `StationNotFoundError` s'il est inconnu | À l'ouverture d'un écran poste |
-| `GET /tracks` | Circuits ayant des tours enregistrés : `track`, `lap_count`, `best_lap_ms` | Au chargement |
+| `GET /tracks` | Circuits ayant des tours ou des morceaux enregistrés : `track`, `lap_count`, `best_lap_ms` (`null` sans tour), `piece_count` | Au chargement |
 | `GET /tracks/{circuit}/reference` | Carte de référence : tour choisi par la stratégie (`best_time` par défaut), `points[i] = [x, z]` en mètres à la position `i / len(points)`, `length_m`, `strategy` | Une fois par circuit, mise en cache côté front |
 | `GET /tracks/{circuit}/laps`, `/laps/{lap_id}` | Tours enregistrés (résumés, plus récent d'abord) et un tour avec sa trace | À la demande |
+| `GET /tracks/{circuit}/pieces`, `/pieces/{id}` | Morceaux de trace enregistrés sans attendre la fin du tour (`reason` : `sector`, `pause`, `pit_entry`, `lap_end`, `stopped`, `size_limit`), `start_pos`, `end_pos`, `points[i] = [x, z]` dans l'ordre roulé | À la demande |
 | `GET /recorder/status` | Enregistreur de tracés : `laps_saved`, `duplicate_laps`, `rejected` et `discarded` par raison | Écran Intégrité |
 | `GET /health` | `subscribers` | Au besoin |
 
@@ -100,7 +101,7 @@ tampons --requestAnimationFrame (20 images/s)--> uPlot (vitesse, gaz et frein)
 Vite, React 18, TypeScript strict, React Router, uPlot (courbes, très rapide à 60 Hz), CSS simple
 (variables issues des tokens « Flame & Sand »), Vitest pour le reducer et les formats, Playwright
 pour le scénario de démo. Pas de bibliothèque d'état : un reducer et un contexte suffisent.
-Si validée, elle doit être consignée dans `docs/decisions/0012-...` avant de coder.
+Si validée, elle doit être consignée dans `docs/decisions/0013-...` avant de coder.
 
 ## Ordre de construction
 
@@ -117,7 +118,7 @@ Si validée, elle doit être consignée dans `docs/decisions/0012-...` avant de 
 
 1. Tracé de piste : décidé côté serveur (décision 0011, enregistrement des tours). Reste à
    faire côté agent : envoyer `x` et `z`.
-2. Stack ci-dessus validée ou non (ADR à écrire, numéro 0012 : le 0010 est pris par
-   l'architecture du serveur).
+2. Stack ci-dessus validée ou non (ADR à écrire, numéro 0013 : les 0010 à 0012 sont pris par le
+   serveur).
 3. Thème : « Flame & Sand » (clair, verre) retenu pour les wireframes. Un thème sombre est hors
    périmètre de ce design system.

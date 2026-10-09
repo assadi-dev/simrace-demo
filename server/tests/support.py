@@ -71,6 +71,7 @@ def lap_samples(
                 lap_time_ms=i * 16,
                 last_lap_ms=last_lap_ms,
                 track_pos=pos,
+                sector=int(pos * 3),  # 3 secteurs egaux, comme ACC
                 in_pit=in_pit,
                 **extra,
             )
