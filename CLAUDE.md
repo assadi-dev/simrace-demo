@@ -89,7 +89,9 @@ PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` 
 - **Contrat agent/serveur** : `agent/src/simrace_agent/models.py` (`Sample`, `SessionInfo`) et
   `server/app/shared/contract.py` doivent rester alignés champ par champ. Il n'y a volontairement
   pas de package partagé (voir décision 0009). Si tu changes l'un, change l'autre et les tests des
-  deux. `x` et `z` (position monde du joueur, optionnels) existent des deux côtés (décision 0011).
+  deux. `x` et `z` (position monde, décision 0011) et les mesures de pneus et de freins (4 valeurs par
+  mesure, décision 0013), le carburant et les aides TC et ABS (décision 0014) sont optionnels et
+  existent des deux côtés.
 - **Serveur en POO** : tout est classe (entités, services, contrôleurs, routes, dépôts, fabriques,
   stratégies), dépendances passées au constructeur, composition dans `app/container.py`. Un dépôt
   ou une stratégie est une classe abstraite avec une implémentation concrète séparée. Les
@@ -124,6 +126,6 @@ avancer `completed_laps` au passage de ligne du tour de sortie des stands (déci
 
 Le tour de sortie des stands d'une vraie session est enregistré en morceau (4783 m, 603 points).
 
-**Jamais vu sur un vrai jeu** : le champ `sector` d'ACC (déclencheur « secteur » des morceaux), un
+**Jamais vu sur un vrai jeu** : la valeur des pneus et des freins en roulant (offsets 88, 152, 348, 740, 756 de la page physique, décision 0013 : lus à l'arrêt, plausibles), le champ `sector` d'ACC (déclencheur « secteur » des morceaux), un
 passage aux stands, le temps du dernier et du meilleur tour. Le serveur, le rejeu et l'envoi par lots sont testés de bout en bout avec
 des enregistrements rejoués. Voir le détail dans [docs/HANDOFF.md](docs/HANDOFF.md).

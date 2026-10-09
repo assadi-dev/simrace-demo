@@ -45,7 +45,7 @@ def test_decode_sample():
 
 
 def test_graphics_page_covers_the_player_car_id():
-    assert layout.GRAPHICS_SIZE == 1216 + 4
+    assert layout.GRAPHICS_SIZE == 1284 + 4
 
 
 def test_sample_carries_the_player_position():
@@ -100,3 +100,67 @@ def test_decode_session():
     static[266:266 + 66] = wstr("H", 33)
     info = layout.decode_session(bytes(static))
     assert (info.car, info.track, info.driver) == ("ferrari_296_gt3", "monza", "Assadi H")
+
+
+def with_wheels(physics: bytes, offset: int, values) -> bytes:
+    buf = bytearray(physics)
+    struct.pack_into("<4f", buf, offset, *values)
+    return bytes(buf)
+
+
+def test_physics_page_covers_the_disc_life():
+    assert layout.PHYSICS_SIZE == 756 + 16
+
+
+def test_sample_carries_tyres_and_brakes_in_wheel_order():
+    physics = make_physics()
+    physics = with_wheels(physics, 88, (26.1, 26.6, 26.7, 26.6))  # wheelsPressure
+    physics = with_wheels(physics, 152, (80.0, 81.5, 79.0, 78.5))  # tyreCoreTemperature
+    physics = with_wheels(physics, 348, (300.0, 310.0, 250.0, 255.0))  # brakeTemp
+    physics = with_wheels(physics, 740, (28.5, 28.4, 29.0, 29.0))  # padLife
+    physics = with_wheels(physics, 756, (31.0, 31.0, 28.0, 28.0))  # discLife
+    sample = layout.decode_sample(physics, make_graphics(), t_ms=0)
+    assert sample.tyre_pressure_psi == [26.1, 26.6, 26.7, 26.6]
+    assert sample.tyre_temp_c == [80.0, 81.5, 79.0, 78.5]
+    assert sample.brake_temp_c == [300.0, 310.0, 250.0, 255.0]
+    assert sample.pad_life_mm == [28.5, 28.4, 29.0, 29.0]
+    assert sample.disc_life_mm == [31.0, 31.0, 28.0, 28.0]
+
+
+def test_empty_physics_page_has_no_tyre_or_brake_data():
+    sample = layout.decode_sample(make_physics(), make_graphics(), t_ms=0)
+    assert sample.tyre_pressure_psi is None
+    assert sample.brake_temp_c is None
+
+
+def test_non_finite_wheel_value_is_dropped():
+    physics = with_wheels(make_physics(), 88, (26.0, float("nan"), 26.0, 26.0))
+    assert layout.decode_sample(physics, make_graphics(), t_ms=0).tyre_pressure_psi is None
+
+
+def make_graphics_with(offsets: dict) -> bytes:
+    buf = bytearray(make_graphics())
+    for offset, (fmt, value) in offsets.items():
+        struct.pack_into(fmt, buf, offset, value)
+    return bytes(buf)
+
+
+def test_sample_carries_fuel_and_driving_aids():
+    graphics = make_graphics_with({1268: ("<i", 7), 1280: ("<i", 4), 1284: ("<f", 3.0)})
+    sample = layout.decode_sample(make_physics(), graphics, t_ms=0)
+    assert sample.fuel_l == 50.0  # make_physics met 50 litres
+    assert sample.fuel_per_lap_l == 3.0
+    assert (sample.tc_level, sample.abs_level) == (7, 4)
+
+
+def test_unknown_fuel_consumption_is_none():
+    sample = layout.decode_sample(make_physics(), make_graphics(), t_ms=0)  # 0 = pas d'estimation
+    assert sample.fuel_per_lap_l is None
+    assert (sample.tc_level, sample.abs_level) == (0, 0)  # 0 = aide coupee, valeur valide
+
+
+def test_session_carries_the_tank_capacity():
+    static = bytearray(layout.STATIC_SIZE)
+    struct.pack_into("<f", static, 416, 120.0)
+    assert layout.decode_session(bytes(static)).fuel_capacity_l == 120.0
+    assert layout.decode_session(bytes(layout.STATIC_SIZE)).fuel_capacity_l is None

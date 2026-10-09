@@ -20,3 +20,5 @@ Format d'un fichier : Statut, Date, Contexte, Décision, Raisons, Conséquences.
 | [0010](0010-architecture-serveur-features-et-shared.md) | Architecture du serveur : features, shared, DDD pragmatique en POO | Acceptée |
 | [0011](0011-enregistrement-des-traces-cote-serveur.md) | Enregistrement des tracés de circuit côté serveur | Acceptée |
 | [0012](0012-sauvegarde-progressive-des-traces-par-morceaux.md) | Sauvegarde progressive des tracés, par morceaux | Acceptée |
+| [0013](0013-lecture-des-pneus-et-des-freins.md) | Lecture des pneus et des freins (pression, températures, usure) | Acceptée, offsets à vérifier |
+| [0014](0014-carburant-et-aides-a-la-conduite.md) | Carburant (litres, capacité, consommation) et réglages TC et ABS | Acceptée |

@@ -1,15 +1,26 @@
 """Contrat de donnees avec l'agent.
 
 A garder aligne champ par champ avec agent/src/simrace_agent/models.py (decision 0009).
-Ecart temporaire (decision 0011): `x` et `z` existent ici, optionnels, pas encore dans l'agent.
+`x`, `z` (decision 0011), les pneus et freins (0013), le carburant et les aides (0014) sont optionnels.
 """
 
+import math
 from enum import IntEnum
+from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 _MAX_LAP_MS = 3_600_000
 _MAX_COORD_M = 100_000
+
+# Quatre mesures (avant gauche, avant droit, arriere gauche, arriere droit), chacune bornee.
+_PerWheel = Annotated[list[float], Field(min_length=4, max_length=4)]
+
+
+def _check_range(values: list[float] | None, low: float, high: float) -> list[float] | None:
+    if values is not None and not all(math.isfinite(v) and low <= v <= high for v in values):
+        raise ValueError(f"valeur hors de [{low}, {high}]")
+    return values
 
 
 class AccStatus(IntEnum):
@@ -23,6 +34,7 @@ class SessionInfo(BaseModel):
     track: str = Field(max_length=64)
     car: str = Field(max_length=64)
     driver: str = Field(max_length=128)
+    fuel_capacity_l: float | None = Field(default=None, ge=0, le=1000, allow_inf_nan=False)
 
 
 class Sample(BaseModel):
@@ -45,3 +57,29 @@ class Sample(BaseModel):
     # position monde en metres (plan de la piste: x et z); absentes tant que l'agent ne les envoie pas
     x: float | None = Field(default=None, ge=-_MAX_COORD_M, le=_MAX_COORD_M, allow_inf_nan=False)
     z: float | None = Field(default=None, ge=-_MAX_COORD_M, le=_MAX_COORD_M, allow_inf_nan=False)
+    # pneus et freins: 4 valeurs par mesure (decision 0013)
+    tyre_pressure_psi: _PerWheel | None = Field(default=None)
+    tyre_temp_c: _PerWheel | None = Field(default=None)
+    brake_temp_c: _PerWheel | None = Field(default=None)
+    pad_life_mm: _PerWheel | None = Field(default=None)
+    disc_life_mm: _PerWheel | None = Field(default=None)
+
+    @field_validator("tyre_pressure_psi", "pad_life_mm", "disc_life_mm")
+    @classmethod
+    def _positive_small(cls, values: list[float] | None) -> list[float] | None:
+        return _check_range(values, 0, 100)
+
+    @field_validator("tyre_temp_c")
+    @classmethod
+    def _tyre_range(cls, values: list[float] | None) -> list[float] | None:
+        return _check_range(values, -50, 500)
+
+    @field_validator("brake_temp_c")
+    @classmethod
+    def _brake_range(cls, values: list[float] | None) -> list[float] | None:
+        return _check_range(values, -50, 2000)
+    # carburant et aides (decision 0014)
+    fuel_l: float | None = Field(default=None, ge=0, le=1000, allow_inf_nan=False)
+    fuel_per_lap_l: float | None = Field(default=None, ge=0, le=100, allow_inf_nan=False)
+    tc_level: int | None = Field(default=None, ge=0, le=30)
+    abs_level: int | None = Field(default=None, ge=0, le=30)

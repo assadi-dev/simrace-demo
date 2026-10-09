@@ -101,7 +101,7 @@ tampons --requestAnimationFrame (20 images/s)--> uPlot (vitesse, gaz et frein)
 Vite, React 18, TypeScript strict, React Router, uPlot (courbes, très rapide à 60 Hz), CSS simple
 (variables issues des tokens « Flame & Sand »), Vitest pour le reducer et les formats, Playwright
 pour le scénario de démo. Pas de bibliothèque d'état : un reducer et un contexte suffisent.
-Si validée, elle doit être consignée dans `docs/decisions/0013-...` avant de coder.
+Si validée, elle doit être consignée dans `docs/decisions/0015-...` avant de coder.
 
 ## Ordre de construction
 
@@ -118,7 +118,7 @@ Si validée, elle doit être consignée dans `docs/decisions/0013-...` avant de 
 
 1. Tracé de piste : décidé côté serveur (décision 0011, enregistrement des tours). Reste à
    faire côté agent : envoyer `x` et `z`.
-2. Stack ci-dessus validée ou non (ADR à écrire, numéro 0013 : les 0010 à 0012 sont pris par le
+2. Stack ci-dessus validée ou non (ADR à écrire, numéro 0015 : les 0010 à 0014 sont pris par le
    serveur).
 3. Thème : « Flame & Sand » (clair, verre) retenu pour les wireframes. Un thème sombre est hors
    périmètre de ce design system.
