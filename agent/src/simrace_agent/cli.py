@@ -47,7 +47,8 @@ def _probe() -> None:
             )
             print(
                 f"   carburant {sample.fuel_l} L  conso {sample.fuel_per_lap_l} L/tour  "
-                f"TC {sample.tc_level}  ABS {sample.abs_level}"
+                f"TC {sample.tc_level}  ABS {sample.abs_level}  "
+                f"G lat {sample.g_lat} vert {sample.g_vert} long {sample.g_long}"
             )
 
 

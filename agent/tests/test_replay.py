@@ -78,3 +78,14 @@ def test_fuel_and_aids_survive_record_and_replay(tmp_path):
     [replayed] = list(ReplaySource(path, speed=1000).samples())
     assert (replayed.fuel_l, replayed.fuel_per_lap_l) == (62.0, 3.0)
     assert (replayed.tc_level, replayed.abs_level) == (7, 4)
+
+
+def test_g_forces_survive_record_and_replay(tmp_path):
+    class WithG(FakeSource):
+        def samples(self):
+            yield replace(make_sample(0), g_lat=0.5, g_vert=1.0, g_long=-1.4)
+
+    path = tmp_path / "session.jsonl"
+    list(Recorder(WithG(), path).samples())
+    [replayed] = list(ReplaySource(path, speed=1000).samples())
+    assert (replayed.g_lat, replayed.g_vert, replayed.g_long) == (0.5, 1.0, -1.4)

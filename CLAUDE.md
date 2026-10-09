@@ -90,7 +90,7 @@ PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` 
   `server/app/shared/contract.py` doivent rester alignés champ par champ. Il n'y a volontairement
   pas de package partagé (voir décision 0009). Si tu changes l'un, change l'autre et les tests des
   deux. `x` et `z` (position monde, décision 0011) et les mesures de pneus et de freins (4 valeurs par
-  mesure, décision 0013), le carburant et les aides TC et ABS (décision 0014) sont optionnels et
+  mesure, décision 0013), le carburant, les aides TC et ABS (décision 0014) et les forces G (décision 0015) sont optionnels et
   existent des deux côtés.
 - **Serveur en POO** : tout est classe (entités, services, contrôleurs, routes, dépôts, fabriques,
   stratégies), dépendances passées au constructeur, composition dans `app/container.py`. Un dépôt

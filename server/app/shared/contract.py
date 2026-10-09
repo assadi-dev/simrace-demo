@@ -1,7 +1,7 @@
 """Contrat de donnees avec l'agent.
 
 A garder aligne champ par champ avec agent/src/simrace_agent/models.py (decision 0009).
-`x`, `z` (decision 0011), les pneus et freins (0013), le carburant et les aides (0014) sont optionnels.
+`x`, `z` (0011), pneus et freins (0013), carburant et aides (0014), forces G (0015) sont optionnels.
 """
 
 import math
@@ -83,3 +83,7 @@ class Sample(BaseModel):
     fuel_per_lap_l: float | None = Field(default=None, ge=0, le=100, allow_inf_nan=False)
     tc_level: int | None = Field(default=None, ge=0, le=30)
     abs_level: int | None = Field(default=None, ge=0, le=30)
+    # forces G (decision 0015): une voiture de course reste sous une dizaine de G
+    g_lat: float | None = Field(default=None, ge=-20, le=20, allow_inf_nan=False)
+    g_vert: float | None = Field(default=None, ge=-20, le=20, allow_inf_nan=False)
+    g_long: float | None = Field(default=None, ge=-20, le=20, allow_inf_nan=False)
