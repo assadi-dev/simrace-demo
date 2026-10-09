@@ -8,6 +8,7 @@ roulage et comparer avec ce que le jeu affiche. Les chaines sont du UTF-16 LE.
 import math
 import struct
 
+from simrace_agent.codes import TRACK_FLAGS
 from simrace_agent.models import Sample, SessionInfo
 
 PHYSICS_NAME = "Local\\acpmf_physics"
@@ -16,7 +17,7 @@ STATIC_NAME = "Local\\acpmf_static"
 
 # On ne mappe que le debut de chaque page: seuls les champs utiles sont lus.
 PHYSICS_SIZE = 772  # jusqu'a discLife[4] inclus
-GRAPHICS_SIZE = 1288  # jusqu'a fuelXLap inclus
+GRAPHICS_SIZE = 1532  # jusqu'a globalRed inclus
 STATIC_SIZE = 420  # jusqu'a maxFuel inclus
 
 # ACC met INT_MAX dans les temps de tour quand aucun tour n'est enregistre.
@@ -34,6 +35,15 @@ _COORDINATES_OFFSET = 256
 _CAR_IDS_OFFSET = 976
 _PLAYER_ID_OFFSET = 1216
 # Aides et carburant (page graphique), verifies sur un vrai ACC: reglages en cours, pas l'action
+_PENALTY_TIME_OFFSET = 1220  # penaltyTime, secondes
+_FLAG_OFFSET = 1224  # flag: voir codes.FLAGS
+_PENALTY_OFFSET = 1228  # penalty: voir codes.PENALTIES (jamais vu sur un vrai jeu)
+_TC_CUT_OFFSET = 1272
+_ENGINE_MAP_OFFSET = 1276  # ACC compte a partir de 0, SimHub affiche +1
+_IS_VALID_LAP_OFFSET = 1408
+_FUEL_EST_LAPS_OFFSET = 1412  # fuelEstimatedLaps
+_GLOBAL_FLAGS_OFFSET = 1500  # 8 entiers: voir codes.TRACK_FLAGS
+_BRAKE_BIAS_OFFSET = 564  # page physique
 _TC_LEVEL_OFFSET = 1268
 _ABS_LEVEL_OFFSET = 1280
 _FUEL_PER_LAP_OFFSET = 1284  # fuelXLap, litres par tour (estimation d'ACC)
@@ -79,6 +89,20 @@ def _decode_g(physics: bytes) -> tuple[float, float, float] | None:
     if not all(math.isfinite(v) for v in values):
         return None
     return round(values[0], 3), round(values[1], 3), round(values[2], 3)
+
+
+def _penalty_time(graphics: bytes) -> float | None:
+    value = struct.unpack_from("<f", graphics, _PENALTY_TIME_OFFSET)[0]
+    return round(value, 1) if math.isfinite(value) and value >= 0 else None
+
+
+def _track_flags(graphics: bytes) -> list[str]:
+    values = struct.unpack_from(f"<{len(TRACK_FLAGS)}i", graphics, _GLOBAL_FLAGS_OFFSET)
+    return [name for name, value in zip(TRACK_FLAGS, values, strict=True) if value]
+
+
+def _positive_float(value: float, digits: int) -> float | None:
+    return round(value, digits) if math.isfinite(value) and value > 0 else None
 
 
 def _fuel_per_lap(graphics: bytes) -> float | None:
@@ -163,6 +187,17 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
         fuel_per_lap_l=_fuel_per_lap(graphics),
         tc_level=struct.unpack_from("<i", graphics, _TC_LEVEL_OFFSET)[0],
         abs_level=struct.unpack_from("<i", graphics, _ABS_LEVEL_OFFSET)[0],
+        flag=struct.unpack_from("<i", graphics, _FLAG_OFFSET)[0],
+        penalty_code=struct.unpack_from("<i", graphics, _PENALTY_OFFSET)[0],
+        penalty_time_s=_penalty_time(graphics),
+        tc_cut_level=struct.unpack_from("<i", graphics, _TC_CUT_OFFSET)[0],
+        engine_map=struct.unpack_from("<i", graphics, _ENGINE_MAP_OFFSET)[0] + 1,
+        brake_bias=_positive_float(struct.unpack_from("<f", physics, _BRAKE_BIAS_OFFSET)[0], 3),
+        is_valid_lap=bool(struct.unpack_from("<i", graphics, _IS_VALID_LAP_OFFSET)[0]),
+        fuel_estimated_laps=_positive_float(
+            struct.unpack_from("<f", graphics, _FUEL_EST_LAPS_OFFSET)[0], 1
+        ),
+        track_flags=_track_flags(graphics),
         g_lat=g[0] if g else None,
         g_vert=g[1] if g else None,
         g_long=g[2] if g else None,

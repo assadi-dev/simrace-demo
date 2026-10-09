@@ -78,3 +78,26 @@ def test_g_forces_are_optional_then_bounded():
     for bad in ({"g_lat": 50.0}, {"g_long": -50.0}, {"g_vert": float("nan")}):
         with pytest.raises(ValidationError):
             Sample.model_validate(sample(**bad))
+
+
+def test_flag_and_penalty_are_optional_then_bounded():
+    assert Sample.model_validate(sample()).flag is None
+    parsed = Sample.model_validate(sample(flag=2, penalty_code=8, penalty_time_s=10.0))
+    assert (parsed.flag, parsed.penalty_code) == (2, 8)
+    for bad in ({"flag": -1}, {"flag": 99}, {"penalty_code": 500}, {"penalty_time_s": -3.0},
+                {"penalty_time_s": float("nan")}):
+        with pytest.raises(ValidationError):
+            Sample.model_validate(sample(**bad))
+
+
+def test_settings_and_track_flags_are_optional_then_validated():
+    assert Sample.model_validate(sample()).track_flags is None
+    parsed = Sample.model_validate(sample(track_flags=["yellow", "yellow_s1"], engine_map=8,
+                                          brake_bias=54.0, is_valid_lap=True, tc_cut_level=6,
+                                          fuel_estimated_laps=20.0))
+    assert parsed.track_flags == ["yellow", "yellow_s1"]
+    assert Sample.model_validate(sample(track_flags=[])).track_flags == []
+    for bad in ({"track_flags": ["purple"]}, {"track_flags": ["yellow"] * 9},
+                {"brake_bias": 500.0}, {"engine_map": -1}, {"fuel_estimated_laps": -2.0}):
+        with pytest.raises(ValidationError):
+            Sample.model_validate(sample(**bad))

@@ -54,3 +54,15 @@ class Sample:
     g_lat: float | None = None  # laterale
     g_vert: float | None = None  # verticale
     g_long: float | None = None  # longitudinale: positive en acceleration, negative au freinage
+    # drapeau affiche et penalite en cours (codes d'ACC, voir codes.py); None si absents
+    flag: int | None = None
+    penalty_code: int | None = None
+    penalty_time_s: float | None = None
+    # reglages et etat de piste lus dans la page graphique; None si ACC ne les donne pas
+    tc_cut_level: int | None = None
+    engine_map: int | None = None  # affiche comme SimHub: valeur ACC + 1
+    brake_bias: float | None = None  # repartition de freinage (valeur brute d'ACC)
+    is_valid_lap: bool | None = None
+    fuel_estimated_laps: float | None = None
+    # drapeaux globaux actifs (codes.TRACK_FLAGS), liste vide = aucun
+    track_flags: list[str] | None = None

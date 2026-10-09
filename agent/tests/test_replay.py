@@ -89,3 +89,27 @@ def test_g_forces_survive_record_and_replay(tmp_path):
     list(Recorder(WithG(), path).samples())
     [replayed] = list(ReplaySource(path, speed=1000).samples())
     assert (replayed.g_lat, replayed.g_vert, replayed.g_long) == (0.5, 1.0, -1.4)
+
+
+def test_flag_and_penalty_survive_record_and_replay(tmp_path):
+    class WithPenalty(FakeSource):
+        def samples(self):
+            yield replace(make_sample(0), flag=2, penalty_code=2, penalty_time_s=10.0)
+
+    path = tmp_path / "session.jsonl"
+    list(Recorder(WithPenalty(), path).samples())
+    [replayed] = list(ReplaySource(path, speed=1000).samples())
+    assert (replayed.flag, replayed.penalty_code, replayed.penalty_time_s) == (2, 2, 10.0)
+
+
+def test_track_flags_and_settings_survive_record_and_replay(tmp_path):
+    class WithFlags(FakeSource):
+        def samples(self):
+            yield replace(make_sample(0), track_flags=["yellow", "yellow_s1"], engine_map=8,
+                          is_valid_lap=True, brake_bias=54.0)
+
+    path = tmp_path / "session.jsonl"
+    list(Recorder(WithFlags(), path).samples())
+    [replayed] = list(ReplaySource(path, speed=1000).samples())
+    assert replayed.track_flags == ["yellow", "yellow_s1"]
+    assert (replayed.engine_map, replayed.is_valid_lap, replayed.brake_bias) == (8, True, 54.0)
