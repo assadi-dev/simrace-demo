@@ -110,3 +110,8 @@ class Sample(BaseModel):
         if flags is not None and not set(flags) <= _TRACK_FLAGS:
             raise ValueError("drapeau inconnu")
         return flags
+    # meteo (decision 0016)
+    air_temp_c: float | None = Field(default=None, ge=-50, le=100, allow_inf_nan=False)
+    road_temp_c: float | None = Field(default=None, ge=-50, le=150, allow_inf_nan=False)
+    wind_speed: float | None = Field(default=None, ge=0, le=500, allow_inf_nan=False)
+    wind_direction: float | None = Field(default=None, ge=-360, le=720, allow_inf_nan=False)

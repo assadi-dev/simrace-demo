@@ -44,7 +44,7 @@ graphique. Lus sur un vrai ACC, le jeu en piste affiche `green`, comme le dashbo
 
 | Champ | Offset | Contenu | Vérifié |
 |---|---|---|---|
-| `track_flags` | 1500 à 1528 | liste des drapeaux actifs : `yellow`, `yellow_s1`, `yellow_s2`, `yellow_s3`, `white`, `green`, `chequered`, `red` | `green` oui (comme SimHub) ; jaune lu une fois (`yellow` + `yellow_s1`), pas comparé |
+| `track_flags` | 1500 à 1528 | liste des drapeaux actifs : `yellow`, `yellow_s1`, `yellow_s2`, `yellow_s3`, `white`, `green`, `chequered`, `red` | `green` oui, **jaune secteur 3 oui** (`yellow` + `yellow_s3`, le dashboard SimHub affichait jaune 3 au même moment) |
 | `is_valid_lap` | 1408 | validité du tour en cours | lu (False sur un tour de sortie), pas comparé à un tour valide |
 | `fuel_estimated_laps` | 1412 | tours de carburant restants selon ACC | oui : 20,0 = 62 L / 3,1 L par tour |
 | `tc_cut_level` | 1272 | réglage TC cut | oui : 6, comme SimHub |
@@ -56,3 +56,16 @@ graphique. Lus sur un vrai ACC, le jeu en piste affiche `green`, comme le dashbo
   avant d'avoir trouvé le bon champ ou la bonne conversion.
 - `is_valid_lap` règle l'étape 2 de la passation (lecture de la validité). Le serveur ne s'en sert pas
   encore pour refuser un tour.
+
+## Complément : météo (2026-10-09)
+
+| Champ | Source ACC | Offset | Vérifié |
+|---|---|---|---|
+| `air_temp_c` | physique `airTemp` | 288 | oui : 27,1 °C, SimHub affiche 27° |
+| `road_temp_c` | physique `roadTemp` | 292 | oui : 27,9 °C, SimHub affiche 28° |
+| `wind_speed` | graphique `windSpeed` | 1248 | **non** : lit toujours 0,0 (temps calme ou donnée absente), unité inconnue |
+| `wind_direction` | graphique `windDirection` | 1252 | **non** : lit toujours 0,0, unité inconnue |
+
+- Une température à 0 est traitée comme « pas de donnée » (`None`), car la page physique vaut 0 en
+  pause. Un vent à 0 est gardé (0 = temps calme est une valeur valide).
+- ACC ne fournit ni pression de l'air ni pression du vent : seulement vitesse et direction.

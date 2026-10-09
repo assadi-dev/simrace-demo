@@ -7,14 +7,15 @@ le PC Windows qui a Assetto Corsa Competizione.
 
 | Brique | État | Vérifié comment |
 |---|---|---|
-| `server/` ingestion, doublons, trous, rejets, `/stations`, `/stream` | fait, postes **en mémoire**, architecture `features/` + `shared/` en POO (décision 0010) | 217 tests pytest + essai de bout en bout avec un vrai `uvicorn` |
+| `server/` ingestion, doublons, trous, rejets, `/stations`, `/stream` | fait, postes **en mémoire**, architecture `features/` + `shared/` en POO (décision 0010) | 218 tests pytest + essai de bout en bout avec un vrai `uvicorn` |
 | `server/` enregistrement des tracés (`/tracks`, `/recorder/status`) | fait : un fichier JSON par tour valide, et **un par morceau** (secteur franchi, pause, stands, fin de tour) dans `server/data/` (décisions 0011 et 0012). 5 vrais tours déjà enregistrés | tests + essai avec ta session réelle : le tour de sortie des stands est conservé en morceau (4783 m) |
-| `agent/` lecture de `x`, `z` (`carCoordinates`, `playerCarID`) | fait, **vérifié avec `probe` sur un tour réel** (937 échantillons, aucun saut, distance mesurée / attendue = 1,01) | 42 tests agent + rejeu de la session réelle vers un vrai serveur |
+| `agent/` lecture de `x`, `z` (`carCoordinates`, `playerCarID`) | fait, **vérifié avec `probe` sur un tour réel** (937 échantillons, aucun saut, distance mesurée / attendue = 1,01) | 45 tests agent + rejeu de la session réelle vers un vrai serveur |
 | `agent/` lecture des pneus et freins (pression, température du pneu, température des freins, usure plaquettes et disques) | fait, **lus sur un vrai ACC à l'arrêt, valeurs plausibles (décision 0013) ; à revoir en roulant (freins qui chauffent) | 5 tests de décodage avec tampons synthétiques ; lancer `probe` et comparer avec l'overlay |
 | `agent/` carburant (L), consommation par tour, capacité du réservoir, réglages TC et ABS | fait, **vérifiés sur un vrai ACC** : carburant restant 62,0 L identique à l'overlay (décision 0014) | 4 tests de décodage + essai `probe` sur les pages réelles : réservoir 120 L, 3,0 L/tour, TC 7, ABS 4 |
 | `agent/` forces G (`accG`: latérale, verticale, longitudinale) | fait, **vérifié sur un vrai ACC** (freinage -1,45 G, accélération +0,9 G) ; signe latéral non vérifié (décision 0015) | 3 tests de décodage + lecture directe de la page physique en roulant |
 | `agent/` drapeaux, code et temps de pénalité (`flag`, `penalty`, `penaltyTime`) | fait, **lus à 0 seulement** : aucun drapeau ni pénalité vus sur un vrai jeu ; offsets déduits de la structure (décision 0016) | 3 tests de décodage + `codes.py` testé ; valider avec `probe` pendant une vraie pénalité |
-| `agent/` drapeaux globaux (`track_flags`), validité du tour, tours de carburant, TC cut, carte moteur, répartition de freinage | fait, **vérifiés sauf `brake_bias`** (0,75 lu, SimHub affiche 54,0) ; jaune par secteur lu une fois (décision 0016) | 6 tests de décodage + `probe` comparé au dashboard SimHub |
+| `agent/` drapeaux globaux (`track_flags`), validité du tour, tours de carburant, TC cut, carte moteur, répartition de freinage | fait, **vérifiés sauf `brake_bias`** (0,75 lu, SimHub affiche 54,0) ; jaune secteur 3 confirmé par SimHub (décision 0016) | 6 tests de décodage + `probe` comparé au dashboard SimHub |
+| `agent/` météo (`air_temp_c`, `road_temp_c`, `wind_speed`, `wind_direction`) | fait, températures **vérifiées** (27,1 et 27,9 °C, comme SimHub) ; vent lu à 0,0 seulement, non vérifié (décision 0016) | 2 tests de décodage + `probe` comparé au dashboard |
 | Tour complet enregistré depuis un vrai ACC | **à faire** : la session de test n'avait qu'un tour de sortie (refusé `started_mid_lap`, comme prévu) | rouler 2 tours propres après le tour de sortie, voir `GET /recorder/status` |
 | `agent/` décodage des pages ACC (`layout.py`) | fait | 4 tests avec tampons synthétiques seulement |
 | `agent/` lecture réelle d'ACC (`sources/acc.py`) | écrit, **jamais lancé** | non vérifié, Windows requis |
@@ -31,8 +32,8 @@ les recrée. Il n'y a pas de dépôt git pour l'instant : transfert par copie du
 `.venv`) ou en créant un dépôt.
 
 1. Installer uv (`winget install astral-sh.uv`) et, si besoin, Docker Desktop.
-2. `cd agent` puis `uv sync`, `uv run pytest` (42 tests doivent passer).
-3. `cd ..\server` puis `uv sync`, `uv run pytest` (217 tests doivent passer).
+2. `cd agent` puis `uv sync`, `uv run pytest` (45 tests doivent passer).
+3. `cd ..\server` puis `uv sync`, `uv run pytest` (218 tests doivent passer).
 4. Lancer ACC, entrer en session (essais libres), rouler.
 5. `cd ..\agent` puis `uv run simrace-agent probe`.
 
