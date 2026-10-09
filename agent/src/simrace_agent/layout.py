@@ -5,6 +5,7 @@ pas encore ete verifies sur une vraie session: lancer `simrace-agent probe` pend
 roulage et comparer avec ce que le jeu affiche. Les chaines sont du UTF-16 LE.
 """
 
+import math
 import struct
 
 from simrace_agent.models import Sample, SessionInfo
@@ -15,7 +16,7 @@ STATIC_NAME = "Local\\acpmf_static"
 
 # On ne mappe que le debut de chaque page: seuls les champs utiles sont lus.
 PHYSICS_SIZE = 32
-GRAPHICS_SIZE = 252
+GRAPHICS_SIZE = 1220  # jusqu'a playerCarID inclus
 STATIC_SIZE = 332
 
 # ACC met INT_MAX dans les temps de tour quand aucun tour n'est enregistre.
@@ -26,6 +27,13 @@ _GRAPHICS_HEAD = struct.Struct("<ii")  # packetId status
 _GRAPHICS_LAPS = struct.Struct("<iiiiiffiiii")  # a partir de l'offset 132
 _LAPS_OFFSET = 132
 _TRACK_POS_OFFSET = 248
+# Voitures de la session (a verifier avec `probe`): activeCars, carCoordinates[60][3] (x, y, z,
+# y = hauteur), carID[60], playerCarID. Le joueur est la voiture dont l'id est playerCarID.
+_ACTIVE_CARS_OFFSET = 252
+_COORDINATES_OFFSET = 256
+_CAR_IDS_OFFSET = 976
+_PLAYER_ID_OFFSET = 1216
+_MAX_CARS = 60
 
 
 def _wstr(buf: bytes, offset: int, chars: int) -> str:
@@ -39,6 +47,27 @@ def _lap_ms(value: int) -> int:
 
 def physics_packet_id(physics: bytes) -> int:
     return struct.unpack_from("<i", physics, 0)[0]
+
+
+def decode_player_position(graphics: bytes) -> tuple[float, float] | None:
+    """Position monde (x, z) en metres de la voiture du joueur, ou None si indisponible.
+
+    None quand le joueur n'est pas dans la liste des voitures actives, quand les valeurs ne sont
+    pas finies, ou quand ACC renvoie l'origine (0, 0, 0) hors session.
+    """
+    active = struct.unpack_from("<i", graphics, _ACTIVE_CARS_OFFSET)[0]
+    player_id = struct.unpack_from("<i", graphics, _PLAYER_ID_OFFSET)[0]
+    count = max(0, min(active, _MAX_CARS))
+    car_ids = struct.unpack_from(f"<{_MAX_CARS}i", graphics, _CAR_IDS_OFFSET)
+    if player_id not in car_ids[:count]:
+        return None
+    index = car_ids[:count].index(player_id)
+    x, y, z = struct.unpack_from("<3f", graphics, _COORDINATES_OFFSET + index * 12)
+    if not all(math.isfinite(v) for v in (x, y, z)):
+        return None
+    if x == 0.0 and y == 0.0 and z == 0.0:
+        return None
+    return x, z
 
 
 def decode_session(static: bytes) -> SessionInfo:
@@ -65,6 +94,7 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
         _laps_total,
     ) = _GRAPHICS_LAPS.unpack_from(graphics, _LAPS_OFFSET)
     track_pos = struct.unpack_from("<f", graphics, _TRACK_POS_OFFSET)[0]
+    position = decode_player_position(graphics)
     return Sample(
         t_ms=t_ms,
         packet_id=packet_id,
@@ -82,4 +112,6 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
         sector=sector,
         in_pit=bool(in_pit),
         track_pos=track_pos,
+        x=position[0] if position else None,
+        z=position[1] if position else None,
     )

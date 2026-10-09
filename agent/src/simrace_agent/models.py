@@ -31,6 +31,9 @@ class Sample:
     sector: int
     in_pit: bool
     track_pos: float  # 0..1, position normalisee sur le circuit
+    # position monde en metres (plan de la piste: x et z); None si ACC ne la donne pas
+    x: float | None = None
+    z: float | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)

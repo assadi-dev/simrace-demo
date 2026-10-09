@@ -19,7 +19,7 @@ ACC -> memoire partagee                  FastAPI
 
 | Brique | Etat |
 |---|---|
-| `agent/` lecture ACC, enregistrement/rejeu, envoi par lots | fait, **lecture ACC jamais testee sur un vrai jeu** |
+| `agent/` lecture ACC, enregistrement/rejeu, envoi par lots | fait, lecture ACC verifiee (vitesse, pedales, tours), **position x/z (trace de piste) ecrite mais pas encore verifiee** |
 | `server/` ingestion, controle d'integrite, `/stations`, `/stream` (SSE), trace des circuits (`/tracks`) | fait, 147 tests, postes **en memoire**, traces en fichiers JSON |
 | PostgreSQL / SQLAlchemy / Alembic (sessions, tours) | a faire (`docker-compose.yml` fournit la base) |
 | `web/` React (courbes, temps au tour, trace de piste, sante des postes) | a faire |

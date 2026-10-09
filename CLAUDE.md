@@ -89,8 +89,7 @@ PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` 
 - **Contrat agent/serveur** : `agent/src/simrace_agent/models.py` (`Sample`, `SessionInfo`) et
   `server/app/shared/contract.py` doivent rester alignés champ par champ. Il n'y a volontairement
   pas de package partagé (voir décision 0009). Si tu changes l'un, change l'autre et les tests des
-  deux. **Écart connu** : `x` et `z` (optionnels) existent côté serveur, pas encore côté agent
-  (décision 0011).
+  deux. `x` et `z` (position monde du joueur, optionnels) existent des deux côtés (décision 0011).
 - **Serveur en POO** : tout est classe (entités, services, contrôleurs, routes, dépôts, fabriques,
   stratégies), dépendances passées au constructeur, composition dans `app/container.py`. Un dépôt
   ou une stratégie est une classe abstraite avec une implémentation concrète séparée. Les
@@ -114,7 +113,10 @@ PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` 
 
 ## Ce qui n'est pas vérifié
 
-La lecture d'ACC (`agent/src/simrace_agent/sources/acc.py` et les offsets de `layout.py`) n'a
-**jamais été exécutée sur un vrai jeu**. Les offsets viennent de la documentation communautaire.
-Tout le reste (serveur, rejeu, envoi par lots) a été testé de bout en bout sur macOS avec un
-enregistrement rejoué. Voir le détail dans [docs/HANDOFF.md](docs/HANDOFF.md).
+Vérifié sur un vrai ACC le 2026-10-09 avec `probe` : la physique (vitesse, pédales, rapport,
+tr/min), le tour, son temps, `pos`, le statut, et le circuit, la voiture et le pilote.
+
+**Jamais lu sur un vrai jeu** : la position monde du joueur (`x`, `z`, offsets 252, 256, 976 et
+1216 de `layout.py`, donc l'enregistrement des tracés), le temps du dernier et du meilleur tour,
+un passage aux stands. Le serveur, le rejeu et l'envoi par lots sont testés de bout en bout avec
+des enregistrements rejoués. Voir le détail dans [docs/HANDOFF.md](docs/HANDOFF.md).

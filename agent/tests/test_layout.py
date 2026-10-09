@@ -13,13 +13,21 @@ def make_physics(packet_id=7, gas=0.8, brake=0.1, gear=3, rpm=7200, steer=-0.2, 
     )
 
 
+CARS = ((3, 100.0, 7.0, 200.0), (5, -250.5, 12.0, 880.25), (9, 1.0, 1.0, 1.0))  # (id, x, y, z)
+
+
 def make_graphics(status=2, laps=4, current=61_234, last=60_000, best=59_500, pit=0, sector=1,
-                  pos=0.37):
+                  pos=0.37, cars=CARS, player_id=5, active=None):
     buf = bytearray(layout.GRAPHICS_SIZE)
     struct.pack_into("<ii", buf, 0, 11, status)
     struct.pack_into("<iiiiiffiiii", buf, 132, laps, 3, current, last, best, 900.0, 1234.0, pit,
                      sector, 20_000, 10)
     struct.pack_into("<f", buf, 248, pos)
+    struct.pack_into("<i", buf, 252, len(cars) if active is None else active)
+    for i, (car_id, x, y, z) in enumerate(cars):
+        struct.pack_into("<3f", buf, 256 + i * 12, x, y, z)
+        struct.pack_into("<i", buf, 976 + i * 4, car_id)
+    struct.pack_into("<i", buf, 1216, player_id)
     return bytes(buf)
 
 
@@ -34,6 +42,44 @@ def test_decode_sample():
     assert sample.sector == 1
     assert sample.in_pit is False
     assert abs(sample.track_pos - 0.37) < 1e-6
+
+
+def test_graphics_page_covers_the_player_car_id():
+    assert layout.GRAPHICS_SIZE == 1216 + 4
+
+
+def test_sample_carries_the_player_position():
+    sample = layout.decode_sample(make_physics(), make_graphics(), t_ms=0)
+    assert (sample.x, sample.z) == (-250.5, 880.25)  # voiture 5, pas la premiere de la liste
+
+
+def test_player_position_picks_the_car_matching_player_id():
+    assert layout.decode_player_position(make_graphics(player_id=3)) == (100.0, 200.0)
+    assert layout.decode_player_position(make_graphics(player_id=9)) == (1.0, 1.0)
+
+
+def test_unknown_player_has_no_position():
+    assert layout.decode_player_position(make_graphics(player_id=77)) is None
+
+
+def test_player_beyond_the_active_cars_is_ignored():
+    assert layout.decode_player_position(make_graphics(player_id=9, active=2)) is None
+
+
+def test_origin_means_no_data_outside_a_session():
+    cars = ((5, 0.0, 0.0, 0.0),)
+    assert layout.decode_player_position(make_graphics(cars=cars)) is None
+
+
+def test_non_finite_coordinates_are_dropped():
+    cars = ((5, float("nan"), 0.0, 1.0),)
+    assert layout.decode_player_position(make_graphics(cars=cars)) is None
+
+
+def test_sample_without_position_still_decodes():
+    sample = layout.decode_sample(make_physics(), make_graphics(player_id=77), t_ms=0)
+    assert (sample.x, sample.z) == (None, None)
+    assert sample.speed_kmh == 181.5
 
 
 def test_no_lap_recorded_yet_is_zero():

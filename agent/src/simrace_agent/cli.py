@@ -3,10 +3,17 @@ import socket
 import time
 from pathlib import Path
 
+from simrace_agent.models import Sample
 from simrace_agent.sender import BatchSender
 from simrace_agent.sources.acc import AccSharedMemorySource
 from simrace_agent.sources.base import Source, SourceError
 from simrace_agent.sources.replay import Recorder, ReplaySource
+
+
+def _format_xz(sample: Sample) -> str:
+    if sample.x is None or sample.z is None:
+        return "x,z n.d."
+    return f"x {sample.x:9.1f}  z {sample.z:9.1f}"
 
 
 def _probe() -> None:
@@ -22,7 +29,8 @@ def _probe() -> None:
             print(
                 f"{sample.speed_kmh:6.1f} km/h  gaz {sample.gas:.2f}  frein {sample.brake:.2f}  "
                 f"rapport {sample.gear:2d}  tr/min {sample.rpm:5d}  tour {sample.completed_laps} "
-                f"{sample.lap_time_ms / 1000:7.3f}s  pos {sample.track_pos:.3f}  statut {sample.status}"
+                f"{sample.lap_time_ms / 1000:7.3f}s  pos {sample.track_pos:.3f}  "
+                f"statut {sample.status}  {_format_xz(sample)}"
             )
 
 

@@ -1,3 +1,6 @@
+import json
+from dataclasses import replace
+
 from simrace_agent.models import Sample, SessionInfo
 from simrace_agent.sources.replay import Recorder, ReplaySource
 
@@ -16,6 +19,29 @@ class FakeSource:
 
     def samples(self):
         yield from (make_sample(i) for i in range(5))
+
+
+def test_position_survives_record_and_replay(tmp_path):
+    class WithPosition(FakeSource):
+        def samples(self):
+            yield replace(make_sample(0), x=12.5, z=-80.25)
+
+    path = tmp_path / "session.jsonl"
+    list(Recorder(WithPosition(), path).samples())
+    [replayed] = list(ReplaySource(path, speed=1000).samples())
+    assert (replayed.x, replayed.z) == (12.5, -80.25)
+
+
+def test_old_recording_without_position_still_replays(tmp_path):
+    path = tmp_path / "old.jsonl"
+    sample = make_sample(1).to_dict()
+    del sample["x"], sample["z"]  # enregistrement fait avant l'ajout de la position
+    path.write_text(
+        json.dumps({"session": FakeSource().session().to_dict()}) + "\n" + json.dumps(sample) + "\n",
+        encoding="utf-8",
+    )
+    [replayed] = list(ReplaySource(path, speed=1000).samples())
+    assert (replayed.x, replayed.z) == (None, None)
 
 
 def test_record_then_replay_roundtrip(tmp_path):
