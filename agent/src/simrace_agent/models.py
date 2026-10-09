@@ -66,8 +66,6 @@ class Sample:
     fuel_estimated_laps: float | None = None
     # drapeaux globaux actifs (codes.TRACK_FLAGS), liste vide = aucun
     track_flags: list[str] | None = None
-    # meteo; None si ACC ne la donne pas (0 degre = pas de donnee)
+    # meteo (temperatures); None si ACC ne la donne pas (0 degre = pas de donnee)
     air_temp_c: float | None = None
     road_temp_c: float | None = None
-    wind_speed: float | None = None  # unite d'ACC, a verifier
-    wind_direction: float | None = None  # degres, a verifier

@@ -105,10 +105,8 @@ def test_settings_and_track_flags_are_optional_then_validated():
 
 def test_weather_is_optional_then_bounded():
     assert Sample.model_validate(sample()).air_temp_c is None
-    parsed = Sample.model_validate(sample(air_temp_c=27.0, road_temp_c=28.4, wind_speed=3.5,
-                                          wind_direction=180.0))
-    assert (parsed.air_temp_c, parsed.wind_direction) == (27.0, 180.0)
-    for bad in ({"air_temp_c": 500.0}, {"road_temp_c": -300.0}, {"wind_speed": -1.0},
-                {"wind_direction": float("nan")}):
+    parsed = Sample.model_validate(sample(air_temp_c=27.0, road_temp_c=28.4))
+    assert (parsed.air_temp_c, parsed.road_temp_c) == (27.0, 28.4)
+    for bad in ({"air_temp_c": 500.0}, {"road_temp_c": -300.0}, {"air_temp_c": float("nan")}):
         with pytest.raises(ValidationError):
             Sample.model_validate(sample(**bad))

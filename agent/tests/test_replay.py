@@ -118,9 +118,9 @@ def test_track_flags_and_settings_survive_record_and_replay(tmp_path):
 def test_weather_survives_record_and_replay(tmp_path):
     class WithWeather(FakeSource):
         def samples(self):
-            yield replace(make_sample(0), air_temp_c=27.0, road_temp_c=28.4, wind_speed=3.5)
+            yield replace(make_sample(0), air_temp_c=27.0, road_temp_c=28.4)
 
     path = tmp_path / "session.jsonl"
     list(Recorder(WithWeather(), path).samples())
     [replayed] = list(ReplaySource(path, speed=1000).samples())
-    assert (replayed.air_temp_c, replayed.road_temp_c, replayed.wind_speed) == (27.0, 28.4, 3.5)
+    assert (replayed.air_temp_c, replayed.road_temp_c) == (27.0, 28.4)

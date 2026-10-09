@@ -242,13 +242,10 @@ def test_sample_carries_the_weather():
     buf = bytearray(make_physics())
     struct.pack_into("<f", buf, 288, 27.0)
     struct.pack_into("<f", buf, 292, 28.4)
-    graphics = make_graphics_with({1248: ("<f", 3.5), 1252: ("<f", 180.0)})
-    sample = layout.decode_sample(bytes(buf), graphics, t_ms=0)
+    sample = layout.decode_sample(bytes(buf), make_graphics(), t_ms=0)
     assert (sample.air_temp_c, sample.road_temp_c) == (27.0, 28.4)
-    assert (sample.wind_speed, sample.wind_direction) == (3.5, 180.0)
 
 
-def test_zero_temperature_means_no_data_but_calm_wind_is_zero():
+def test_zero_temperature_means_no_data():
     sample = layout.decode_sample(make_physics(), make_graphics(), t_ms=0)
     assert (sample.air_temp_c, sample.road_temp_c) == (None, None)
-    assert (sample.wind_speed, sample.wind_direction) == (0.0, 0.0)

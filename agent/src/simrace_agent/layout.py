@@ -46,8 +46,6 @@ _GLOBAL_FLAGS_OFFSET = 1500  # 8 entiers: voir codes.TRACK_FLAGS
 _BRAKE_BIAS_OFFSET = 564  # page physique
 _AIR_TEMP_OFFSET = 288  # page physique, degres C
 _ROAD_TEMP_OFFSET = 292  # page physique, degres C
-_WIND_SPEED_OFFSET = 1248  # page graphique
-_WIND_DIRECTION_OFFSET = 1252  # page graphique
 _TC_LEVEL_OFFSET = 1268
 _ABS_LEVEL_OFFSET = 1280
 _FUEL_PER_LAP_OFFSET = 1284  # fuelXLap, litres par tour (estimation d'ACC)
@@ -107,10 +105,6 @@ def _track_flags(graphics: bytes) -> list[str]:
 
 def _positive_float(value: float, digits: int) -> float | None:
     return round(value, digits) if math.isfinite(value) and value > 0 else None
-
-
-def _finite_float(value: float) -> float | None:
-    return round(value, 1) if math.isfinite(value) else None
 
 
 def _fuel_per_lap(graphics: bytes) -> float | None:
@@ -208,8 +202,6 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
         track_flags=_track_flags(graphics),
         air_temp_c=_positive_float(struct.unpack_from("<f", physics, _AIR_TEMP_OFFSET)[0], 1),
         road_temp_c=_positive_float(struct.unpack_from("<f", physics, _ROAD_TEMP_OFFSET)[0], 1),
-        wind_speed=_finite_float(struct.unpack_from("<f", graphics, _WIND_SPEED_OFFSET)[0]),
-        wind_direction=_finite_float(struct.unpack_from("<f", graphics, _WIND_DIRECTION_OFFSET)[0]),
         g_lat=g[0] if g else None,
         g_vert=g[1] if g else None,
         g_long=g[2] if g else None,
