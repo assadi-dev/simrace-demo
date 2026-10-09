@@ -6,6 +6,7 @@ class SessionInfo:
     track: str
     car: str
     driver: str
+    fuel_capacity_l: float | None = None  # capacite du reservoir (litres), None si inconnue
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -34,6 +35,18 @@ class Sample:
     # position monde en metres (plan de la piste: x et z); None si ACC ne la donne pas
     x: float | None = None
     z: float | None = None
+    # pneus et freins, 4 valeurs dans l'ordre avant gauche, avant droit, arriere gauche, arriere
+    # droit; None si ACC ne les donne pas
+    tyre_pressure_psi: list[float] | None = None
+    tyre_temp_c: list[float] | None = None  # temperature du coeur du pneu
+    brake_temp_c: list[float] | None = None
+    pad_life_mm: list[float] | None = None  # usure des plaquettes (mm restants)
+    disc_life_mm: list[float] | None = None  # usure des disques (mm restants)
+    # carburant et aides a la conduite; None si ACC ne les donne pas
+    fuel_l: float | None = None  # carburant restant (litres)
+    fuel_per_lap_l: float | None = None  # consommation estimee par ACC (litres par tour)
+    tc_level: int | None = None  # reglage du controle de traction
+    abs_level: int | None = None  # reglage de l'ABS
 
     def to_dict(self) -> dict:
         return asdict(self)

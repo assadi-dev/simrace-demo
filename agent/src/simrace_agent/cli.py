@@ -16,6 +16,12 @@ def _format_xz(sample: Sample) -> str:
     return f"x {sample.x:9.1f}  z {sample.z:9.1f}"
 
 
+def _format_wheels(label: str, values: list[float] | None, unit: str) -> str:
+    if values is None:
+        return f"{label} n.d."
+    return f"{label} " + " ".join(f"{v:6.1f}" for v in values) + f" {unit}"
+
+
 def _probe() -> None:
     source = AccSharedMemorySource()
     last_print = 0.0
@@ -31,6 +37,17 @@ def _probe() -> None:
                 f"rapport {sample.gear:2d}  tr/min {sample.rpm:5d}  tour {sample.completed_laps} "
                 f"{sample.lap_time_ms / 1000:7.3f}s  pos {sample.track_pos:.3f}  "
                 f"statut {sample.status}  {_format_xz(sample)}"
+            )
+            print(
+                "   " + _format_wheels("pneus", sample.tyre_pressure_psi, "psi")
+                + " | " + _format_wheels("temp", sample.tyre_temp_c, "C")
+                + " | " + _format_wheels("freins", sample.brake_temp_c, "C")
+                + " | " + _format_wheels("plaquettes", sample.pad_life_mm, "mm")
+                + " | " + _format_wheels("disques", sample.disc_life_mm, "mm")
+            )
+            print(
+                f"   carburant {sample.fuel_l} L  conso {sample.fuel_per_lap_l} L/tour  "
+                f"TC {sample.tc_level}  ABS {sample.abs_level}"
             )
 
 

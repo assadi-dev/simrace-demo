@@ -52,3 +52,29 @@ def test_record_then_replay_roundtrip(tmp_path):
     assert replay.session() == FakeSource().session()
     assert [s.packet_id for s in replayed] == [s.packet_id for s in recorded]
     assert [s.speed_kmh for s in replayed] == [s.speed_kmh for s in recorded]
+
+
+def test_tyres_and_brakes_survive_record_and_replay(tmp_path):
+    class WithTyres(FakeSource):
+        def samples(self):
+            yield replace(make_sample(0), tyre_pressure_psi=[26.1, 26.6, 26.7, 26.6],
+                          brake_temp_c=[300.0, 310.0, 250.0, 255.0])
+
+    path = tmp_path / "session.jsonl"
+    list(Recorder(WithTyres(), path).samples())
+    [replayed] = list(ReplaySource(path, speed=1000).samples())
+    assert replayed.tyre_pressure_psi == [26.1, 26.6, 26.7, 26.6]
+    assert replayed.brake_temp_c == [300.0, 310.0, 250.0, 255.0]
+    assert replayed.tyre_temp_c is None
+
+
+def test_fuel_and_aids_survive_record_and_replay(tmp_path):
+    class WithFuel(FakeSource):
+        def samples(self):
+            yield replace(make_sample(0), fuel_l=62.0, fuel_per_lap_l=3.0, tc_level=7, abs_level=4)
+
+    path = tmp_path / "session.jsonl"
+    list(Recorder(WithFuel(), path).samples())
+    [replayed] = list(ReplaySource(path, speed=1000).samples())
+    assert (replayed.fuel_l, replayed.fuel_per_lap_l) == (62.0, 3.0)
+    assert (replayed.tc_level, replayed.abs_level) == (7, 4)

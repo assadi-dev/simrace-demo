@@ -15,9 +15,9 @@ GRAPHICS_NAME = "Local\\acpmf_graphics"
 STATIC_NAME = "Local\\acpmf_static"
 
 # On ne mappe que le debut de chaque page: seuls les champs utiles sont lus.
-PHYSICS_SIZE = 32
-GRAPHICS_SIZE = 1220  # jusqu'a playerCarID inclus
-STATIC_SIZE = 332
+PHYSICS_SIZE = 772  # jusqu'a discLife[4] inclus
+GRAPHICS_SIZE = 1288  # jusqu'a fuelXLap inclus
+STATIC_SIZE = 420  # jusqu'a maxFuel inclus
 
 # ACC met INT_MAX dans les temps de tour quand aucun tour n'est enregistre.
 _NO_TIME = 2**31 - 1
@@ -33,7 +33,19 @@ _ACTIVE_CARS_OFFSET = 252
 _COORDINATES_OFFSET = 256
 _CAR_IDS_OFFSET = 976
 _PLAYER_ID_OFFSET = 1216
+# Aides et carburant (page graphique), verifies sur un vrai ACC: reglages en cours, pas l'action
+_TC_LEVEL_OFFSET = 1268
+_ABS_LEVEL_OFFSET = 1280
+_FUEL_PER_LAP_OFFSET = 1284  # fuelXLap, litres par tour (estimation d'ACC)
+_MAX_FUEL_OFFSET = 416  # page statique: capacite du reservoir en litres
 _MAX_CARS = 60
+# Pneus et freins (page physique), 4 flottants chacun, ordre des roues: avant gauche, avant droit,
+# arriere gauche, arriere droit. Offsets calcules depuis SharedFileOut.h, a verifier avec `probe`.
+_TYRE_PRESSURE_OFFSET = 88  # wheelsPressure, psi
+_TYRE_CORE_TEMP_OFFSET = 152  # tyreCoreTemperature, degres C
+_BRAKE_TEMP_OFFSET = 348  # brakeTemp, degres C
+_PAD_LIFE_OFFSET = 740  # padLife, mm restants
+_DISC_LIFE_OFFSET = 756  # discLife, mm restants
 
 
 def _wstr(buf: bytes, offset: int, chars: int) -> str:
@@ -47,6 +59,23 @@ def _lap_ms(value: int) -> int:
 
 def physics_packet_id(physics: bytes) -> int:
     return struct.unpack_from("<i", physics, 0)[0]
+
+
+def decode_wheels(physics: bytes, offset: int) -> list[float] | None:
+    """Quatre valeurs (une par roue), ou None si une valeur n'est pas finie ou si tout vaut 0.
+
+    Tout a zero veut dire que ACC ne renseigne pas la page (hors session): on n'envoie rien plutot
+    qu'une fausse mesure.
+    """
+    values = struct.unpack_from("<4f", physics, offset)
+    if not all(math.isfinite(v) for v in values) or not any(values):
+        return None
+    return [round(v, 2) for v in values]
+
+
+def _fuel_per_lap(graphics: bytes) -> float | None:
+    value = struct.unpack_from("<f", graphics, _FUEL_PER_LAP_OFFSET)[0]
+    return round(value, 2) if math.isfinite(value) and value > 0 else None
 
 
 def decode_player_position(graphics: bytes) -> tuple[float, float] | None:
@@ -74,11 +103,13 @@ def decode_session(static: bytes) -> SessionInfo:
     car = _wstr(static, 68, 33)
     track = _wstr(static, 134, 33)
     driver = f"{_wstr(static, 200, 33)} {_wstr(static, 266, 33)}".strip()
-    return SessionInfo(track=track, car=car, driver=driver)
+    max_fuel = struct.unpack_from("<f", static, _MAX_FUEL_OFFSET)[0]
+    capacity = round(max_fuel, 1) if math.isfinite(max_fuel) and max_fuel > 0 else None
+    return SessionInfo(track=track, car=car, driver=driver, fuel_capacity_l=capacity)
 
 
 def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
-    packet_id, gas, brake, _fuel, gear, rpm, steer, speed = _PHYSICS.unpack_from(physics, 0)
+    packet_id, gas, brake, fuel, gear, rpm, steer, speed = _PHYSICS.unpack_from(physics, 0)
     _gfx_id, status = _GRAPHICS_HEAD.unpack_from(graphics, 0)
     (
         completed_laps,
@@ -114,4 +145,13 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
         track_pos=track_pos,
         x=position[0] if position else None,
         z=position[1] if position else None,
+        tyre_pressure_psi=decode_wheels(physics, _TYRE_PRESSURE_OFFSET),
+        tyre_temp_c=decode_wheels(physics, _TYRE_CORE_TEMP_OFFSET),
+        brake_temp_c=decode_wheels(physics, _BRAKE_TEMP_OFFSET),
+        pad_life_mm=decode_wheels(physics, _PAD_LIFE_OFFSET),
+        disc_life_mm=decode_wheels(physics, _DISC_LIFE_OFFSET),
+        fuel_l=round(fuel, 2) if math.isfinite(fuel) and fuel >= 0 else None,
+        fuel_per_lap_l=_fuel_per_lap(graphics),
+        tc_level=struct.unpack_from("<i", graphics, _TC_LEVEL_OFFSET)[0],
+        abs_level=struct.unpack_from("<i", graphics, _ABS_LEVEL_OFFSET)[0],
     )
