@@ -13,7 +13,8 @@ Python (par exemple `cv-analyser-api`).
 - `agent/` et `server/` sont deux projets `uv` indépendants (chacun son `pyproject.toml`, son
   `uv.lock`, son `.venv`).
 - Le contrat est dupliqué volontairement : dataclasses dans `agent/src/simrace_agent/models.py`,
-  modèles Pydantic dans `server/app/schemas.py`.
+  modèles Pydantic dans `server/app/shared/contract.py` (anciennement `server/app/schemas.py`,
+  déplacé par la décision 0010).
 
 ## Raisons
 

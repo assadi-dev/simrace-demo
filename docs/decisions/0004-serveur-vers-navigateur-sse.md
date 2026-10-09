@@ -23,6 +23,6 @@ Le front React affiche les données en direct. Il ne fait que recevoir.
 
 - Pas de reprise `Last-Event-ID` pour l'instant : les `id` sont émis mais il n'y a pas de tampon
   d'événements à rejouer.
-- Le hub (`server/app/hub.py`) jette les plus anciens événements d'un abonné trop lent.
+- Le hub (`server/app/features/telemetry/hub.py`) jette les plus anciens événements d'un abonné trop lent.
 - Navigateur en HTTP/1.1 : limite d'environ 6 connexions ouvertes par serveur, sans effet pour une
   démo.

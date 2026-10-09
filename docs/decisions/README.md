@@ -17,3 +17,5 @@ Format d'un fichier : Statut, Date, Contexte, Décision, Raisons, Conséquences.
 | [0007](0007-lecture-memoire-partagee-sans-creation.md) | Lecture de la mémoire partagée sans jamais créer la page | Acceptée |
 | [0008](0008-stockage-et-reduction-des-echantillons.md) | Stockage PostgreSQL et réduction des échantillons | Acceptée, non implémentée |
 | [0009](0009-deux-projets-uv-sans-package-partage.md) | Deux projets uv, sans package partagé | Acceptée |
+| [0010](0010-architecture-serveur-features-et-shared.md) | Architecture du serveur : features, shared, DDD pragmatique en POO | Acceptée |
+| [0011](0011-enregistrement-des-traces-cote-serveur.md) | Enregistrement des tracés de circuit côté serveur | Acceptée, écart de contrat temporaire |

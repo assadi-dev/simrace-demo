@@ -4,6 +4,7 @@ Chaque lot a un `seq` croissant au sein d'un `run_id` (change a chaque demarrage
 Un lot reste en file tant que le serveur ne l'a pas acquitte; l'ordre est conserve.
 """
 
+import socket
 import threading
 import uuid
 from collections import deque
@@ -15,9 +16,16 @@ from simrace_agent.models import SessionInfo
 
 class BatchSender:
     def __init__(
-        self, server_url: str, station_id: str, *, max_pending: int = 500, timeout: float = 2.0
+        self,
+        server_url: str,
+        station_id: str,
+        *,
+        machine: str | None = None,
+        max_pending: int = 500,
+        timeout: float = 2.0,
     ) -> None:
         self.station_id = station_id
+        self.machine = machine or socket.gethostname()  # nom du PC, affiche par l'interface
         self.run_id = uuid.uuid4().hex
         self.dropped = 0  # lots perdus car la file etait pleine (serveur injoignable trop longtemps)
         self.refused = 0  # lots refuses definitivement par le serveur (4xx)
@@ -41,6 +49,7 @@ class BatchSender:
             self._seq += 1
             payload = {
                 "station_id": self.station_id,
+                "machine": self.machine,
                 "run_id": self.run_id,
                 "seq": self._seq,
                 "session": session.to_dict(),

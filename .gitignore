@@ -6,5 +6,6 @@ __pycache__/
 .mypy_cache/
 .env
 recordings/
+server/data/
 node_modules/
 dist/

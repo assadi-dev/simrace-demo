@@ -35,19 +35,29 @@ PC de jeu (Windows)                      Serveur
 ACC -> mémoire partagée                  FastAPI
   -> agent Python --POST /ingest/batches--> validation, doublons, trous
        (lots numérotés, accusé,            |- GET /stations  (santé des postes)
-        reprise après coupure)             '- GET /stream    (SSE) --> React (à faire)
+        reprise après coupure)             |- GET /tracks/{circuit}/reference  (tracé de piste)
+                                           '- GET /stream    (SSE) --> React (à faire)
 ```
 
 | Dossier | Rôle | Stack |
 |---|---|---|
 | `agent/` | Lit ACC (Windows), enregistre/rejoue des sessions, envoie des lots | Python >= 3.11, `httpx` seulement |
-| `server/` | Ingestion, contrôle d'intégrité, diffusion SSE, état des postes | FastAPI, Pydantic, Python >= 3.12 |
+| `server/` | Ingestion, contrôle d'intégrité, diffusion SSE, état des postes, enregistrement des tracés | FastAPI, Pydantic, Python >= 3.12, POO, `app/features/` + `app/shared/` |
 | `web/` | Interface React (n'existe pas encore) | React, TypeScript |
 | `docs/` | Décisions et passation | Markdown |
 
 Deux projets `uv` indépendants (`agent/` et `server/`), chacun avec son `pyproject.toml`, son
 `uv.lock` et son `.venv`. Ne mets pas de dépendance lourde dans l'agent : il tourne sur le PC de
 jeu.
+
+### Organisation du serveur (décision 0010)
+
+`server/app/features/<contexte>/` : un dossier par contexte métier (`stations`, `ingestion`,
+`telemetry`, `tracks`), avec les fichiers dont il a besoin parmi `domain`, `schemas`, `controller`,
+`routes`, `services`, `repository`, `factory`, `strategy`. `server/app/shared/` : ce qui sert à
+plusieurs contextes (contrat avec l'agent, horloge, évènements, erreurs, configuration, `Slug`).
+`app/container.py` compose tout, `app/main.py` crée l'application. Les tests sont rangés pareil
+dans `server/tests/`.
 
 ## Commandes
 
@@ -77,14 +87,23 @@ PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` 
 ## Règles du projet
 
 - **Contrat agent/serveur** : `agent/src/simrace_agent/models.py` (`Sample`, `SessionInfo`) et
-  `server/app/schemas.py` doivent rester alignés champ par champ. Il n'y a volontairement pas de
-  package partagé (voir décision 0009). Si tu changes l'un, change l'autre et les tests des deux.
+  `server/app/shared/contract.py` doivent rester alignés champ par champ. Il n'y a volontairement
+  pas de package partagé (voir décision 0009). Si tu changes l'un, change l'autre et les tests des
+  deux. **Écart connu** : `x` et `z` (optionnels) existent côté serveur, pas encore côté agent
+  (décision 0011).
+- **Serveur en POO** : tout est classe (entités, services, contrôleurs, routes, dépôts, fabriques,
+  stratégies), dépendances passées au constructeur, composition dans `app/container.py`. Un dépôt
+  ou une stratégie est une classe abstraite avec une implémentation concrète séparée. Les
+  contrôleurs qui touchent à l'état partagé sont `async` (boucle d'évènements, pas de thread).
+  Cette règle ne concerne pas l'agent.
+- **Tracés de circuit** : le serveur enregistre un fichier JSON par tour, jamais écrasé. Un nom
+  venu de l'agent (circuit, poste, run) ne devient jamais un chemin sans passer par `Slug`.
 - **Ne crée jamais une page de mémoire partagée côté agent** : lecture seule avec
   `OpenFileMappingW`, jamais `CreateFileMapping` (voir décision 0007).
 - **Ne persiste pas chaque paquet** : ACC émet ~60 paquets/s. Stocke les tours complets et un
   échantillon sur six pour la télémétrie, par lots (voir décision 0008).
 - **Le serveur ne fait pas confiance à l'agent** : tout échantillon est validé (bornes dans
-  `schemas.py`), un rejet est compté avec sa raison, il ne fait jamais échouer tout un lot.
+  `shared/contract.py`), un rejet est compté avec sa raison, il ne fait jamais échouer tout un lot.
 - Un nouveau `run_id` = l'agent a redémarré, la numérotation `seq` repart de 1.
 - **Langue** : documentation et commentaires en français, identifiants de code en anglais. Pas de
   tiret cadratin (—) dans les textes rédigés pour l'utilisateur. Les commentaires du code existant

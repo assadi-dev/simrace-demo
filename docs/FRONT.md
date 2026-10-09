@@ -13,9 +13,17 @@ rejeu d'un enregistrement sur 2 ou 3 postes (`--source replay --station-id sim-N
 
 | Source | Contenu | Rythme |
 |---|---|---|
-| `GET /stations` | Liste des postes : `station_id`, `run_id`, `online`, `last_seen`, `session` (circuit, voiture, pilote), `last_seq`, `batches`, `samples`, `rejected`, `duplicates`, `gaps`, `reject_reasons` | Interrogation toutes les 2 s |
+| `GET /stations` | Liste des postes : `station_id`, `machine` (nom du PC, affiché en gris), `run_id`, `online`, `last_seen`, `session` (circuit, voiture, pilote), `last_seq`, `batches`, `samples`, `rejected`, `duplicates`, `gaps`, `reject_reasons` | Interrogation toutes les 2 s |
 | `GET /stream` (SSE) | Évènement `samples` : `{ station_id, session, samples: Sample[] }`, un évènement par lot accepté | Un lot toutes les 200 ms par poste, environ 12 échantillons |
+| `GET /stations/{id}` | Un poste (même contenu), 404 `StationNotFoundError` s'il est inconnu | À l'ouverture d'un écran poste |
+| `GET /tracks` | Circuits ayant des tours enregistrés : `track`, `lap_count`, `best_lap_ms` | Au chargement |
+| `GET /tracks/{circuit}/reference` | Carte de référence : tour choisi par la stratégie (`best_time` par défaut), `points[i] = [x, z]` en mètres à la position `i / len(points)`, `length_m`, `strategy` | Une fois par circuit, mise en cache côté front |
+| `GET /tracks/{circuit}/laps`, `/laps/{lap_id}` | Tours enregistrés (résumés, plus récent d'abord) et un tour avec sa trace | À la demande |
+| `GET /recorder/status` | Enregistreur de tracés : `laps_saved`, `duplicate_laps`, `rejected` et `discarded` par raison | Écran Intégrité |
 | `GET /health` | `subscribers` | Au besoin |
+
+Erreurs : corps `{ "error": "<NomDeLErreur>", "detail": "..." }` avec 404 (inconnu), 422 (identifiant
+mal formé). Un circuit sans tour enregistré répond 404 : le front retombe sur le tracé schématique.
 
 `Sample` : `t_ms` (horloge de l'agent, epoch ms), `packet_id`, `speed_kmh`, `gas`, `brake`, `gear`,
 `rpm`, `steer`, `status` (0 off, 1 replay, 2 live, 3 pause), `completed_laps`, `lap_time_ms`,
@@ -25,7 +33,7 @@ rejeu d'un enregistrement sur 2 ou 3 postes (`--source replay --station-id sim-N
 
 | Lacune | Conséquence sur le front | Où la combler |
 |---|---|---|
-| Pas de coordonnées X/Y dans `Sample` | Impossible de tracer la forme réelle de la piste. On dessine un **tracé schématique** (boucle générique) avec un curseur placé par `track_pos`. | Optionnel : ajouter `x`, `z` dans les deux contrats (décision 0009) |
+| L'agent n'envoie pas encore `x`, `z` (le serveur les accepte, optionnels) | Tant qu'aucune carte n'existe pour un circuit (`GET /tracks/{circuit}/reference` répond 404), on dessine un **tracé schématique** avec un curseur placé par `track_pos`. Une fois la carte enregistrée : vrai tracé, voiture placée par `(x, z)` ou par `track_pos`. | Agent : lire `carCoordinates` (HANDOFF, étape 1) |
 | Pas de validité du tour | Colonne « Validité » affichée « en attente » | Étape 2 de la passation (`isValidLap`) |
 | Pas d'évènement « tour terminé » | Le front le déduit : `completed_laps` augmente, le temps du tour terminé est `last_lap_ms` du nouvel échantillon (0 = inconnu) | Plus tard : table `laps` côté serveur |
 | Historique des lots absent (compteurs seulement) | L'écran Intégrité affiche des compteurs et des raisons de rejet. La « chaîne des lots » (carré par `seq`) est une phase 2. | Persistance PostgreSQL (étape 3) ou `GET /stations/{id}/batches` |
@@ -39,7 +47,7 @@ type Sample = { /* champs ci-dessus, mêmes noms */ };
 type SessionInfo = { track: string; car: string; driver: string };
 
 type StationSummary = {            // GET /stations
-  station_id: string; run_id: string; online: boolean; last_seen: string | null;
+  station_id: string; machine: string | null; run_id: string; online: boolean; last_seen: string | null;
   session: SessionInfo; last_seq: number; batches: number; samples: number;
   rejected: number; duplicates: number; gaps: number;
   reject_reasons: Record<string, number>;   // "champ:type" -> nombre
@@ -92,7 +100,7 @@ tampons --requestAnimationFrame (20 images/s)--> uPlot (vitesse, gaz et frein)
 Vite, React 18, TypeScript strict, React Router, uPlot (courbes, très rapide à 60 Hz), CSS simple
 (variables issues des tokens « Flame & Sand »), Vitest pour le reducer et les formats, Playwright
 pour le scénario de démo. Pas de bibliothèque d'état : un reducer et un contexte suffisent.
-Si validée, elle doit être consignée dans `docs/decisions/0010-...` avant de coder.
+Si validée, elle doit être consignée dans `docs/decisions/0012-...` avant de coder.
 
 ## Ordre de construction
 
@@ -107,8 +115,9 @@ Si validée, elle doit être consignée dans `docs/decisions/0010-...` avant de 
 
 ## Décisions à trancher
 
-1. Tracé de piste : schématique avec `track_pos` (recommandé, aucun changement serveur) ou ajout
-   de coordonnées dans le contrat (plus parlant, touche agent, serveur et tests).
-2. Stack ci-dessus validée ou non (ADR 0010).
+1. Tracé de piste : décidé côté serveur (décision 0011, enregistrement des tours). Reste à
+   faire côté agent : envoyer `x` et `z`.
+2. Stack ci-dessus validée ou non (ADR à écrire, numéro 0012 : le 0010 est pris par
+   l'architecture du serveur).
 3. Thème : « Flame & Sand » (clair, verre) retenu pour les wireframes. Un thème sombre est hors
    périmètre de ce design system.

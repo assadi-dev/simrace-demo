@@ -7,7 +7,9 @@ le PC Windows qui a Assetto Corsa Competizione.
 
 | Brique | État | Vérifié comment |
 |---|---|---|
-| `server/` ingestion, doublons, trous, rejets, `/stations`, `/stream` | fait, stockage **en mémoire** | 8 tests pytest + essai de bout en bout |
+| `server/` ingestion, doublons, trous, rejets, `/stations`, `/stream` | fait, postes **en mémoire**, architecture `features/` + `shared/` en POO (décision 0010) | 147 tests pytest + essai de bout en bout avec un vrai `uvicorn` |
+| `server/` enregistrement des tracés (`/tracks`, `/recorder/status`) | fait, un fichier JSON par tour dans `server/data/`, **inactif tant que l'agent n'envoie pas `x` et `z`** (décision 0011) | tests + essai de bout en bout avec des tours synthétiques |
+| `agent/` lecture de `x`, `z` (`carCoordinates`) | **à faire** : l'agent n'a pas été modifié | |
 | `agent/` décodage des pages ACC (`layout.py`) | fait | 4 tests avec tampons synthétiques seulement |
 | `agent/` lecture réelle d'ACC (`sources/acc.py`) | écrit, **jamais lancé** | non vérifié, Windows requis |
 | `agent/` enregistrement et rejeu | fait | test aller-retour + essai de bout en bout |
@@ -24,7 +26,7 @@ les recrée. Il n'y a pas de dépôt git pour l'instant : transfert par copie du
 
 1. Installer uv (`winget install astral-sh.uv`) et, si besoin, Docker Desktop.
 2. `cd agent` puis `uv sync`, `uv run pytest` (5 tests doivent passer).
-3. `cd ..\server` puis `uv sync`, `uv run pytest` (8 tests doivent passer).
+3. `cd ..\server` puis `uv sync`, `uv run pytest` (147 tests doivent passer).
 4. Lancer ACC, entrer en session (essais libres), rouler.
 5. `cd ..\agent` puis `uv run simrace-agent probe`.
 
@@ -52,7 +54,12 @@ Objectif : confirmer que `probe` affiche des valeurs cohérentes avec le jeu.
 
 ## Prochaines étapes (ordre conseillé)
 
-1. Vérifier la lecture d'ACC (ci-dessus). Corriger `layout.py` si besoin.
+0. **Fait le 2026-10-09** : lecture d'ACC vérifiée avec `probe` (physique, graphique, statique :
+   vitesse, pédales, rapport, tr/min, tour, temps, `pos`, statut, circuit, voiture). Reste non
+   vérifié : temps du dernier et du meilleur tour, passage aux stands.
+1. **Agent : lire `x` et `z`** (page graphique, `carCoordinates[60][3]` à l'offset 256 et
+   `playerCarID` à 1216, à confirmer avec `probe`), les ajouter à `Sample` côté agent. Le serveur
+   les accepte déjà (optionnels). C'est ce qui met en marche l'enregistrement des tracés.
 2. Lire la validité du tour (champ `isValidLap` de la page graphique d'ACC, offset à trouver dans
    `SharedFileOut.h`), l'ajouter à `Sample` côté agent **et** côté serveur.
 3. Persistance PostgreSQL (SQLAlchemy 2 async + Alembic) :
@@ -73,7 +80,13 @@ Objectif : confirmer que `probe` affiche des valeurs cohérentes avec le jeu.
 
 ## Limites connues
 
-- Le registre des postes (`server/app/stations.py`) et le hub SSE sont en mémoire.
+- Les postes (`InMemoryStationRepository`) et le hub SSE sont en mémoire. Les tracés sont des
+  fichiers (`server/data/tracks/<circuit>/<poste>-<run>-lap<N>.json`, ignorés par git) ; lister
+  les tours relit les fichiers.
+- Rejouer un enregistrement avec un nouveau `run_id` crée de nouveaux fichiers de tours.
+  `SIMRACE_RECORD_TRACKS=false` désactive l'enregistrement.
+- La validité du tour d'ACC n'est pas lue : un tour avec sortie de piste mais sans arrêt ni trou
+  peut être enregistré.
 - Le hub SSE jette les événements les plus anciens d'un abonné trop lent (file de 1000).
 - L'agent perd les plus anciens lots si la file dépasse 500 lots (serveur injoignable trop
   longtemps) ; le compteur `dropped` est affiché à l'arrêt.

@@ -11,7 +11,7 @@ le lot, et on veut pouvoir expliquer pourquoi une donnée a été refusée (exac
 
 - L'enveloppe du lot (`Batch`) est validée strictement : une enveloppe invalide est un 422.
 - Les échantillons arrivent comme des dictionnaires et sont validés **un par un** avec le modèle
-  `Sample` (bornes dans `server/app/schemas.py`). Un échantillon invalide est rejeté, compté dans
+  `Sample` (bornes dans `server/app/shared/contract.py`). Un échantillon invalide est rejeté, compté dans
   `rejected` et sa raison est comptée dans `reject_reasons` (par exemple
   `speed_kmh:less_than_equal`). Le reste du lot est accepté.
 - `/stations` expose ces compteurs pour l'opérateur.

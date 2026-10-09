@@ -1,62 +1,36 @@
-import os
-from collections.abc import AsyncIterable
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.sse import EventSourceResponse, ServerSentEvent
 
-from app.hub import Hub
-from app.schemas import Ack, Batch
-from app.stations import Registry
-
-
-def create_app() -> FastAPI:
-    app = FastAPI(title="simrace")
-    app.state.hub = Hub()
-    app.state.registry = Registry()
-
-    origins = os.environ.get("SIMRACE_CORS_ORIGINS", "http://localhost:5173,http://localhost:3000")
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[o.strip() for o in origins.split(",") if o.strip()],
-        allow_methods=["GET"],
-        allow_headers=["*"],
-    )
-
-    @app.get("/health")
-    async def health() -> dict:
-        return {"status": "ok", "subscribers": app.state.hub.subscriber_count}
-
-    @app.post("/ingest/batches")
-    async def ingest(batch: Batch) -> Ack:
-        ack, samples = app.state.registry.ingest(batch)
-        if samples:
-            app.state.hub.publish(
-                "samples",
-                {
-                    "station_id": batch.station_id,
-                    "session": batch.session.model_dump(),
-                    "samples": [s.model_dump() for s in samples],
-                },
-            )
-        return ack
-
-    @app.get("/stations")
-    async def stations() -> list[dict]:
-        return app.state.registry.snapshot()
-
-    @app.get("/stream", response_class=EventSourceResponse)
-    async def stream() -> AsyncIterable[ServerSentEvent]:
-        hub: Hub = app.state.hub
-        queue = hub.subscribe()
-        try:
-            while True:
-                event = await queue.get()
-                yield ServerSentEvent(data=event.data, event=event.type, id=str(event.id))
-        finally:
-            hub.unsubscribe(queue)
-
-    return app
+from app.container import ApplicationContainer
+from app.shared.api import ErrorHandlers
+from app.shared.clock import Clock
+from app.shared.config import Settings
 
 
-app = create_app()
+class ApiApplication:
+    """Construit l'application FastAPI: configuration, CORS, erreurs, routes de chaque contexte."""
+
+    @staticmethod
+    def create(
+        settings: Settings | None = None,
+        clock: Clock | None = None,
+        container: ApplicationContainer | None = None,
+    ) -> FastAPI:
+        settings = settings or Settings.from_env()
+        container = container or ApplicationContainer(settings, clock)
+
+        app = FastAPI(title="simrace")
+        app.state.container = container
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=container.settings.cors_origins,
+            allow_methods=["GET"],
+            allow_headers=["*"],
+        )
+        ErrorHandlers().install(app)
+        for router in container.routers():
+            app.include_router(router)
+        return app
+
+
+app = ApiApplication.create()

@@ -1,8 +1,22 @@
-from typing import Literal
+"""Contrat de donnees avec l'agent.
+
+A garder aligne champ par champ avec agent/src/simrace_agent/models.py (decision 0009).
+Ecart temporaire (decision 0011): `x` et `z` existent ici, optionnels, pas encore dans l'agent.
+"""
+
+from enum import IntEnum
 
 from pydantic import BaseModel, Field
 
 _MAX_LAP_MS = 3_600_000
+_MAX_COORD_M = 100_000
+
+
+class AccStatus(IntEnum):
+    OFF = 0
+    REPLAY = 1
+    LIVE = 2
+    PAUSE = 3
 
 
 class SessionInfo(BaseModel):
@@ -28,22 +42,6 @@ class Sample(BaseModel):
     sector: int = Field(ge=0, le=9)
     in_pit: bool
     track_pos: float = Field(ge=0, le=1)
-
-
-class Batch(BaseModel):
-    """Enveloppe d'un lot. Les echantillons sont valides un par un par le registre."""
-
-    station_id: str = Field(min_length=1, max_length=64)
-    run_id: str = Field(min_length=1, max_length=64)
-    seq: int = Field(ge=1)
-    session: SessionInfo
-    samples: list[dict] = Field(max_length=600)
-
-
-class Ack(BaseModel):
-    station_id: str
-    run_id: str
-    seq: int
-    status: Literal["accepted", "duplicate"]
-    accepted: int
-    rejected: int
+    # position monde en metres (plan de la piste: x et z); absentes tant que l'agent ne les envoie pas
+    x: float | None = Field(default=None, ge=-_MAX_COORD_M, le=_MAX_COORD_M, allow_inf_nan=False)
+    z: float | None = Field(default=None, ge=-_MAX_COORD_M, le=_MAX_COORD_M, allow_inf_nan=False)
