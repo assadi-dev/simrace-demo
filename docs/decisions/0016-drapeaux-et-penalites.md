@@ -56,6 +56,10 @@ graphique. Lus sur un vrai ACC, le jeu en piste affiche `green`, comme le dashbo
   avant d'avoir trouvé le bon champ ou la bonne conversion.
 - `is_valid_lap` règle l'étape 2 de la passation (lecture de la validité). Le serveur ne s'en sert pas
   encore pour refuser un tour.
+- 2026-10-12, sur un vrai jeu : des tours avec virages coupés ressortaient valides quand le front
+  lisait `is_valid_lap` au dernier échantillon avant la ligne. Le front retient désormais
+  l'invalidité sur tout le tour et contrôle avec `best_lap_ms` (décision 0018). Reste à observer
+  avec `probe` quand ACC passe ce champ à faux puis le remet à vrai.
 
 ## Complément : météo (2026-10-09)
 

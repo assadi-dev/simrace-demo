@@ -46,3 +46,24 @@ d'ACC, les courbes uPlot et une remise à zéro de la distance et de la vitesse 
 - Sans carte de référence, la trace n'est pas dessinée (les coordonnées n'ont pas d'équivalent sur
   le tracé schématique).
 - Avec d'anciens enregistrements sans `is_valid_lap`, le tableau ne montre que le tour en cours.
+
+## Complément : validité des tours plus robuste (2026-10-12)
+
+Constat sur un vrai jeu : des tours avec virages coupés étaient affichés « Valide », et le plus
+rapide d'entre eux devenait « Meilleur ». Lire `is_valid_lap` sur le seul dernier échantillon du
+tour ne suffit pas. Le front (`src/features/direct/laps.ts`) applique maintenant deux règles :
+
+- **Invalidité retenue** : un tour est invalide si un seul de ses échantillons a eu `is_valid_lap`
+  à faux. Le passage de ligne est reconnu par le compteur ou par le bouclage de `track_pos` ; un
+  nouveau passage ne compte qu'après la mi-tour (entre 0,5 et 0,9), ou si le compteur a déjà servi
+  le précédent. Le tour de sortie des stands (non compté par ACC) ne contamine donc pas le premier
+  tour lancé.
+- **Contrôle par le meilleur temps d'ACC** : ACC ne retient que les tours valides dans
+  `best_lap_ms`. Deux secondes après la ligne, un tour plus rapide que ce meilleur temps est
+  invalide (« plus rapide que le meilleur d'ACC »). Un tour n'est listé qu'après ce contrôle ; si
+  ACC n'a pas de meilleur temps (0), pas de conclusion.
+
+Le tableau affiche le nombre de tours masqués par raison, pour vérifier ces règles sur un vrai jeu.
+Non vérifié : qu'ACC ne compte vraiment que les tours valides dans `best_lap_ms`, et le moment où
+il remet `isValidLap` à vrai. Le serveur ne se sert toujours pas de la validité pour accepter un
+tour de référence.

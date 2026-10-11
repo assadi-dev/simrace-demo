@@ -22,7 +22,7 @@ le PC Windows qui a Assetto Corsa Competizione.
 | `agent/` enregistrement et rejeu | fait | test aller-retour + essai de bout en bout |
 | `agent/` envoi par lots avec reprise (`sender.py`) | fait | essai de bout en bout, serveur coupé non testé |
 | PostgreSQL / SQLAlchemy / Alembic | à faire | `docker-compose.yml` fournit la base |
-| `web/` squelette React | fait : Vite, shadcn/ui (thème Flame & Sand), TanStack Router, Table et Query, Zod, Zustand, nuqs (décision 0017). Écran **Postes** conforme à la maquette (KPI, cartes avec valeurs en direct, position, intégrité ; tri en ligne d'abord), **Leaderboard** (tableau TanStack Table, `?circuit=` dans l'URL) en version minimale ; **Direct** fait (KPI, courbes uPlot, jauge, vraie carte avec trace hors piste, tours valides, drapeaux et pénalités, décision 0018), **Intégrité** en squelette | 82 tests Vitest, 13 scénarios Playwright contre un vrai serveur, captures d'écran desktop et mobile. **Vérifié avec des lots de test envoyés au serveur, pas avec le flux d'un vrai ACC** |
+| `web/` squelette React | fait : Vite, shadcn/ui (thème Flame & Sand), TanStack Router, Table et Query, Zod, Zustand, nuqs (décision 0017). Écran **Postes** conforme à la maquette (KPI, cartes avec valeurs en direct, position, intégrité ; tri en ligne d'abord), **Leaderboard** (tableau TanStack Table, `?circuit=` dans l'URL) en version minimale ; **Direct** fait (KPI, courbes uPlot, jauge, vraie carte avec trace hors piste, tours valides, drapeaux et pénalités, décision 0018), **Intégrité** en squelette | 93 tests Vitest, 13 scénarios Playwright contre un vrai serveur, captures d'écran desktop et mobile. **Vérifié avec des lots de test envoyés au serveur, pas avec le flux d'un vrai ACC** |
 | Playwright (front) | fait : `web/e2e/` lance `uvicorn` et Vite, envoie de vrais lots comme l'agent | `npm run test:e2e` depuis `web/` |
 | CI GitHub Actions | à faire | |
 
@@ -114,6 +114,11 @@ Objectif : confirmer que `probe` affiche des valeurs cohérentes avec le jeu.
   longtemps) ; le compteur `dropped` est affiché à l'arrêt.
 - `fastapi.testclient` affiche un avertissement de dépréciation (httpx / starlette) sans gravité.
 - Aucune authentification sur l'API pour l'instant.
+- Validité des tours : sur un vrai jeu, des tours coupés sortaient valides avec la lecture de
+  `is_valid_lap` au dernier échantillon. Le front retient l'invalidité sur tout le tour et
+  contrôle avec le meilleur temps d'ACC (décision 0018, complément). À vérifier avec `probe` :
+  le moment où `is_valid_lap` passe à faux puis revient à vrai, et que `best_lap_ms` ignore les
+  tours invalides.
 - Front, écran Direct : tours, drapeaux, distance et vitesse moyenne sont déduits du flux **depuis
   l'ouverture de la page** (le flux ne rejoue pas le passé). Un nouveau `run_id` ne vide pas
   l'historique (le flux ne le transmet pas), seul un `completed_laps` qui recule le fait.

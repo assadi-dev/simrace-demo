@@ -88,8 +88,12 @@ export function LapsCard({
       </div>
       <DataTable columns={lapColumns} data={rows} getRowId={(row) => row.id} />
       <p className="text-meta text-muted-foreground">
-        Seuls les tours valides selon ACC (is_valid_lap) sont listés, depuis
-        l'ouverture de la page. Masqués (invalides ou non lus) : {hidden}.
+        Tours valides seulement, depuis l'ouverture de la page : aucun
+        échantillon invalide pendant le tour (is_valid_lap) et pas plus rapide
+        que le meilleur temps retenu par ACC. Masqués : invalidés par ACC{" "}
+        {hidden.accFlag}, plus rapides que le meilleur d'ACC{" "}
+        {hidden.fasterThanAccBest}, validité non lue {hidden.unknown}
+        {hidden.pending > 0 ? `, en vérification ${hidden.pending}` : ""}.
       </p>
     </Card>
   )

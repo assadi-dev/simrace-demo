@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import samplesEvent from "@/contracts/fixtures/samples-event.json"
 import { samplesEventSchema, type Sample } from "@/contracts/telemetry"
+import type { Lap } from "./laps"
 import { EMPTY_HISTORY } from "./history"
 import { directKpis, gaugeStats, gearLabel } from "./values"
 
@@ -9,6 +10,19 @@ const base = samplesEventSchema.parse(samplesEvent).samples[0]
 const sample = (overrides: Partial<Sample> = {}): Sample => ({
   ...base,
   ...overrides,
+})
+
+/** Tour termine et controle (laps.ts) ; un tour invalide l'est par is_valid_lap. */
+const lap = (
+  number: number,
+  timeMs: number | null,
+  valid: boolean | null
+): Lap => ({
+  number,
+  timeMs,
+  valid,
+  invalidReason: valid === false ? "acc_flag" : null,
+  bestCheckUntil: null,
 })
 
 const byLabel = <T extends { label: string }>(items: T[], label: string) =>
@@ -47,10 +61,7 @@ describe("directKpis", () => {
       sample({ completed_laps: 2, last_lap_ms: 108_000, best_lap_ms: 107_900 }),
       {
         ...EMPTY_HISTORY,
-        laps: [
-          { number: 1, timeMs: 107_900, valid: true },
-          { number: 2, timeMs: 108_000, valid: true },
-        ],
+        laps: [lap(1, 107_900, true), lap(2, 108_000, true)],
       }
     )
 

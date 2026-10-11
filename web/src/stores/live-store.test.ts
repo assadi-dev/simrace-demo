@@ -7,7 +7,11 @@ import { useLiveStore } from "./live-store"
 const base = samplesEventSchema.parse(samplesEvent)
 
 /** Evenement `samples` pour un poste, un echantillon par valeur de t_ms. */
-function event(stationId: string, times: number[], overrides = {}): SamplesEvent {
+function event(
+  stationId: string,
+  times: number[],
+  overrides = {}
+): SamplesEvent {
   return {
     ...base,
     station_id: stationId,
@@ -58,7 +62,7 @@ describe("live-store", () => {
       event("sim-1", [200], { completed_laps: 1, last_lap_ms: 108_431 })
     )
 
-    expect(state().stations["sim-1"].history.laps).toEqual([
+    expect(state().stations["sim-1"].history.laps).toMatchObject([
       { number: 1, timeMs: 108_431, valid: null },
     ])
   })
