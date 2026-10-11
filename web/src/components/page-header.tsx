@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 
-/** Titre de page : surtitre (source des donnees), h1, description, actions a droite. */
+/** Titre de page (maquettes) : h1 et resume a gauche ; source des donnees et actions a droite. */
 export function PageHeader({
   eyebrow,
   title,
@@ -13,17 +13,21 @@ export function PageHeader({
   actions?: ReactNode
 }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-4">
-      <div className="flex flex-col gap-1">
-        {eyebrow ? (
-          <p className="text-eyebrow text-primary-text">{eyebrow}</p>
-        ) : null}
+    <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 px-1">
+      <div className="flex flex-col gap-0.5">
         <h1 className="text-page-title">{title}</h1>
         {description ? (
-          <p className="text-caption text-muted-foreground">{description}</p>
+          <p className="text-sm text-muted-foreground">{description}</p>
         ) : null}
       </div>
-      {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+      {eyebrow || actions ? (
+        <div className="flex flex-wrap items-center gap-3">
+          {eyebrow ? (
+            <p className="text-eyebrow text-primary-text">{eyebrow}</p>
+          ) : null}
+          {actions}
+        </div>
+      ) : null}
     </div>
   )
 }

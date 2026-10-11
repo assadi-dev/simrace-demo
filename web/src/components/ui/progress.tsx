@@ -14,12 +14,14 @@ function Progress({
         "relative flex h-2 w-full items-center overflow-x-hidden rounded-full bg-chart-track",
         className
       )}
+      value={value}
       {...props}
     >
+      {/* Largeur plutot que translation : le degrade couvre la partie remplie, comme la maquette. */}
       <ProgressPrimitive.Indicator
         data-slot="progress-indicator"
-        className="size-full flex-1 bg-gradient-flame transition-all"
-        style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
+        className="h-full rounded-full bg-gradient-flame transition-[width]"
+        style={{ width: `${Math.min(100, Math.max(0, value || 0))}%` }}
       />
     </ProgressPrimitive.Root>
   )

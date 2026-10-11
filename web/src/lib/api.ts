@@ -2,8 +2,9 @@ import type { z } from "zod"
 
 import { apiErrorBodySchema } from "@/contracts/errors"
 import { stationListSchema } from "@/contracts/stations"
+import { config } from "@/lib/config"
 
-export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000"
+export const API_URL = config.apiUrl
 
 /**
  * Echec d'un appel au serveur. `code` vaut le nom d'erreur du serveur, ou `NetworkError`
