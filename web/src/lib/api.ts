@@ -2,6 +2,7 @@ import type { z } from "zod"
 
 import { apiErrorBodySchema } from "@/contracts/errors"
 import { stationListSchema } from "@/contracts/stations"
+import { trackMapSchema, type TrackMap } from "@/contracts/tracks"
 import { config } from "@/lib/config"
 
 export const API_URL = config.apiUrl
@@ -69,3 +70,23 @@ async function getJson<T>(
 
 export const fetchStations = (signal?: AbortSignal) =>
   getJson("/stations", stationListSchema, signal)
+
+/**
+ * Carte de reference d'un circuit. `null` si le serveur n'a encore enregistre aucun tour valide
+ * de ce circuit (404) : le front dessine alors le trace schematique.
+ */
+export async function fetchTrackMap(
+  track: string,
+  signal?: AbortSignal
+): Promise<TrackMap | null> {
+  try {
+    return await getJson(
+      `/tracks/${encodeURIComponent(track)}/reference`,
+      trackMapSchema,
+      signal
+    )
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null
+    throw error
+  }
+}

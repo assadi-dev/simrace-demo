@@ -57,4 +57,3 @@ export const describePenalty = (code: number) =>
   PENALTIES[code] ?? `Pénalité (code ${code})`
 
 export const describeTrackFlag = (flag: TrackFlag) => TRACK_FLAG_LABELS[flag]
-

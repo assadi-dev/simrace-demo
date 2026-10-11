@@ -6,7 +6,10 @@ import { EMPTY_HISTORY } from "./history"
 import { directKpis, gaugeStats, gearLabel } from "./values"
 
 const base = samplesEventSchema.parse(samplesEvent).samples[0]
-const sample = (overrides: Partial<Sample> = {}): Sample => ({ ...base, ...overrides })
+const sample = (overrides: Partial<Sample> = {}): Sample => ({
+  ...base,
+  ...overrides,
+})
 
 const byLabel = <T extends { label: string }>(items: T[], label: string) =>
   items.find((item) => item.label === label)
@@ -52,8 +55,14 @@ describe("directKpis", () => {
     )
 
     expect(byLabel(kpis, "Tour en cours")?.value).toBe("3")
-    expect(byLabel(kpis, "Dernier tour")).toMatchObject({ value: "1:48,000", help: "Tour 2" })
-    expect(byLabel(kpis, "Meilleur tour")).toMatchObject({ value: "1:47,900", help: "Tour 1" })
+    expect(byLabel(kpis, "Dernier tour")).toMatchObject({
+      value: "1:48,000",
+      help: "Tour 2",
+    })
+    expect(byLabel(kpis, "Meilleur tour")).toMatchObject({
+      value: "1:47,900",
+      help: "Tour 1",
+    })
   })
 })
 
@@ -66,10 +75,15 @@ describe("gaugeStats", () => {
 
     expect(byLabel(stats, "Rapport")?.value).toBe("4")
     expect(byLabel(stats, "Distance parcourue")?.value).toBe("5,00")
-    expect(byLabel(stats, "Vitesse moyenne")).toMatchObject({ value: "150", unit: "km/h" })
+    expect(byLabel(stats, "Vitesse moyenne")).toMatchObject({
+      value: "150",
+      unit: "km/h",
+    })
   })
 
   it("n'invente pas de moyenne avant d'avoir roule", () => {
-    expect(byLabel(gaugeStats(sample(), EMPTY_HISTORY), "Vitesse moyenne")?.value).toBe("n.d.")
+    expect(
+      byLabel(gaugeStats(sample(), EMPTY_HISTORY), "Vitesse moyenne")?.value
+    ).toBe("n.d.")
   })
 })

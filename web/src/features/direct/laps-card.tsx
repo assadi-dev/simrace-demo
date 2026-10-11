@@ -5,7 +5,11 @@ import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import type { Sample } from "@/contracts/telemetry"
 import type { StationHistory } from "@/features/direct/history"
-import { buildLapRows, type LapRow, type Validity } from "@/features/direct/rows"
+import {
+  buildLapRows,
+  type LapRow,
+  type Validity,
+} from "@/features/direct/rows"
 import { cn } from "@/lib/utils"
 import { formatDelta, formatLapTime, NOT_AVAILABLE } from "@/lib/format"
 
@@ -62,7 +66,7 @@ const lapColumns = column.columns([
   }),
 ])
 
-/** Tours deduits de completed_laps (maquette 2), vus depuis l'ouverture de la page. */
+/** Tours valides deduits de completed_laps (maquette 2), vus depuis l'ouverture de la page. */
 export function LapsCard({
   sample,
   history,
@@ -70,7 +74,10 @@ export function LapsCard({
   sample: Sample
   history: StationHistory
 }) {
-  const rows = useMemo(() => buildLapRows(sample, history), [sample, history])
+  const { rows, hidden } = useMemo(
+    () => buildLapRows(sample, history),
+    [sample, history]
+  )
   return (
     <Card className="px-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -79,14 +86,10 @@ export function LapsCard({
           Déduit de completed_laps
         </span>
       </div>
-      <DataTable
-        columns={lapColumns}
-        data={rows}
-        getRowId={(row) => row.id}
-      />
+      <DataTable columns={lapColumns} data={rows} getRowId={(row) => row.id} />
       <p className="text-meta text-muted-foreground">
-        Tours vus depuis l'ouverture de la page. Validité lue dans ACC
-        (is_valid_lap), pas encore comparée à un tour valide sur un vrai jeu.
+        Seuls les tours valides selon ACC (is_valid_lap) sont listés, depuis
+        l'ouverture de la page. Masqués (invalides ou non lus) : {hidden}.
       </p>
     </Card>
   )

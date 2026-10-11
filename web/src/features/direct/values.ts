@@ -25,7 +25,9 @@ const lapWithTime = (laps: readonly Lap[], timeMs: number) =>
 /** Les six KPI de la maquette 2, tires du dernier echantillon. */
 export function directKpis(sample: Sample, history: StationHistory): Kpi[] {
   const tc = [sample.tc_level, sample.tc_cut_level]
-  const bestLap = sample.best_lap_ms ? lapWithTime(history.laps, sample.best_lap_ms) : undefined
+  const bestLap = sample.best_lap_ms
+    ? lapWithTime(history.laps, sample.best_lap_ms)
+    : undefined
   return [
     {
       label: "TC · TC Cut",
@@ -40,7 +42,8 @@ export function directKpis(sample: Sample, history: StationHistory): Kpi[] {
     {
       label: "Map moteur",
       value: setting(sample.engine_map),
-      help: sample.engine_map == null ? NOT_SENT : "Numérotée comme dans le jeu",
+      help:
+        sample.engine_map == null ? NOT_SENT : "Numérotée comme dans le jeu",
     },
     {
       label: "Tour en cours",
@@ -50,7 +53,10 @@ export function directKpis(sample: Sample, history: StationHistory): Kpi[] {
     {
       label: "Dernier tour",
       value: formatLapTime(sample.last_lap_ms),
-      help: sample.completed_laps > 0 ? `Tour ${sample.completed_laps}` : "Aucun tour terminé",
+      help:
+        sample.completed_laps > 0
+          ? `Tour ${sample.completed_laps}`
+          : "Aucun tour terminé",
     },
     {
       label: "Meilleur tour",
@@ -60,12 +66,21 @@ export function directKpis(sample: Sample, history: StationHistory): Kpi[] {
   ]
 }
 
-export type GaugeStat = { label: string; value: string; unit: string; help: string }
+export type GaugeStat = {
+  label: string
+  value: string
+  unit: string
+  help: string
+}
 
 /** Les trois mini-cartes a gauche de la jauge. Distance et moyenne sont calculees par le front. */
-export function gaugeStats(sample: Sample, history: StationHistory): GaugeStat[] {
+export function gaugeStats(
+  sample: Sample,
+  history: StationHistory
+): GaugeStat[] {
   const { distanceM, drivenMs } = history.trip
-  const average = drivenMs > 0 ? distanceM / 1000 / (drivenMs / 3_600_000) : null
+  const average =
+    drivenMs > 0 ? distanceM / 1000 / (drivenMs / 3_600_000) : null
   return [
     {
       label: "Rapport",
@@ -77,11 +92,12 @@ export function gaugeStats(sample: Sample, history: StationHistory): GaugeStat[]
       label: "Distance parcourue",
       value: formatDecimal(distanceM / 1000, 2),
       unit: "km",
-      help: "Calculée : vitesse × temps entre échantillons",
+      help: "Calculée : vitesse × temps entre échantillons, depuis la remise à zéro",
     },
     {
       label: "Vitesse moyenne",
-      value: average == null ? NOT_AVAILABLE : formatNumber(Math.round(average)),
+      value:
+        average == null ? NOT_AVAILABLE : formatNumber(Math.round(average)),
       unit: average == null ? "" : "km/h",
       help: "Calculée : distance ÷ temps roulé",
     },

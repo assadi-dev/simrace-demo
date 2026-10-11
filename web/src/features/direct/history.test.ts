@@ -6,6 +6,8 @@ import {
   activeEvents,
   advanceHistory,
   EMPTY_HISTORY,
+  EMPTY_TRIP,
+  resetTrip,
   type StationHistory,
 } from "./history"
 
@@ -33,7 +35,11 @@ describe("tours", () => {
   it("un tour termine quand completed_laps augmente, avec last_lap_ms et la validite du tour", () => {
     const history = replay([
       sample(0, { completed_laps: 0, is_valid_lap: false }),
-      sample(17, { completed_laps: 1, last_lap_ms: 108_431, is_valid_lap: true }),
+      sample(17, {
+        completed_laps: 1,
+        last_lap_ms: 108_431,
+        is_valid_lap: true,
+      }),
     ])
 
     // la validite est celle du dernier echantillon du tour termine, pas du nouveau
@@ -90,7 +96,11 @@ describe("distance parcourue", () => {
 
   it("rend le meme objet quand rien ne change (pas de rendu inutile)", () => {
     const start = replay([sample(0)])
-    const next = advanceHistory(start, sample(0, { status: 3 }), sample(17, { status: 3 }))
+    const next = advanceHistory(
+      start,
+      sample(0, { status: 3 }),
+      sample(17, { status: 3 })
+    )
 
     expect(next).toBe(start)
   })
@@ -108,7 +118,12 @@ describe("drapeaux et penalites", () => {
   it("ouvre une penalite avec le tour et le moment, la ferme quand elle disparait", () => {
     const history = replay([
       sample(0, { completed_laps: 1, lap_time_ms: 41_000 }),
-      sample(17, { completed_laps: 1, lap_time_ms: 41_017, penalty_code: 1, penalty_time_s: 0 }),
+      sample(17, {
+        completed_laps: 1,
+        lap_time_ms: 41_017,
+        penalty_code: 1,
+        penalty_time_s: 0,
+      }),
       sample(34, { completed_laps: 1, lap_time_ms: 41_034, penalty_code: 1 }),
       sample(51, { completed_laps: 1, lap_time_ms: 41_051, penalty_code: 0 }),
     ])
@@ -138,5 +153,53 @@ describe("drapeaux et penalites", () => {
       ["flag", 1, null],
       ["track_flag", "yellow_s1", 17],
     ])
+  })
+})
+
+describe("trace roulee", () => {
+  it("garde un point tous les 2 m et note le passage aux stands", () => {
+    const history = replay([
+      sample(0, { x: 0, z: 0 }),
+      sample(17, { x: 1, z: 0 }), // a moins de 2 m : ignore
+      sample(34, { x: 3, z: 0 }),
+      sample(51, { x: 3.5, z: 0, in_pit: true }), // stands : garde meme tout pres
+    ])
+
+    expect(history.trail).toEqual([
+      { x: 0, z: 0, inPit: false },
+      { x: 3, z: 0, inPit: false },
+      { x: 3.5, z: 0, inPit: true },
+    ])
+  })
+
+  it("repart a zero au passage de ligne, par le compteur ou par la position", () => {
+    const byCounter = replay([
+      sample(0, { x: 0, z: 0, completed_laps: 0 }),
+      sample(17, { x: 50, z: 0, completed_laps: 1 }),
+    ])
+    const byPosition = replay([
+      sample(0, { x: 0, z: 0, track_pos: 0.99 }),
+      sample(17, { x: 50, z: 0, track_pos: 0.01 }),
+    ])
+
+    expect(byCounter.trail).toEqual([{ x: 50, z: 0, inPit: false }])
+    expect(byPosition.trail).toEqual([{ x: 50, z: 0, inPit: false }])
+  })
+
+  it("reste vide sans coordonnees", () => {
+    expect(replay([sample(0), sample(17)]).trail).toEqual([])
+  })
+})
+
+describe("resetTrip", () => {
+  it("remet la distance a zero sans toucher aux tours", () => {
+    const history = replay([
+      sample(0, { completed_laps: 0 }),
+      sample(500, { completed_laps: 1, last_lap_ms: 100_000 }),
+    ])
+
+    const reset = resetTrip(history)
+    expect(reset.trip).toBe(EMPTY_TRIP)
+    expect(reset.laps).toBe(history.laps)
   })
 })

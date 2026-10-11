@@ -39,23 +39,37 @@ export type RaceEvent = ActiveEvent & {
 /** Distance integree a partir de la vitesse, en roulant (statut live) uniquement. */
 export type Trip = { distanceM: number; drivenMs: number }
 
+/** Point roule (position monde en metres, decision 0011). */
+export type TrailPoint = { x: number; z: number; inPit: boolean }
+
 export type StationHistory = {
   laps: Lap[]
   /** Plus recent d'abord. */
   events: RaceEvent[]
   trip: Trip
+  /** Trace roulee du tour en cours ; vide si l'agent n'envoie pas x et z. */
+  trail: TrailPoint[]
 }
+
+export const EMPTY_TRIP: Trip = { distanceM: 0, drivenMs: 0 }
 
 export const EMPTY_HISTORY: StationHistory = {
   laps: [],
   events: [],
-  trip: { distanceM: 0, drivenMs: 0 },
+  trip: EMPTY_TRIP,
+  trail: [],
 }
 
 /** Au-dela, deux echantillons ne sont pas consecutifs (lots perdus, pause) : on n'integre pas. */
 export const MAX_STEP_MS = 1000
 const MAX_LAPS = 200
 const MAX_EVENTS = 50
+/** Un point de trace tous les 2 m : environ 2 500 points pour un tour de 5 km. */
+export const TRAIL_STEP_M = 2
+const MAX_TRAIL = 6000
+/** Passage de ligne reconnu par la position, comme le serveur (tour de sortie non compte par ACC). */
+const WRAP_FROM = 0.9
+const WRAP_TO = 0.1
 
 /**
  * Drapeaux et penalites actifs dans un echantillon. Le drapeau vert (etat normal) n'est pas un
@@ -132,6 +146,34 @@ function advanceTrip(trip: Trip, previous: Sample, sample: Sample): Trip {
   }
 }
 
+function advanceTrail(
+  trail: TrailPoint[],
+  previous: Sample | undefined,
+  sample: Sample
+): TrailPoint[] {
+  if (sample.x == null || sample.z == null) return trail
+  const point = { x: sample.x, z: sample.z, inPit: sample.in_pit }
+  const newLap =
+    previous !== undefined &&
+    (sample.completed_laps > previous.completed_laps ||
+      (previous.track_pos >= WRAP_FROM && sample.track_pos <= WRAP_TO))
+  if (newLap) return [point]
+
+  const last = trail.at(-1)
+  if (
+    last &&
+    last.inPit === point.inPit &&
+    Math.hypot(point.x - last.x, point.z - last.z) < TRAIL_STEP_M
+  ) {
+    return trail
+  }
+  return [...trail, point].slice(-MAX_TRAIL)
+}
+
+/** Remise a zero de la distance et de la vitesse moyenne (bouton de la carte Vitesse). */
+export const resetTrip = (history: StationHistory): StationHistory =>
+  history.trip === EMPTY_TRIP ? history : { ...history, trip: EMPTY_TRIP }
+
 /**
  * Fait avancer l'historique d'un echantillon. `previous` est le dernier echantillon retenu
  * (t_ms strictement plus petit, le store ecarte les autres).
@@ -159,10 +201,18 @@ export function advanceHistory(
   }
 
   const events = advanceEvents(history.events, sample)
-  const trip = previous ? advanceTrip(history.trip, previous, sample) : history.trip
+  const trip = previous
+    ? advanceTrip(history.trip, previous, sample)
+    : history.trip
+  const trail = advanceTrail(history.trail, previous, sample)
 
-  if (laps === history.laps && events === history.events && trip === history.trip) {
+  if (
+    laps === history.laps &&
+    events === history.events &&
+    trip === history.trip &&
+    trail === history.trail
+  ) {
     return history
   }
-  return { laps, events, trip }
+  return { laps, events, trip, trail }
 }

@@ -15,7 +15,10 @@ function EventLabel({ event }: { event: ActiveEvent }) {
   return (
     <span className="inline-flex items-center gap-2 whitespace-nowrap">
       {isYellowEvent(event) ? (
-        <span aria-hidden="true" className="size-2.5 shrink-0 rounded-[2px] bg-flag-yellow" />
+        <span
+          aria-hidden="true"
+          className="size-2.5 shrink-0 rounded-[2px] bg-flag-yellow"
+        />
       ) : null}
       {describeEvent(event)}
     </span>
@@ -27,7 +30,9 @@ const seconds = (s: number) => `${formatDecimal(s, 1)}\u00a0s`
 /** Penalite : temps annonce par ACC. Drapeau : duree d'affichage, une fois leve. */
 function eventTime(event: RaceEvent): string {
   if (event.kind === "penalty") {
-    return event.penaltyTimeS == null ? NOT_AVAILABLE : seconds(event.penaltyTimeS)
+    return event.penaltyTimeS == null
+      ? NOT_AVAILABLE
+      : seconds(event.penaltyTimeS)
   }
   return event.endedAt == null
     ? NOT_AVAILABLE
@@ -76,8 +81,16 @@ const eventColumns = column.columns([
 
 /** Etat actuel : un drapeau ou une penalite par pastille, le vert compris. */
 function CurrentState({ sample }: { sample: Sample }) {
-  if (sample.flag == null && sample.penalty_code == null && sample.track_flags == null) {
-    return <p className="text-caption text-muted-foreground">État actuel : {NOT_AVAILABLE}, non transmis par l'agent.</p>
+  if (
+    sample.flag == null &&
+    sample.penalty_code == null &&
+    sample.track_flags == null
+  ) {
+    return (
+      <p className="text-caption text-muted-foreground">
+        État actuel : {NOT_AVAILABLE}, non transmis par l'agent.
+      </p>
+    )
   }
   const active = activeEvents(sample)
   const green = sample.track_flags?.includes("green") ?? false
@@ -86,14 +99,20 @@ function CurrentState({ sample }: { sample: Sample }) {
       {green ? (
         <li>
           <Badge variant="success" className="px-3">
-            <span aria-hidden="true" className="size-2 rounded-full bg-success" />
+            <span
+              aria-hidden="true"
+              className="size-2 rounded-full bg-success"
+            />
             Drapeau vert
           </Badge>
         </li>
       ) : null}
       {active.map((event) => (
         <li key={`${event.kind}:${event.code}`}>
-          <Badge variant={event.kind === "penalty" ? "danger" : "secondary"} className="px-3">
+          <Badge
+            variant={event.kind === "penalty" ? "danger" : "secondary"}
+            className="px-3"
+          >
             <EventLabel event={event} />
           </Badge>
         </li>
@@ -138,8 +157,9 @@ export function EventsCard({
         emptyMessage="Aucune pénalité ni drapeau reçu depuis l'ouverture de la page."
       />
       <p className="text-meta text-muted-foreground">
-        Codes lus dans ACC (flag, penalty, penaltyTime, drapeaux globaux) mais jamais vus
-        pendant une vraie pénalité (décision 0016) : un code inconnu s'affiche avec son numéro.
+        Codes lus dans ACC (flag, penalty, penaltyTime, drapeaux globaux) mais
+        jamais vus pendant une vraie pénalité (décision 0016) : un code inconnu
+        s'affiche avec son numéro.
       </p>
     </Card>
   )

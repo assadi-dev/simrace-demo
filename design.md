@@ -227,7 +227,7 @@ Base Tailwind v4 : `--spacing: 4px`.
 | `ToggleGroup` | `ToggleGroup` | Conteneur verre `rounded-2xl p-1` ; item actif `ink` |
 | `Select` | `Select` | `h-11.5 rounded-md bg-card-strong border-card-border` |
 | `FlameProgress` | `Progress` | Piste `chart-track`, indicateur `gradient-flame`, `h-2 rounded-full` |
-| `SpeedGauge` | — (SVG) | Demi-cercle 0–420 km/h, 24 segments ; valeur entière `metric` au centre ; régime `metric-sm` dessous ; carré 1:1 |
+| `SpeedGauge` | — (SVG) | Demi-cercle 0–320 km/h (`SPEED_GAUGE_MAX_KMH`), 24 segments ; valeur entière `metric` au centre ; régime `metric-sm` dessous ; carré 1:1 |
 | `TrackMap` | — (SVG) | Tracé schématique (pas de coordonnées dans le flux) ; trait `border-strong` 16px ; points pilote `chart-n` cerclés de blanc ; carré = pause |
 | `TemperatureChip` | — | Mini-carte `card-inner`, `rounded-md`, icône Lucide `thermometer` (air) / `route` (piste) en `primary-text` |
 | `DeltaValue` | — | `+0,512` vert / `−1,203` rouge / `0,000` gris, `font-semibold` |

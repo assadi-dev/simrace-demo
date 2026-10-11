@@ -1,4 +1,9 @@
-import { GAUGE, gaugeSegments, type GaugeSegment } from "@/features/direct/geometry"
+import {
+  GAUGE,
+  gaugeSegments,
+  SPEED_GAUGE_MAX_KMH,
+  type GaugeSegment,
+} from "@/features/direct/geometry"
 import { formatNumber } from "@/lib/format"
 
 /** Couleur d'un segment : melange des deux tokens de son degrade (index.css). */
@@ -10,7 +15,13 @@ const segmentColor = ({ on, shade }: GaugeSegment) => {
 }
 
 /** Jauge de vitesse segmentee, regime dessous (design.md 8 : SpeedGauge). */
-export function SpeedGauge({ speedKmh, rpm }: { speedKmh: number; rpm: number }) {
+export function SpeedGauge({
+  speedKmh,
+  rpm,
+}: {
+  speedKmh: number
+  rpm: number
+}) {
   const kmh = Math.round(speedKmh)
   const labelX = (GAUGE.rIn + GAUGE.rOut) / 2
   return (
@@ -18,7 +29,7 @@ export function SpeedGauge({ speedKmh, rpm }: { speedKmh: number; rpm: number })
       <svg
         viewBox="0 0 320 196"
         role="img"
-        aria-label={`Jauge de vitesse de 0 à ${GAUGE.maxKmh} km/h : ${kmh} km/h, ${rpm} tours par minute`}
+        aria-label={`Jauge de vitesse de 0 à ${SPEED_GAUGE_MAX_KMH} km/h : ${kmh} km/h, ${rpm} tours par minute`}
         className="block h-auto w-full max-w-130"
       >
         {gaugeSegments(speedKmh).map((segment, i) => (
@@ -68,7 +79,7 @@ export function SpeedGauge({ speedKmh, rpm }: { speedKmh: number; rpm: number })
           fontSize={12}
           className="fill-muted-foreground"
         >
-          {GAUGE.maxKmh}
+          {SPEED_GAUGE_MAX_KMH}
         </text>
       </svg>
       <div className="flex items-baseline gap-1.5 whitespace-nowrap">
