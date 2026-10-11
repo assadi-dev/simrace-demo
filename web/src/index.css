@@ -87,76 +87,92 @@
     "Segoe UI", sans-serif;
   --font-heading: var(--font-sans);
 
-  /* taille / interligne / graisse / interlettrage (design.md 4) */
-  --text-display: 44px;
-  --text-display--line-height: 48px;
+  /* taille / interligne / graisse / interlettrage (design.md 4), multiplies par --ui-scale */
+  --text-display: calc(44px * var(--ui-scale));
+  --text-display--line-height: calc(48px * var(--ui-scale));
   --text-display--font-weight: 600;
-  --text-display--letter-spacing: -1.2px;
-  --text-metric: 32px;
-  --text-metric--line-height: 38px;
+  --text-display--letter-spacing: calc(-1.2px * var(--ui-scale));
+  --text-metric: calc(32px * var(--ui-scale));
+  --text-metric--line-height: calc(38px * var(--ui-scale));
   --text-metric--font-weight: 600;
-  --text-metric--letter-spacing: -0.8px;
-  --text-page-title: 26px;
-  --text-page-title--line-height: 32px;
+  --text-metric--letter-spacing: calc(-0.8px * var(--ui-scale));
+  --text-page-title: calc(26px * var(--ui-scale));
+  --text-page-title--line-height: calc(32px * var(--ui-scale));
   --text-page-title--font-weight: 600;
-  --text-page-title--letter-spacing: -0.5px;
-  --text-metric-sm: 24px;
-  --text-metric-sm--line-height: 30px;
+  --text-page-title--letter-spacing: calc(-0.5px * var(--ui-scale));
+  --text-metric-sm: calc(24px * var(--ui-scale));
+  --text-metric-sm--line-height: calc(30px * var(--ui-scale));
   --text-metric-sm--font-weight: 600;
-  --text-metric-sm--letter-spacing: -0.4px;
-  --text-brand: 22px;
-  --text-brand--line-height: 28px;
+  --text-metric-sm--letter-spacing: calc(-0.4px * var(--ui-scale));
+  --text-brand: calc(22px * var(--ui-scale));
+  --text-brand--line-height: calc(28px * var(--ui-scale));
   --text-brand--font-weight: 600;
-  --text-brand--letter-spacing: -0.3px;
-  --text-card-title: 18px;
-  --text-card-title--line-height: 24px;
+  --text-brand--letter-spacing: calc(-0.3px * var(--ui-scale));
+  --text-card-title: calc(18px * var(--ui-scale));
+  --text-card-title--line-height: calc(24px * var(--ui-scale));
   --text-card-title--font-weight: 600;
-  --text-card-title--letter-spacing: -0.3px;
-  --text-nav: 15px;
-  --text-nav--line-height: 20px;
+  --text-card-title--letter-spacing: calc(-0.3px * var(--ui-scale));
+  --text-nav: calc(15px * var(--ui-scale));
+  --text-nav--line-height: calc(20px * var(--ui-scale));
   --text-nav--font-weight: 500;
-  --text-label: 13px;
-  --text-label--line-height: 18px;
+  --text-label: calc(13px * var(--ui-scale));
+  --text-label--line-height: calc(18px * var(--ui-scale));
   --text-label--font-weight: 500;
-  --text-caption: 13px;
-  --text-caption--line-height: 18px;
+  --text-caption: calc(13px * var(--ui-scale));
+  --text-caption--line-height: calc(18px * var(--ui-scale));
   --text-caption--font-weight: 400;
-  --text-table-head: 12px;
-  --text-table-head--line-height: 16px;
+  --text-table-head: calc(12px * var(--ui-scale));
+  --text-table-head--line-height: calc(16px * var(--ui-scale));
   --text-table-head--font-weight: 500;
-  --text-badge: 12px;
-  --text-badge--line-height: 16px;
+  --text-badge: calc(12px * var(--ui-scale));
+  --text-badge--line-height: calc(16px * var(--ui-scale));
   --text-badge--font-weight: 600;
-  --text-meta: 12px;
-  --text-meta--line-height: 18px;
+  --text-meta: calc(12px * var(--ui-scale));
+  --text-meta--line-height: calc(18px * var(--ui-scale));
   --text-meta--font-weight: 400;
-  --text-micro: 11px;
-  --text-micro--line-height: 14px;
+  --text-micro: calc(11px * var(--ui-scale));
+  --text-micro--line-height: calc(14px * var(--ui-scale));
   --text-micro--font-weight: 600;
+
+  /* tailles Tailwind utilisees par shadcn (tableaux, pastilles) : meme echelle */
+  --text-sm: calc(14px * var(--ui-scale));
+  --text-sm--line-height: calc(20px * var(--ui-scale));
+  --text-xs: calc(12px * var(--ui-scale));
+  --text-xs--line-height: calc(16px * var(--ui-scale));
+
+  /* unite d'espacement Tailwind (p-6, gap-5, h-11, size-2...) : 4px a l'echelle 1 */
+  --spacing: calc(4px * var(--ui-scale));
 }
 
 /* Surtitre : la mise en majuscules ne peut pas etre portee par un token de theme. */
 @utility text-eyebrow {
-  font-size: 12px;
-  line-height: 16px;
+  font-size: calc(12px * var(--ui-scale));
+  line-height: calc(16px * var(--ui-scale));
   font-weight: 600;
-  letter-spacing: 1.4px;
+  letter-spacing: calc(1.4px * var(--ui-scale));
   text-transform: uppercase;
 }
 
 /* ---------- Rayons (design.md 6) ---------- */
 @theme {
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 22px;
-  --radius-3xl: 28px;
-  --radius-cell: 12px;
+  --radius-sm: calc(10px * var(--ui-scale));
+  --radius-md: calc(14px * var(--ui-scale));
+  --radius-lg: calc(16px * var(--ui-scale));
+  --radius-xl: calc(20px * var(--ui-scale));
+  --radius-2xl: calc(22px * var(--ui-scale));
+  --radius-3xl: calc(28px * var(--ui-scale));
+  --radius-cell: calc(12px * var(--ui-scale));
 }
 
 /* ---------- Variables semantiques shadcn ---------- */
 :root {
+  /*
+   * Echelle de l'interface : textes, espacements et rayons sont multiplies par ce facteur
+   * (design.md, valeurs de reference a l'echelle 1). 0,75 = tout 25 % plus petit, memes
+   * proportions.
+   */
+  --ui-scale: 0.75;
+
   /* Ambiance et verre (design.md 2.2) */
   --ambient-top: #d3d3d3;
   --ambient-mid: #e6dfd2;
@@ -220,7 +236,7 @@
     #7dc1de 100%
   );
 
-  --radius: 16px;
+  --radius: calc(16px * var(--ui-scale));
 }
 
 @theme inline {
