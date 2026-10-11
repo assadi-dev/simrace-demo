@@ -3,6 +3,7 @@ import socket
 import time
 from pathlib import Path
 
+from simrace_agent import config
 from simrace_agent.codes import describe_flag, describe_penalty
 from simrace_agent.models import Sample
 from simrace_agent.sender import BatchSender
@@ -90,14 +91,15 @@ def _build_source(args: argparse.Namespace) -> Source:
 
 
 def main(argv: list[str] | None = None) -> None:
+    config.load_env_file(Path(".env"))
     parser = argparse.ArgumentParser(prog="simrace-agent")
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("probe", help="affiche en direct les valeurs lues dans ACC")
 
     run = sub.add_parser("run", help="envoie la telemetrie au serveur")
-    run.add_argument("--server", default="http://localhost:8000")
-    run.add_argument("--station-id", default=socket.gethostname())
+    run.add_argument("--server", default=config.server_url())
+    run.add_argument("--station-id", default=config.station_id(socket.gethostname()))
     run.add_argument("--source", choices=["acc", "replay"], default="acc")
     run.add_argument("--file", help="fichier a rejouer (--source replay)")
     run.add_argument("--speed", type=float, default=1.0, help="vitesse de rejeu")
