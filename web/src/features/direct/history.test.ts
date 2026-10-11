@@ -42,8 +42,10 @@ describe("tours", () => {
       }),
     ])
 
-    // la validite est celle du dernier echantillon du tour termine, pas du nouveau
-    expect(history.laps).toEqual([{ number: 1, timeMs: 108_431, valid: false }])
+    // la validite est celle du tour termine, pas du nouveau (detail : laps.test.ts)
+    expect(history.laps).toMatchObject([
+      { number: 1, timeMs: 108_431, valid: false },
+    ])
   })
 
   it("un temps a 0 (inconnu cote ACC) et une validite absente restent inconnus", () => {
@@ -52,7 +54,9 @@ describe("tours", () => {
       sample(17, { completed_laps: 3, last_lap_ms: 0 }),
     ])
 
-    expect(history.laps).toEqual([{ number: 3, timeMs: null, valid: null }])
+    expect(history.laps).toMatchObject([
+      { number: 3, timeMs: null, valid: null },
+    ])
   })
 
   it("completed_laps qui recule (nouvelle session) vide l'historique", () => {

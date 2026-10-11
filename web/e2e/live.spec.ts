@@ -31,6 +31,34 @@ test("la page Postes montre un poste qui vient d'envoyer un lot", async ({
   await expect(card.getByText("Alice Martin")).toBeVisible()
 })
 
+test("la carte d'un poste montre le meilleur tour d'ACC et les temperatures", async ({
+  page,
+  request,
+}) => {
+  const stationId = uniqueId("sim")
+  const agent = new FakeAgent(request, {
+    stationId,
+    track: "monza",
+    driver: "Pilote Meteo",
+  })
+  await agent.sendBatch()
+  await page.goto("/")
+  await expect(page.getByRole("status")).toContainText(
+    "Flux en direct connecté"
+  )
+
+  await agent.sendBatch({
+    best_lap_ms: 129_402,
+    air_temp_c: 27.1,
+    road_temp_c: 27.9,
+  })
+
+  const card = page.locator('[data-slot="card"]', { hasText: stationId })
+  await expect(card).toContainText("2:09,402")
+  await expect(card).toContainText(/Air\s*27,1\s°C/)
+  await expect(card).toContainText(/Piste\s*27,9\s°C/)
+})
+
 test("l'indicateur du flux passe a connecte", async ({ page }) => {
   await page.goto("/")
 
@@ -112,9 +140,11 @@ test("l'ecran Direct deduit les tours et suit un drapeau jaune", async ({
     is_valid_lap: true,
     track_flags: ["green"],
   })
+  // ACC retient ce tour comme meilleur temps : il est liste tout de suite
   await agent.sendBatch({
     completed_laps: 1,
     last_lap_ms: 108_431,
+    best_lap_ms: 108_431,
     lap_time_ms: 2_460,
   })
 
@@ -124,17 +154,26 @@ test("l'ecran Direct deduit les tours et suit un drapeau jaune", async ({
   await expect(laps.getByRole("row").nth(2)).toContainText("Meilleur")
   await expect(laps.getByRole("row").nth(2)).toContainText("Valide")
 
-  // un tour invalide selon ACC n'est pas liste, meme plus rapide
-  await agent.sendBatch({ completed_laps: 1, is_valid_lap: false })
-  await agent.sendBatch({ completed_laps: 2, last_lap_ms: 100_000 })
+  // virage coupe : is_valid_lap faux un instant puis remis a vrai avant la ligne
+  const best = { best_lap_ms: 108_431, is_valid_lap: true }
+  await agent.sendBatch({ ...best, completed_laps: 1, is_valid_lap: false })
+  await agent.sendBatch({ ...best, completed_laps: 1, is_valid_lap: true })
+  await agent.sendBatch({ ...best, completed_laps: 2, last_lap_ms: 100_000 })
   await expect(laps.getByRole("row").nth(1)).toContainText("3 (en cours)")
   await expect(laps.getByRole("row")).toHaveCount(3)
+  await expect(page.getByText(/invalidés par ACC 1/)).toBeVisible()
+
+  // tour declare valide mais plus rapide que le meilleur retenu par ACC (2 s apres la ligne)
+  await agent.sendBatch({ ...best, completed_laps: 3, last_lap_ms: 99_000 })
+  await agent.sendBatch({ ...best, completed_laps: 3 }, 130) // 130 x 17 ms > 2 s
   await expect(
-    page.getByText("Masqués (invalides ou non lus) : 1")
+    page.getByText(/plus rapides que le meilleur d'ACC 1/)
   ).toBeVisible()
+  await expect(laps.getByRole("row")).toHaveCount(3)
+  await expect(laps).not.toContainText("1:39,000")
 
   await agent.sendBatch({
-    completed_laps: 1,
+    completed_laps: 3,
     track_flags: ["green", "yellow", "yellow_s2"],
   })
 
@@ -148,7 +187,7 @@ test("l'ecran Direct deduit les tours et suit un drapeau jaune", async ({
   )
   await expect(events.getByRole("row").nth(1)).toContainText("En cours")
 
-  await agent.sendBatch({ completed_laps: 1, track_flags: ["green"] })
+  await agent.sendBatch({ completed_laps: 3, track_flags: ["green"] })
   await expect(events.getByRole("row").nth(1)).toContainText("Levé")
   await expect(current).not.toContainText("jaune")
 })

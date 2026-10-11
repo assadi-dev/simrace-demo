@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import samplesEvent from "@/contracts/fixtures/samples-event.json"
 import { samplesEventSchema, type Sample } from "@/contracts/telemetry"
+import type { Lap } from "./laps"
 import { EMPTY_HISTORY, type RaceEvent } from "./history"
 import { buildLapRows, describeEvent, isYellowEvent } from "./rows"
 
@@ -11,6 +12,19 @@ const sample = (overrides: Partial<Sample> = {}): Sample => ({
   ...overrides,
 })
 
+/** Tour termine et controle (laps.ts) ; un tour invalide l'est par is_valid_lap. */
+const lap = (
+  number: number,
+  timeMs: number | null,
+  valid: boolean | null
+): Lap => ({
+  number,
+  timeMs,
+  valid,
+  invalidReason: valid === false ? "acc_flag" : null,
+  bestCheckUntil: null,
+})
+
 describe("buildLapRows", () => {
   it("tour en cours en tete, puis les tours valides du plus recent au plus ancien", () => {
     const { rows, hidden } = buildLapRows(
@@ -18,10 +32,10 @@ describe("buildLapRows", () => {
       {
         ...EMPTY_HISTORY,
         laps: [
-          { number: 1, timeMs: 108_000, valid: true },
-          { number: 2, timeMs: 105_000, valid: false }, // plus rapide mais invalide
-          { number: 3, timeMs: 106_797, valid: true },
-          { number: 4, timeMs: 107_000, valid: null }, // validite non lue
+          lap(1, 108_000, true),
+          lap(2, 105_000, false), // plus rapide mais invalide
+          lap(3, 106_797, true),
+          lap(4, 107_000, null), // validite non lue
         ],
       }
     )
@@ -31,13 +45,36 @@ describe("buildLapRows", () => {
       ["3", 106_797, "best", "valid"],
       ["1", 108_000, -1_203, "valid"],
     ])
-    expect(hidden).toBe(2)
+    expect(hidden).toEqual({
+      accFlag: 1,
+      fasterThanAccBest: 0,
+      unknown: 1,
+      pending: 0,
+    })
+  })
+
+  it("n'affiche ni un tour en controle ni un tour plus rapide que le meilleur d'ACC", () => {
+    const { rows, hidden } = buildLapRows(sample(), {
+      ...EMPTY_HISTORY,
+      laps: [
+        { ...lap(1, 100_000, false), invalidReason: "faster_than_acc_best" },
+        { ...lap(2, 101_000, true), bestCheckUntil: 5_000 },
+      ],
+    })
+
+    expect(rows).toHaveLength(1) // le tour en cours seulement
+    expect(hidden).toEqual({
+      accFlag: 0,
+      fasterThanAccBest: 1,
+      unknown: 0,
+      pending: 1,
+    })
   })
 
   it("un temps inconnu n'a pas d'ecart", () => {
     const { rows } = buildLapRows(sample({ is_valid_lap: null }), {
       ...EMPTY_HISTORY,
-      laps: [{ number: 1, timeMs: null, valid: true }],
+      laps: [lap(1, null, true)],
     })
 
     expect(rows[0].validity).toBe("unknown")

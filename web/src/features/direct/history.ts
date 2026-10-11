@@ -1,19 +1,17 @@
 import { ACC_STATUS, type Sample, type TrackFlag } from "@/contracts/telemetry"
+import {
+  advanceLaps,
+  EMPTY_TRACKING,
+  type Lap,
+  type LapTracking,
+} from "@/features/direct/laps"
+
+export type { Lap } from "@/features/direct/laps"
 
 /*
  * Historique d'un poste, deduit du flux echantillon par echantillon (fonctions pures, testees).
  * Le flux ne rejoue pas le passe : tout ce qui est ici a ete vu depuis l'ouverture de la page.
  */
-
-/** Tour termine, deduit d'une hausse de completed_laps. */
-export type Lap = {
-  /** 1 = premier tour termine de la session. */
-  number: number
-  /** last_lap_ms du premier echantillon du tour suivant ; null si ACC donne 0 (inconnu). */
-  timeMs: number | null
-  /** is_valid_lap du dernier echantillon du tour ; null si l'agent ne l'envoie pas. */
-  valid: boolean | null
-}
 
 /** Drapeau ou penalite actif dans un echantillon. */
 export type ActiveEvent = (
@@ -44,6 +42,8 @@ export type TrailPoint = { x: number; z: number; inPit: boolean }
 
 export type StationHistory = {
   laps: Lap[]
+  /** Validite observee pendant le tour en cours et dernier passage de ligne (laps.ts). */
+  lapTracking: LapTracking
   /** Plus recent d'abord. */
   events: RaceEvent[]
   trip: Trip
@@ -55,6 +55,7 @@ export const EMPTY_TRIP: Trip = { distanceM: 0, drivenMs: 0 }
 
 export const EMPTY_HISTORY: StationHistory = {
   laps: [],
+  lapTracking: EMPTY_TRACKING,
   events: [],
   trip: EMPTY_TRIP,
   trail: [],
@@ -62,7 +63,6 @@ export const EMPTY_HISTORY: StationHistory = {
 
 /** Au-dela, deux echantillons ne sont pas consecutifs (lots perdus, pause) : on n'integre pas. */
 export const MAX_STEP_MS = 1000
-const MAX_LAPS = 200
 const MAX_EVENTS = 50
 /** Un point de trace tous les 2 m : environ 2 500 points pour un tour de 5 km. */
 export const TRAIL_STEP_M = 2
@@ -188,17 +188,12 @@ export function advanceHistory(
     return advanceHistory(EMPTY_HISTORY, undefined, sample)
   }
 
-  let laps = history.laps
-  if (previous && sample.completed_laps > previous.completed_laps) {
-    laps = [
-      ...laps,
-      {
-        number: sample.completed_laps,
-        timeMs: sample.last_lap_ms || null,
-        valid: previous.is_valid_lap ?? null,
-      },
-    ].slice(-MAX_LAPS)
-  }
+  const { laps, tracking: lapTracking } = advanceLaps(
+    history.laps,
+    history.lapTracking,
+    previous,
+    sample
+  )
 
   const events = advanceEvents(history.events, sample)
   const trip = previous
@@ -208,11 +203,12 @@ export function advanceHistory(
 
   if (
     laps === history.laps &&
+    lapTracking === history.lapTracking &&
     events === history.events &&
     trip === history.trip &&
     trail === history.trail
   ) {
     return history
   }
-  return { laps, events, trip, trail }
+  return { laps, lapTracking, events, trip, trail }
 }
