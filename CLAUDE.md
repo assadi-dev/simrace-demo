@@ -92,6 +92,11 @@ npx playwright install chromium   # une seule fois
 npm run test:e2e     # Playwright : lance uvicorn (../server) et Vite, envoie de vrais lots
 ```
 
+VS Code : `.vscode/launch.json` (à la racine) lance chaque projet dans le terminal intégré avec les
+commandes ci-dessus : `server`, `web`, `web: Chrome`, `agent: replay` (attend
+`recordings/session.jsonl`), `agent: ACC (Windows)`, `agent: probe (Windows)`. Deux ensembles :
+`server + web` et `demo: server + web + agent replay`.
+
 PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` avec
 `New-Item -ItemType Directory -Force recordings` et enchaîne les commandes sur des lignes séparées.
 
