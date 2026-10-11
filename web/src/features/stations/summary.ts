@@ -38,6 +38,8 @@ export type LiveValues = {
   lapLabel: string
   lapTime: string
   lastLap: string
+  /** Meilleur tour de la session selon ACC (best_lap_ms), pas recalcule par le front. */
+  bestLap: string
   position: string
   /** 0 a 100, pour la barre de progression. */
   positionPercent: number
@@ -45,7 +47,8 @@ export type LiveValues = {
 
 /**
  * Valeurs en direct d'une carte, tirees du dernier echantillon du flux (pas de /stations).
- * Hors ligne : seul le dernier tour reste affiche, le reste n'est plus "en direct".
+ * Hors ligne : seuls le dernier et le meilleur tour restent affiches, le reste n'est plus
+ * "en direct".
  */
 export function liveValues(
   status: StationStatus,
@@ -58,6 +61,7 @@ export function liveValues(
       lapLabel: `Tour ${NOT_AVAILABLE}`,
       lapTime: NOT_AVAILABLE,
       lastLap: formatLapTime(sample?.last_lap_ms),
+      bestLap: formatLapTime(sample?.best_lap_ms),
       position: NOT_AVAILABLE,
       positionPercent: 0,
     }
@@ -69,6 +73,7 @@ export function liveValues(
     lapLabel: `Tour ${sample.completed_laps + 1}`,
     lapTime: formatLapTime(sample.lap_time_ms),
     lastLap: formatLapTime(sample.last_lap_ms),
+    bestLap: formatLapTime(sample.best_lap_ms),
     position: `${percent}\u202f%`,
     positionPercent: percent,
   }

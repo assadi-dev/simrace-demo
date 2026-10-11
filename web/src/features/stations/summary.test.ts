@@ -14,7 +14,10 @@ const station = (id: string, online: boolean, counters = {}) => ({
   online,
   ...counters,
 })
-const sample = (overrides: Partial<Sample>): Sample => ({ ...baseSample, ...overrides })
+const sample = (overrides: Partial<Sample>): Sample => ({
+  ...baseSample,
+  ...overrides,
+})
 
 describe("sortStations", () => {
   it("met les postes en ligne d'abord, puis trie par identifiant", () => {
@@ -25,15 +28,30 @@ describe("sortStations", () => {
       station("sim-1", true),
     ])
 
-    expect(sorted.map((s) => s.station_id)).toEqual(["sim-1", "sim-2", "sim-3", "sim-4"])
+    expect(sorted.map((s) => s.station_id)).toEqual([
+      "sim-1",
+      "sim-2",
+      "sim-3",
+      "sim-4",
+    ])
   })
 })
 
 describe("summarizeStations", () => {
   it("additionne les compteurs d'integrite de tous les postes", () => {
     const summary = summarizeStations([
-      station("a", true, { samples: 1000, duplicates: 2, gaps: 1, rejected: 17 }),
-      station("b", false, { samples: 212, duplicates: 0, gaps: 0, rejected: 3 }),
+      station("a", true, {
+        samples: 1000,
+        duplicates: 2,
+        gaps: 1,
+        rejected: 17,
+      }),
+      station("b", false, {
+        samples: 212,
+        duplicates: 0,
+        gaps: 0,
+        rejected: 3,
+      }),
     ])
 
     expect(summary).toEqual({
@@ -64,6 +82,7 @@ describe("liveValues", () => {
         completed_laps: 1,
         lap_time_ms: 2460,
         last_lap_ms: 146_460,
+        best_lap_ms: 131_765,
         track_pos: 0.482,
       })
     )
@@ -73,17 +92,22 @@ describe("liveValues", () => {
     expect(values.lapLabel).toBe("Tour 2")
     expect(values.lapTime).toBe("0:02,460")
     expect(values.lastLap).toBe("2:26,460")
+    expect(values.bestLap).toBe("2:11,765")
     expect(strip(values.position)).toBe("48 %")
     expect(values.positionPercent).toBe(48)
   })
 
-  it("hors ligne : ne garde que le dernier tour, le reste n'est plus en direct", () => {
-    const values = liveValues("offline", sample({ speed_kmh: 200, last_lap_ms: 101_902 }))
+  it("hors ligne : ne garde que le dernier et le meilleur tour, le reste n'est plus en direct", () => {
+    const values = liveValues(
+      "offline",
+      sample({ speed_kmh: 200, last_lap_ms: 101_902, best_lap_ms: 100_500 })
+    )
 
     expect(values.speed).toBe("n.d.")
     expect(values.position).toBe("n.d.")
     expect(values.positionPercent).toBe(0)
     expect(values.lastLap).toBe("1:41,902")
+    expect(values.bestLap).toBe("1:40,500")
   })
 
   it("sans echantillon du flux : tout est n.d., rien n'est invente", () => {
@@ -95,6 +119,7 @@ describe("liveValues", () => {
       lapLabel: "Tour n.d.",
       lapTime: "n.d.",
       lastLap: "n.d.",
+      bestLap: "n.d.",
     })
   })
 })

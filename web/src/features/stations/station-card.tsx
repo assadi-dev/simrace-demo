@@ -33,6 +33,7 @@ export function StationCard({
     ["Rapport · tr/min", values.gearRpm],
     [values.lapLabel, values.lapTime],
     ["Dernier tour", values.lastLap],
+    ["Meilleur tour ACC", values.bestLap],
   ]
   const counters = [
     ["Lots", station.batches],
@@ -97,7 +98,10 @@ export function StationCard({
 
       <div className="flex flex-wrap gap-2">
         <Button asChild>
-          <Link to="/stations/$stationId" params={{ stationId: station.station_id }}>
+          <Link
+            to="/stations/$stationId"
+            params={{ stationId: station.station_id }}
+          >
             Ouvrir le direct
           </Link>
         </Button>
