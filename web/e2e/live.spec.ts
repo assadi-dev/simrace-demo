@@ -443,6 +443,37 @@ test("trier les temps : le plus rapide d'abord, puis inverse, aria-sort a jour",
   await expect(page.getByRole("row").nth(3)).toContainText("Pilote C")
 })
 
+test.describe("la carte Vitesse tient dans la fenetre (80 % de la hauteur au plus)", () => {
+  for (const [width, height] of [
+    [1500, 750],
+    [1280, 720],
+    [1440, 900],
+    [1920, 1080],
+  ]) {
+    test(`${width} x ${height}`, async ({ page, request }) => {
+      const stationId = uniqueId("sim")
+      const agent = new FakeAgent(request, {
+        stationId,
+        track: "monza",
+        driver: "Pilote Taille",
+      })
+      await page.setViewportSize({ width, height })
+      await page.goto(`/stations/${stationId}`)
+      await expect(page.getByRole("status")).toContainText(
+        "Flux en direct connecté"
+      )
+      await agent.sendBatch({ speed_kmh: 120 })
+
+      const card = page.locator('[data-slot="card"]', {
+        has: page.getByRole("heading", { name: "Vitesse" }),
+      })
+      await expect(card).toBeVisible()
+      const box = await card.boundingBox()
+      expect(box!.height).toBeLessThanOrEqual(height * 0.8)
+    })
+  }
+})
+
 test.describe("telephone (390 px)", () => {
   test.use({ viewport: { width: 390, height: 844 } })
 

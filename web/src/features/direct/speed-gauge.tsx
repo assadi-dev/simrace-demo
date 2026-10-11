@@ -25,12 +25,13 @@ export function SpeedGauge({
   const kmh = Math.round(speedKmh)
   const labelX = (GAUGE.rIn + GAUGE.rOut) / 2
   return (
-    <div className="flex aspect-square min-w-0 flex-[1_1_--spacing(75)] flex-col items-center justify-center gap-1 rounded-lg border border-card-border bg-card-inner p-5">
+    // pas de carre : la hauteur suit la fenetre, pour que la carte Vitesse y tienne entiere
+    <div className="flex min-w-0 flex-[1_1_--spacing(75)] flex-col items-center justify-center gap-1 rounded-lg border border-card-border bg-card-inner p-5">
       <svg
         viewBox="0 0 320 196"
         role="img"
         aria-label={`Jauge de vitesse de 0 à ${SPEED_GAUGE_MAX_KMH} km/h : ${kmh} km/h, ${rpm} tours par minute`}
-        className="block h-auto w-full max-w-130"
+        className="block h-auto max-h-[38dvh] w-full max-w-130"
       >
         {gaugeSegments(speedKmh).map((segment, i) => (
           <line
