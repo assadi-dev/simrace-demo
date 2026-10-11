@@ -1,6 +1,6 @@
 import type { APIRequestContext } from "@playwright/test"
 
-export const API_URL = "http://localhost:8000"
+import { API_URL } from "./env.ts"
 
 /** Identifiant unique par test : le serveur garde les postes en memoire entre les tests. */
 export const uniqueId = (prefix: string) =>
