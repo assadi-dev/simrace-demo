@@ -14,7 +14,10 @@ npm run dev
 ```
 
 Le serveur doit tourner sur `http://localhost:8000` (`cd ../server && uv run uvicorn app.main:app`).
-Pour un autre serveur : `VITE_API_URL` (voir `.env.example`). Le serveur n'autorise par défaut que
+Configuration dans `.env.local` (voir `.env.example`), validée par Zod au démarrage
+(`src/lib/config.ts`) : `VITE_API_URL` (serveur, `http://localhost:8000` par défaut) et
+`VITE_MAX_STATIONS` (nombre de postes du centre, pour « Postes en ligne N / max », 1 par défaut).
+Redémarrer `npm run dev` après un changement. Le serveur n'autorise par défaut que
 `http://localhost:5173` en CORS.
 
 ## Commandes
@@ -26,7 +29,7 @@ Pour un autre serveur : `VITE_API_URL` (voir `.env.example`). Le serveur n'autor
 | `npm run lint` | ESLint |
 | `npm test` | Vitest : contrats Zod, store, fonctions pures |
 | `npx playwright install chromium` | À faire une fois avant les tests e2e |
-| `npm run test:e2e` | Playwright : lance `uvicorn` et Vite, envoie de vrais lots comme l'agent |
+| `npm run test:e2e` | Playwright : lance `uvicorn` (port 8100) et Vite (port 5273), envoie de vrais lots comme l'agent ; n'utilise ni tes serveurs de développement ni `.env.local` |
 
 ## Organisation
 

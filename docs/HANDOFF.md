@@ -22,7 +22,7 @@ le PC Windows qui a Assetto Corsa Competizione.
 | `agent/` enregistrement et rejeu | fait | test aller-retour + essai de bout en bout |
 | `agent/` envoi par lots avec reprise (`sender.py`) | fait | essai de bout en bout, serveur coupé non testé |
 | PostgreSQL / SQLAlchemy / Alembic | à faire | `docker-compose.yml` fournit la base |
-| `web/` squelette React | fait : Vite, shadcn/ui (thème Flame & Sand), TanStack Router, Table et Query, Zod, Zustand, nuqs (décision 0017). Écrans **Postes** (cartes) et **Leaderboard** (tableau TanStack Table, `?circuit=` dans l'URL) en version minimale ; **Direct** et **Intégrité** en squelette | 24 tests Vitest, 8 scénarios Playwright contre un vrai serveur, captures d'écran desktop et mobile. **Vérifié avec des lots de test envoyés au serveur, pas avec le flux d'un vrai ACC** |
+| `web/` squelette React | fait : Vite, shadcn/ui (thème Flame & Sand), TanStack Router, Table et Query, Zod, Zustand, nuqs (décision 0017). Écran **Postes** conforme à la maquette (KPI, cartes avec valeurs en direct, position, intégrité ; tri en ligne d'abord), **Leaderboard** (tableau TanStack Table, `?circuit=` dans l'URL) en version minimale ; **Direct** et **Intégrité** en squelette | 24 tests Vitest, 8 scénarios Playwright contre un vrai serveur, captures d'écran desktop et mobile. **Vérifié avec des lots de test envoyés au serveur, pas avec le flux d'un vrai ACC** |
 | Playwright (front) | fait : `web/e2e/` lance `uvicorn` et Vite, envoie de vrais lots comme l'agent | `npm run test:e2e` depuis `web/` |
 | CI GitHub Actions | à faire | |
 

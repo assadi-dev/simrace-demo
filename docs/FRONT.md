@@ -109,7 +109,8 @@ ajouter avec l'écran Direct.
 
 1. **Fait** : squelette Vite, client de flux et store (dernier échantillon par poste, `t_ms` qui
    recule ignoré), tests Vitest. Reste : tampons de courbes et déduction des tours.
-2. **Fait (version minimale)** : écran Postes en cartes, valide `/stations` et CORS. Le Leaderboard
+2. **Fait** : écran Postes conforme à la maquette 1 (KPI, cartes, valeurs en direct, position
+   sur le tour, pilules d'intégrité). Écart : grille à colonnes égales au lieu de flex. Le Leaderboard
    (tableau TanStack Table) est aussi fait en version minimale, sans la colonne Delta.
 3. Écran Direct : KPI, puis courbes uPlot, puis tracé schématique, puis tableau des tours.
 4. Écran Intégrité (compteurs et raisons).
