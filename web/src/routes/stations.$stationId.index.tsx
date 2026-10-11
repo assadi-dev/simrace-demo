@@ -169,7 +169,7 @@ function DirectPage() {
             {directKpis(live.latest, live.history).map((kpi) => (
               <KpiCard
                 key={kpi.label}
-                className="flex-[1_1_150px]"
+                className="flex-[1_1_--spacing(37.5)]"
                 label={kpi.label}
                 value={kpi.value}
                 help={kpi.help}
@@ -178,7 +178,7 @@ function DirectPage() {
           </div>
 
           <div className="flex flex-wrap items-start gap-5">
-            <div className="flex min-w-0 flex-[2_1_640px] flex-col gap-5">
+            <div className="flex min-w-0 flex-[2_1_--spacing(160)] flex-col gap-5">
               <SpeedCard
                 sample={live.latest}
                 history={live.history}
@@ -191,7 +191,7 @@ function DirectPage() {
               />
               <EventsCard sample={live.latest} events={live.history.events} />
             </div>
-            <div className="flex min-w-0 flex-[1_1_340px] flex-col gap-5">
+            <div className="flex min-w-0 flex-[1_1_--spacing(85)] flex-col gap-5">
               <PositionCard
                 sample={live.latest}
                 track={live.session.track}

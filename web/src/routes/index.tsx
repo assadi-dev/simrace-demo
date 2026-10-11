@@ -61,7 +61,7 @@ function StationsPage() {
         <>
           <div className="flex flex-wrap gap-5">
             <KpiCard
-              className="flex-[1_1_200px]"
+              className="flex-[1_1_--spacing(50)]"
               label="Postes en ligne"
               value={`${summary.online} / ${config.maxStations}`}
               help={
@@ -71,25 +71,25 @@ function StationsPage() {
               }
             />
             <KpiCard
-              className="flex-[1_1_200px]"
+              className="flex-[1_1_--spacing(50)]"
               label="Échantillons acceptés"
               value={formatNumber(summary.samples)}
               help="Après validation des bornes"
             />
             <KpiCard
-              className="flex-[1_1_200px]"
+              className="flex-[1_1_--spacing(50)]"
               label="Lots en doublon"
               value={formatNumber(summary.duplicates)}
               help="Ignorés, jamais comptés deux fois"
             />
             <KpiCard
-              className="flex-[1_1_200px]"
+              className="flex-[1_1_--spacing(50)]"
               label="Trous constatés"
               value={formatNumber(summary.gaps)}
               help="Numéros de lot manquants"
             />
             <KpiCard
-              className="flex-[1_1_200px]"
+              className="flex-[1_1_--spacing(50)]"
               label="Échantillons rejetés"
               value={formatNumber(summary.rejected)}
               help="Comptés avec leur raison"
@@ -107,7 +107,7 @@ function StationsPage() {
             </Card>
           ) : (
             // grille plutot que flex : une carte seule sur sa ligne ne s'etire pas
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(min(420px,100%),1fr))] gap-5">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(min(--spacing(105),100%),1fr))] gap-5">
               {sorted.map((station) => (
                 <StationCard
                   key={station.station_id}

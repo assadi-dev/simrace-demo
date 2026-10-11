@@ -25,7 +25,7 @@ export function SpeedGauge({
   const kmh = Math.round(speedKmh)
   const labelX = (GAUGE.rIn + GAUGE.rOut) / 2
   return (
-    <div className="flex aspect-square min-w-0 flex-[1_1_300px] flex-col items-center justify-center gap-1 rounded-lg border border-card-border bg-card-inner p-5">
+    <div className="flex aspect-square min-w-0 flex-[1_1_--spacing(75)] flex-col items-center justify-center gap-1 rounded-lg border border-card-border bg-card-inner p-5">
       <svg
         viewBox="0 0 320 196"
         role="img"
