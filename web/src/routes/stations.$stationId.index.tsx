@@ -179,15 +179,15 @@ function DirectPage() {
 
           <div className="flex flex-wrap items-start gap-5">
             <div className="flex min-w-0 flex-[2_1_640px] flex-col gap-5">
-              <CurvesCard
-                stationId={stationId}
-                windowS={windowS}
-                frozen={frozen}
-              />
               <SpeedCard
                 sample={live.latest}
                 history={live.history}
                 onResetTrip={() => resetTrip(stationId)}
+              />
+              <CurvesCard
+                stationId={stationId}
+                windowS={windowS}
+                frozen={frozen}
               />
               <EventsCard sample={live.latest} events={live.history.events} />
             </div>
