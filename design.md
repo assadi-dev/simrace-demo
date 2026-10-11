@@ -129,7 +129,7 @@ L'ordre des couleurs de pilote est fixe et suit l'ordre des postes, il ne tourne
 | `gradient-flow` | `linear-gradient(90deg, #EB9629 0%, #C0A771 50%, #7DC1DE 100%)` | Graphes temporels (aires), jamais en aplat |
 | Verre | `card` + `card-border` sur `gradient-ambient` | Toutes les surfaces |
 
-**Jauge de vitesse segmentée** : 24 segments arrondis. Segments allumés : interpolation `#E27100 → #EE9A45` de gauche à droite. Segments éteints : `#F5CFA2 → #F8ECDD` (s'estompent vers la droite).
+**Jauge de vitesse segmentée** : 24 segments arrondis. Segments allumés : interpolation `#E27100 → #EE9A45` de gauche à droite. Segments éteints : `#F5CFA2 → #F8ECDD` (s'estompent vers la droite). Tokens : `gauge-on-from`, `gauge-on-to`, `gauge-off-from`, `gauge-off-to` (mélangés avec `color-mix`).
 
 ---
 
@@ -234,6 +234,8 @@ Base Tailwind v4 : `--spacing: 4px`.
 | Encadré « Notes » | — | `border border-dashed border-border-strong rounded-xl`, surtitre `eyebrow` |
 
 ---
+
+Tailles de texte et `cn` : chaque taille ajoutée ici (`text-…`) doit aussi être déclarée dans `src/lib/utils.ts`, sinon la fusion de classes la prend pour une couleur et la supprime à côté de `text-muted-foreground`. Les composants importent `cn` depuis `@/lib/utils` (règle ESLint).
 
 ## 9. Icônes (Lucide)
 
