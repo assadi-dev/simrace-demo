@@ -72,6 +72,12 @@
   --color-seq-3: #aa5400;
   --color-seq-4: #743806;
   --color-flag-yellow: #e8c317;
+
+  /* Jauge de vitesse segmentee (design.md 3) : allumes de gauche a droite, eteints qui s'estompent */
+  --color-gauge-on-from: #e27100;
+  --color-gauge-on-to: #ee9a45;
+  --color-gauge-off-from: #f5cfa2;
+  --color-gauge-off-to: #f8ecdd;
 }
 
 /* ---------- Typographie ---------- */

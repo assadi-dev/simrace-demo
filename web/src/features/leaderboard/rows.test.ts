@@ -4,6 +4,7 @@ import samplesEvent from "@/contracts/fixtures/samples-event.json"
 import stationsFixture from "@/contracts/fixtures/stations.json"
 import { stationListSchema } from "@/contracts/stations"
 import { samplesEventSchema, type Sample } from "@/contracts/telemetry"
+import { EMPTY_HISTORY } from "@/features/direct/history"
 import type { LiveStation } from "@/stores/live-store"
 import { buildDriverRows, listTracks } from "./rows"
 
@@ -20,6 +21,7 @@ const station = (id: string, track: string, online = true) => ({
 const live = (overrides: Partial<Sample>): LiveStation => ({
   session: sim1.session,
   latest: { ...baseSample, ...overrides },
+  history: EMPTY_HISTORY,
   receivedAt: 0,
 })
 

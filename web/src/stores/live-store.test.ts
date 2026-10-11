@@ -50,6 +50,19 @@ describe("live-store", () => {
     expect(state().stations["sim-1"].latest.t_ms).toBe(100)
   })
 
+  it("deduit les tours d'un lot a l'autre, sans compter les echantillons ecartes", () => {
+    state().pushSamples(event("sim-1", [100], { completed_laps: 0 }))
+    // 50 recule : ecarte, il ne doit pas faire croire a un tour
+    state().pushSamples(event("sim-1", [50], { completed_laps: 7 }))
+    state().pushSamples(
+      event("sim-1", [200], { completed_laps: 1, last_lap_ms: 108_431 })
+    )
+
+    expect(state().stations["sim-1"].history.laps).toEqual([
+      { number: 1, timeMs: 108_431, valid: null },
+    ])
+  })
+
   it("ignore un lot vide", () => {
     state().pushSamples(event("sim-1", []))
 

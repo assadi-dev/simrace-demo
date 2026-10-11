@@ -6,7 +6,7 @@ import { API_URL } from "./env.ts"
 export const uniqueId = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
 
-type Overrides = Record<string, number | boolean>
+type Overrides = Record<string, number | boolean | string[]>
 
 /** Un echantillon valide au sens du contrat (server/app/shared/contract.py). */
 function sample(tMs: number, overrides: Overrides) {

@@ -65,10 +65,53 @@ test("l'ecran Direct affiche la vitesse recue par le flux", async ({
   await page.goto(`/stations/${stationId}`)
   await expect(page.getByText("Aucun échantillon reçu pour ce poste.")).toBeVisible()
 
-  await agent.sendBatch({ speed_kmh: 213, gear: 5 })
+  await agent.sendBatch({ speed_kmh: 213, gear: 5, rpm: 7200 })
 
-  await expect(page.getByText("213")).toBeVisible()
-  await expect(page.getByText(/rapport 5/)).toBeVisible()
+  await expect(page.getByRole("heading", { name: `${stationId} · monza`, level: 1 })).toBeVisible()
+  await expect(page.getByRole("img", { name: /213 km\/h, 7200 tours/ })).toBeVisible()
+  const gear = page.getByRole("term").filter({ hasText: "Rapport" }).locator("..")
+  await expect(gear).toContainText("5")
+  // reglages non envoyes par ce faux agent : affiches n.d., jamais inventes
+  await expect(page.getByText("n.d. · n.d.")).toBeVisible()
+})
+
+test("l'ecran Direct deduit les tours et suit un drapeau jaune", async ({
+  page,
+  request,
+}) => {
+  const stationId = uniqueId("sim")
+  const agent = new FakeAgent(request, {
+    stationId,
+    track: "spa",
+    driver: "Chloé Durand",
+  })
+  await page.goto(`/stations/${stationId}`)
+  await expect(page.getByRole("status")).toContainText("Flux en direct connecté")
+
+  // le flux ne rejoue pas le passe : la page est ouverte avant que le tour se termine
+  await agent.sendBatch({ completed_laps: 0, is_valid_lap: true, track_flags: ["green"] })
+  await agent.sendBatch({ completed_laps: 1, last_lap_ms: 108_431, lap_time_ms: 2_460 })
+
+  const laps = page.getByRole("table").filter({ hasText: "Validité" })
+  await expect(laps.getByRole("row").nth(1)).toContainText("2 (en cours)")
+  await expect(laps.getByRole("row").nth(2)).toContainText("1:48,431")
+  await expect(laps.getByRole("row").nth(2)).toContainText("Meilleur")
+  await expect(laps.getByRole("row").nth(2)).toContainText("Valide")
+
+  await agent.sendBatch({
+    completed_laps: 1,
+    track_flags: ["green", "yellow", "yellow_s2"],
+  })
+
+  const current = page.getByRole("list", { name: "État actuel" })
+  await expect(current).toContainText("Drapeau jaune secteur 2")
+  const events = page.getByRole("table").filter({ hasText: "Temps correspondant" })
+  await expect(events.getByRole("row").nth(1)).toContainText("Drapeau jaune secteur 2")
+  await expect(events.getByRole("row").nth(1)).toContainText("En cours")
+
+  await agent.sendBatch({ completed_laps: 1, track_flags: ["green"] })
+  await expect(events.getByRole("row").nth(1)).toContainText("Levé")
+  await expect(current).not.toContainText("jaune")
 })
 
 test("le leaderboard classe les pilotes d'un circuit avec leurs temps en direct", async ({
@@ -192,5 +235,27 @@ test.describe("telephone (390 px)", () => {
         clientWidth
       )
     }
+  })
+
+  test("l'ecran Direct rempli tient dans la largeur du telephone", async ({
+    page,
+    request,
+  }) => {
+    const stationId = uniqueId("sim")
+    const agent = new FakeAgent(request, {
+      stationId,
+      track: "nurburgring",
+      driver: "Pilote Mobile",
+    })
+    await page.goto(`/stations/${stationId}`)
+    await expect(page.getByRole("status")).toContainText("Flux en direct connecté")
+    await agent.sendBatch({ completed_laps: 0, track_flags: ["green"] })
+    await agent.sendBatch({ completed_laps: 1, last_lap_ms: 146_460 })
+    await expect(page.getByRole("img", { name: /Jauge de vitesse/ })).toBeVisible()
+
+    const { scrollWidth, clientWidth } = await page
+      .locator("html")
+      .evaluate((html) => ({ scrollWidth: html.scrollWidth, clientWidth: html.clientWidth }))
+    expect(scrollWidth).toBeLessThanOrEqual(clientWidth)
   })
 })

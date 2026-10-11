@@ -108,11 +108,23 @@ ajouter avec l'écran Direct.
 ## Ordre de construction
 
 1. **Fait** : squelette Vite, client de flux et store (dernier échantillon par poste, `t_ms` qui
-   recule ignoré), tests Vitest. Reste : tampons de courbes et déduction des tours.
+   recule ignoré, historique des tours, drapeaux et distance), tests Vitest. Reste : tampons de
+   courbes.
 2. **Fait** : écran Postes conforme à la maquette 1 (KPI, cartes, valeurs en direct, position
    sur le tour, pilules d'intégrité). Écart : grille à colonnes égales au lieu de flex. Le Leaderboard
    (tableau TanStack Table) est aussi fait en version minimale, sans la colonne Delta.
-3. Écran Direct : KPI, puis courbes uPlot, puis tracé schématique, puis tableau des tours.
+3. Écran Direct : **première version faite** (maquette 2) : titre et choix du poste, 6 KPI
+   (TC, TC Cut, ABS, carte moteur, tour en cours, dernier et meilleur tour), carte Vitesse (jauge
+   segmentée, rapport, distance et vitesse moyenne calculées), Position sur la piste (températures,
+   tracé schématique placé par `track_pos`), Tours (déduits de `completed_laps`, validité
+   `is_valid_lap`), Pénalités et drapeaux (état actuel + historique). Logique pure dans
+   `src/features/direct/` (`history.ts`, `values.ts`, `rows.ts`, `geometry.ts`), testée par Vitest.
+   Écarts voulus avec la maquette : TC, ABS, carte moteur, températures, drapeaux et validité sont
+   maintenant dans le contrat (décisions 0014 à 0016), ils s'affichent au lieu de « Phase 2 ».
+   Reste : courbes uPlot avec les boutons 10/30/60 s et « Figer les courbes » (pas encore dans la
+   page), vraie carte du circuit via `GET /tracks/{circuit}/reference` (même forme de points que
+   `pointAt`), remise à zéro sur nouveau `run_id` (le flux ne le transmet pas ; aujourd'hui seul
+   un `completed_laps` qui recule vide l'historique).
 4. Écran Intégrité (compteurs et raisons).
 5. Playwright : **socle fait** (`web/e2e/`, 8 scénarios, vrai serveur, de vrais lots). Reste :
    vérifier qu'une courbe se dessine et qu'un doublon injecté incrémente le compteur.

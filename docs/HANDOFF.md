@@ -22,7 +22,7 @@ le PC Windows qui a Assetto Corsa Competizione.
 | `agent/` enregistrement et rejeu | fait | test aller-retour + essai de bout en bout |
 | `agent/` envoi par lots avec reprise (`sender.py`) | fait | essai de bout en bout, serveur coupé non testé |
 | PostgreSQL / SQLAlchemy / Alembic | à faire | `docker-compose.yml` fournit la base |
-| `web/` squelette React | fait : Vite, shadcn/ui (thème Flame & Sand), TanStack Router, Table et Query, Zod, Zustand, nuqs (décision 0017). Écran **Postes** conforme à la maquette (KPI, cartes avec valeurs en direct, position, intégrité ; tri en ligne d'abord), **Leaderboard** (tableau TanStack Table, `?circuit=` dans l'URL) en version minimale ; **Direct** et **Intégrité** en squelette | 24 tests Vitest, 8 scénarios Playwright contre un vrai serveur, captures d'écran desktop et mobile. **Vérifié avec des lots de test envoyés au serveur, pas avec le flux d'un vrai ACC** |
+| `web/` squelette React | fait : Vite, shadcn/ui (thème Flame & Sand), TanStack Router, Table et Query, Zod, Zustand, nuqs (décision 0017). Écran **Postes** conforme à la maquette (KPI, cartes avec valeurs en direct, position, intégrité ; tri en ligne d'abord), **Leaderboard** (tableau TanStack Table, `?circuit=` dans l'URL) en version minimale ; **Direct** conforme à la maquette sauf les courbes uPlot (KPI, jauge, tracé schématique, tours, drapeaux et pénalités), **Intégrité** en squelette | 69 tests Vitest, 10 scénarios Playwright contre un vrai serveur, captures d'écran desktop et mobile. **Vérifié avec des lots de test envoyés au serveur, pas avec le flux d'un vrai ACC** |
 | Playwright (front) | fait : `web/e2e/` lance `uvicorn` et Vite, envoie de vrais lots comme l'agent | `npm run test:e2e` depuis `web/` |
 | CI GitHub Actions | à faire | |
 
@@ -80,10 +80,10 @@ Objectif : confirmer que `probe` affiche des valeurs cohérentes avec le jeu.
    - le dernier `seq` par poste doit survivre à un redémarrage du serveur (aujourd'hui il est en
      mémoire : après un redémarrage, le premier lot reçu est pris en compte et le trou compté à
      tort comme manquant).
-4. Front `web/` : le squelette est fait (voir l'état ci-dessus). Reste l'écran **Direct** (courbes
-   vitesse/frein/gaz avec uPlot et tampons hors de l'état React, temps au tour, trace de piste
-   dessinée avec `track_pos` ou les coordonnées) et l'écran **Intégrité** (compteurs et raisons de
-   rejet de `/stations`). Voir [docs/FRONT.md](FRONT.md).
+4. Front `web/` : Postes et Direct faits (voir l'état ci-dessus). Reste sur Direct : courbes
+   vitesse/frein/gaz avec uPlot (tampons hors de l'état React) et vraie carte du circuit ; puis
+   l'écran **Intégrité** (compteurs et raisons de rejet de `/stations`). Voir
+   [docs/FRONT.md](FRONT.md).
 5. Tests : pytest d'intégration avec PostgreSQL, GitHub Actions (serveur, agent, `web/` : build,
    Vitest, Playwright avec `npx playwright install chromium`).
 6. Durcissement : clé d'API par poste sur `/ingest/batches`, configuration par variables
@@ -114,6 +114,9 @@ Objectif : confirmer que `probe` affiche des valeurs cohérentes avec le jeu.
   longtemps) ; le compteur `dropped` est affiché à l'arrêt.
 - `fastapi.testclient` affiche un avertissement de dépréciation (httpx / starlette) sans gravité.
 - Aucune authentification sur l'API pour l'instant.
+- Front, écran Direct : tours, drapeaux, distance et vitesse moyenne sont déduits du flux **depuis
+  l'ouverture de la page** (le flux ne rejoue pas le passé). Un nouveau `run_id` ne vide pas
+  l'historique (le flux ne le transmet pas), seul un `completed_laps` qui recule le fait.
 - Le projet a été testé sur macOS (Python 3.12 pour le serveur). La portabilité sur Windows des
   tests est attendue mais n'a pas été vérifiée.
 
