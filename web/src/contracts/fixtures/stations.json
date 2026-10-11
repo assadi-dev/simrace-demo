@@ -1,0 +1,42 @@
+[
+  {
+    "station_id": "sim-1",
+    "machine": "PC-SIM-01",
+    "run_id": "test-1791739653",
+    "online": true,
+    "last_seen": "2026-10-11T17:28:54.205292Z",
+    "session": {
+      "track": "monza",
+      "car": "ferrari_296_gt3",
+      "driver": "Alice Martin",
+      "fuel_capacity_l": null
+    },
+    "last_seq": 398,
+    "batches": 398,
+    "samples": 4776,
+    "rejected": 0,
+    "duplicates": 0,
+    "gaps": 0,
+    "reject_reasons": {}
+  },
+  {
+    "station_id": "sim-3",
+    "machine": "PC-SIM-03",
+    "run_id": "test-1791739653",
+    "online": true,
+    "last_seen": "2026-10-11T17:28:54.212698Z",
+    "session": {
+      "track": "spa",
+      "car": "bmw_m4_gt3",
+      "driver": "Chloe Durand",
+      "fuel_capacity_l": null
+    },
+    "last_seq": 398,
+    "batches": 398,
+    "samples": 4776,
+    "rejected": 0,
+    "duplicates": 0,
+    "gaps": 0,
+    "reject_reasons": {}
+  }
+]

@@ -1,0 +1,281 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
+
+/*
+ * Tokens SimRace, theme "Flame & Sand". Reference : design.md (a la racine du depot).
+ * Clair uniquement : le theme sombre est hors perimetre du design system.
+ * Regle : aucune couleur en dur dans un composant, uniquement ces tokens.
+ */
+
+/* Les classes shadcn `dark:` ne s'activent que sous `.dark`, qui n'existe pas ici
+   (sans cette ligne, Tailwind les activerait selon le theme du systeme). */
+@custom-variant dark (&:is(.dark *));
+
+/* ---------- Primitives, statuts, donnees (disponibles en classes Tailwind) ---------- */
+/* `static` : toutes les variables sont emises, meme sans classe, car :root les reference. */
+@theme static {
+  /* La palette Tailwind par defaut est retiree : seules les couleurs ci-dessous existent. */
+  --color-*: initial;
+
+  --color-white: #ffffff;
+
+  --color-flame-50: #fff6ec;
+  --color-flame-100: #fde8d0;
+  --color-flame-200: #f7d3a8;
+  --color-flame-300: #f2b474;
+  --color-flame-400: #ea903a;
+  --color-flame-500: #e27100;
+  --color-flame-600: #c15f00;
+  --color-flame-700: #9e4a00;
+  --color-flame-800: #743806;
+  --color-flame-900: #4f2805;
+
+  --color-sand-0: #ffffff;
+  --color-sand-50: #fef7ec;
+  --color-sand-100: #fbf0dd;
+  --color-sand-200: #f2ede5;
+  --color-sand-300: #e6dfd2;
+  --color-sand-400: #d3cec5;
+  --color-sand-500: #a8a29a;
+  --color-sand-600: #87837e;
+  --color-sand-700: #66615a;
+  --color-sand-800: #3d3a36;
+  --color-sand-900: #2d2c2a;
+  --color-sand-950: #1f1c18;
+
+  /* Statuts : pastille + fond + texte, toujours avec un libelle (design.md 2.4) */
+  --color-success: #1fbf5e;
+  --color-success-soft: #1fbf5e1f;
+  --color-success-text: #0b6e34;
+  --color-warning: #e8a317;
+  --color-warning-soft: #e8a31724;
+  --color-warning-text: #7f5300;
+  --color-danger: #e5484d;
+  --color-danger-soft: #e5484d1a;
+  --color-danger-text: #a91f2f;
+  --color-info: #3b8fef;
+  --color-info-soft: #3b8fef1a;
+  --color-info-text: #155cb2;
+
+  /* Donnees et graphiques (design.md 2.5) */
+  --color-chart-1: #e27100;
+  --color-chart-2: #3b8fef;
+  --color-chart-3: #12a091;
+  --color-chart-4: #8c3f8f;
+  --color-chart-5: #a8a29a;
+  --color-chart-other: #a8a29a;
+  --color-chart-track: #f4e2cb;
+  --color-seq-1: #ea903a;
+  --color-seq-2: #d96c00;
+  --color-seq-3: #aa5400;
+  --color-seq-4: #743806;
+  --color-flag-yellow: #e8c317;
+}
+
+/* ---------- Typographie ---------- */
+@theme {
+  --font-sans:
+    "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+  --font-heading: var(--font-sans);
+
+  /* taille / interligne / graisse / interlettrage (design.md 4) */
+  --text-display: 44px;
+  --text-display--line-height: 48px;
+  --text-display--font-weight: 600;
+  --text-display--letter-spacing: -1.2px;
+  --text-metric: 32px;
+  --text-metric--line-height: 38px;
+  --text-metric--font-weight: 600;
+  --text-metric--letter-spacing: -0.8px;
+  --text-page-title: 26px;
+  --text-page-title--line-height: 32px;
+  --text-page-title--font-weight: 600;
+  --text-page-title--letter-spacing: -0.5px;
+  --text-metric-sm: 24px;
+  --text-metric-sm--line-height: 30px;
+  --text-metric-sm--font-weight: 600;
+  --text-metric-sm--letter-spacing: -0.4px;
+  --text-brand: 22px;
+  --text-brand--line-height: 28px;
+  --text-brand--font-weight: 600;
+  --text-brand--letter-spacing: -0.3px;
+  --text-card-title: 18px;
+  --text-card-title--line-height: 24px;
+  --text-card-title--font-weight: 600;
+  --text-card-title--letter-spacing: -0.3px;
+  --text-nav: 15px;
+  --text-nav--line-height: 20px;
+  --text-nav--font-weight: 500;
+  --text-label: 13px;
+  --text-label--line-height: 18px;
+  --text-label--font-weight: 500;
+  --text-caption: 13px;
+  --text-caption--line-height: 18px;
+  --text-caption--font-weight: 400;
+  --text-table-head: 12px;
+  --text-table-head--line-height: 16px;
+  --text-table-head--font-weight: 500;
+  --text-badge: 12px;
+  --text-badge--line-height: 16px;
+  --text-badge--font-weight: 600;
+  --text-meta: 12px;
+  --text-meta--line-height: 18px;
+  --text-meta--font-weight: 400;
+  --text-micro: 11px;
+  --text-micro--line-height: 14px;
+  --text-micro--font-weight: 600;
+}
+
+/* Surtitre : la mise en majuscules ne peut pas etre portee par un token de theme. */
+@utility text-eyebrow {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+/* ---------- Rayons (design.md 6) ---------- */
+@theme {
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 22px;
+  --radius-3xl: 28px;
+  --radius-cell: 12px;
+}
+
+/* ---------- Variables semantiques shadcn ---------- */
+:root {
+  /* Ambiance et verre (design.md 2.2) */
+  --ambient-top: #d3d3d3;
+  --ambient-mid: #e6dfd2;
+  --ambient-bottom: #feeed2;
+  --card: #ffffff47; /* blanc 28 % */
+  --card-strong: #ffffff8c; /* blanc 55 % */
+  --card-border: #ffffff99; /* blanc 60 % */
+  --card-inner: #ffffff73; /* blanc 45 % */
+
+  --background: var(--ambient-mid);
+  --foreground: var(--color-sand-950);
+  --card-foreground: var(--foreground);
+  --popover: var(--color-sand-50);
+  --popover-foreground: var(--color-sand-950);
+
+  --primary: var(--color-flame-500);
+  --primary-foreground: #ffffff;
+  --primary-soft: var(--color-flame-100);
+  --primary-text: var(--color-flame-700);
+
+  --secondary: var(--card-strong);
+  --secondary-foreground: var(--color-sand-950);
+  --muted: var(--card-strong);
+  --muted-foreground: var(--color-sand-700);
+  --subtle-foreground: #8c877f; /* decoratif seulement (2,7:1) */
+  --accent: var(--card-strong);
+  --accent-foreground: var(--color-sand-950);
+  --destructive: var(--color-danger-text);
+
+  --border: #1f1c1814; /* encre 8 % */
+  --border-strong: #1f1c1824; /* encre 14 % */
+  --input: var(--card-border);
+  --ring: var(--color-flame-400);
+
+  /* Bouton principal et navigation active : Obsidian */
+  --ink: var(--color-sand-900);
+  --ink-foreground: #ffffff;
+
+  /* Deltas de temps : positif = plus rapide */
+  --delta-faster: var(--color-success-text);
+  --delta-slower: var(--color-danger-text);
+  --delta-equal: var(--muted-foreground);
+
+  /* Les 4 degrades autorises (design.md 3) */
+  --gradient-ambient: linear-gradient(
+    180deg,
+    var(--ambient-top) 0%,
+    var(--ambient-mid) 50%,
+    var(--ambient-bottom) 100%
+  );
+  --gradient-flame: linear-gradient(
+    90deg,
+    var(--color-flame-500) 0%,
+    var(--color-flame-400) 55%,
+    var(--color-flame-200) 100%
+  );
+  --gradient-flow: linear-gradient(
+    90deg,
+    #eb9629 0%,
+    #c0a771 50%,
+    #7dc1de 100%
+  );
+
+  --radius: 16px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-strong: var(--card-strong);
+  --color-card-border: var(--card-border);
+  --color-card-inner: var(--card-inner);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-text: var(--primary-text);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
+  --color-delta-faster: var(--delta-faster);
+  --color-delta-slower: var(--delta-slower);
+  --color-delta-equal: var(--delta-equal);
+  --color-ambient-top: var(--ambient-top);
+  --color-ambient-mid: var(--ambient-mid);
+  --color-ambient-bottom: var(--ambient-bottom);
+}
+
+@utility bg-gradient-ambient {
+  background-image: var(--gradient-ambient);
+}
+@utility bg-gradient-flame {
+  background-image: var(--gradient-flame);
+}
+@utility bg-gradient-flow {
+  background-image: var(--gradient-flow);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    color-scheme: light;
+  }
+  body {
+    @apply min-h-svh bg-background text-foreground antialiased;
+    background-image: var(--gradient-ambient);
+    background-attachment: fixed;
+    /* chiffres tabulaires : les chronos et les vitesses ne "dansent" pas */
+    font-variant-numeric: tabular-nums;
+  }
+}
