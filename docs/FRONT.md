@@ -1,7 +1,7 @@
 # Plan du front (`web/`)
 
-Statut : proposition, à valider avant de coder. Les wireframes sont dans le design Claude
-« SimRace Wireframes » (3 écrans : Postes, Direct, Intégrité).
+Statut : pile validée (décision 0017) et squelette fait dans `web/` ; les écrans Direct et Intégrité
+restent à construire. Les maquettes sont dans `maquettes/` et le design dans [design.md](../design.md).
 
 ## Objectif
 
@@ -82,7 +82,8 @@ fetch /stations (2 s) ------------------> liste des postes + compteurs d'intégr
 tampons --requestAnimationFrame (20 images/s)--> uPlot (vitesse, gaz et frein)
 ```
 
-- Un seul `EventSource` pour toute l'application, partagé par les écrans (contexte React).
+- Un seul `EventSource` pour toute l'application (`useLiveStream`, monté dans la route racine),
+  qui alimente un store Zustand (`src/stores/live-store.ts`).
 - Les tampons vivent hors de l'état React (références) : React ne se redessine pas à 60 Hz. Seuls
   les chiffres (KPI) sont rafraîchis à 10 Hz.
 - État de connexion : `connecté`, `reconnexion`, `hors ligne`, toujours visible dans l'en-tête.
@@ -95,30 +96,31 @@ tampons --requestAnimationFrame (20 images/s)--> uPlot (vitesse, gaz et frein)
 | `/` | **Postes** : grille de cartes, KPI globaux | Opérateur du centre | `/stations` + dernier échantillon du flux |
 | `/stations/:id` | **Direct** : KPI, courbes, position sur la piste, tours | Pilote, opérateur | flux `samples` filtré sur le poste |
 | `/stations/:id/integrite` | **Intégrité** : compteurs, raisons de rejet, runs | Opérateur, démo recruteur | `/stations` (+ phase 2 : lots) |
+| `/leaderboard` | **Leaderboard** : pilotes par circuit (`?circuit=`), position, temps en direct | Pilotes, centre | `/stations` + dernier échantillon du flux |
 
-## Stack proposée
+## Stack
 
-Vite, React 18, TypeScript strict, React Router, uPlot (courbes, très rapide à 60 Hz), CSS simple
-(variables issues des tokens « Flame & Sand »), Vitest pour le reducer et les formats, Playwright
-pour le scénario de démo. Pas de bibliothèque d'état : un reducer et un contexte suffisent.
-Si validée, elle doit être consignée dans `docs/decisions/0017-...` avant de coder.
+Voir la décision [0017](decisions/0017-pile-du-front.md) : Vite, React 19, TypeScript strict,
+Tailwind v4 et shadcn/ui, TanStack Router, Table et Query, Zod (contrats), Zustand (état du
+direct), nuqs (état dans l'URL), Vitest et Playwright. uPlot reste prévu pour les courbes, à
+ajouter avec l'écran Direct.
 
 ## Ordre de construction
 
-1. Squelette Vite + client de flux (reducer, tampons) + tests Vitest sur le reducer (doublons de
-   `t_ms`, changement de `run_id`, déduction des tours).
-2. Écran Postes (le plus simple, valide `/stations` et CORS).
+1. **Fait** : squelette Vite, client de flux et store (dernier échantillon par poste, `t_ms` qui
+   recule ignoré), tests Vitest. Reste : tampons de courbes et déduction des tours.
+2. **Fait (version minimale)** : écran Postes en cartes, valide `/stations` et CORS. Le Leaderboard
+   (tableau TanStack Table) est aussi fait en version minimale, sans la colonne Delta.
 3. Écran Direct : KPI, puis courbes uPlot, puis tracé schématique, puis tableau des tours.
 4. Écran Intégrité (compteurs et raisons).
-5. Playwright : lancer serveur + rejeu, vérifier qu'une courbe se dessine et qu'un doublon
-   injecté incrémente le compteur.
+5. Playwright : **socle fait** (`web/e2e/`, 8 scénarios, vrai serveur, de vrais lots). Reste :
+   vérifier qu'une courbe se dessine et qu'un doublon injecté incrémente le compteur.
 6. Phase 2 selon l'avancement : chaîne des lots, validité du tour, coordonnées de piste.
 
 ## Décisions à trancher
 
 1. Tracé de piste : décidé côté serveur (décision 0011, enregistrement des tours). Reste à
    faire côté agent : envoyer `x` et `z`.
-2. Stack ci-dessus validée ou non (ADR à écrire, numéro 0017 : les 0010 à 0016 sont pris par le
-   serveur).
+2. Pile : validée, voir la décision 0017.
 3. Thème : « Flame & Sand » (clair, verre) retenu pour les wireframes. Un thème sombre est hors
    périmètre de ce design system.
