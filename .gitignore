@@ -9,3 +9,4 @@ recordings/
 server/data/
 node_modules/
 dist/
+.claude/settings.json

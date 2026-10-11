@@ -1,0 +1,66 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "server",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+      "cwd": "${workspaceFolder}/server"
+    },
+    {
+      "name": "web",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev -- --strictPort",
+      "cwd": "${workspaceFolder}/web"
+    },
+    {
+      "name": "web: Chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/web"
+    },
+    {
+      "name": "agent: replay",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "uv run simrace-agent run --source replay --file ../recordings/session.jsonl --station-id sim-1 --server http://localhost:8000",
+      "cwd": "${workspaceFolder}/agent"
+    },
+    {
+      "name": "agent: ACC (Windows)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "uv run simrace-agent run --server http://localhost:8000",
+      "cwd": "${workspaceFolder}/agent"
+    },
+    {
+      "name": "agent: probe (Windows)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "uv run simrace-agent probe",
+      "cwd": "${workspaceFolder}/agent"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "server + web",
+      "configurations": [
+        "server",
+        "web"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "demo: server + web + agent replay",
+      "configurations": [
+        "server",
+        "web",
+        "agent: replay"
+      ],
+      "stopAll": true
+    }
+  ]
+}

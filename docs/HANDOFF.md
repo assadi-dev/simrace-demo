@@ -1,6 +1,6 @@
 # Passation (handoff)
 
-Dernière mise à jour : 2026-10-09. Le projet a été créé sur macOS ; le développement continue sur
+Dernière mise à jour : 2026-10-11. Le projet a été créé sur macOS ; le développement continue sur
 le PC Windows qui a Assetto Corsa Competizione.
 
 ## État
@@ -22,8 +22,9 @@ le PC Windows qui a Assetto Corsa Competizione.
 | `agent/` enregistrement et rejeu | fait | test aller-retour + essai de bout en bout |
 | `agent/` envoi par lots avec reprise (`sender.py`) | fait | essai de bout en bout, serveur coupé non testé |
 | PostgreSQL / SQLAlchemy / Alembic | à faire | `docker-compose.yml` fournit la base |
-| `web/` React | à faire | |
-| CI GitHub Actions, Playwright | à faire | |
+| `web/` squelette React | fait : Vite, shadcn/ui (thème Flame & Sand), TanStack Router, Table et Query, Zod, Zustand, nuqs (décision 0017). Écran **Postes** conforme à la maquette (KPI, cartes avec valeurs en direct, position, intégrité ; tri en ligne d'abord), **Leaderboard** (tableau TanStack Table, `?circuit=` dans l'URL) en version minimale ; **Direct** et **Intégrité** en squelette | 24 tests Vitest, 8 scénarios Playwright contre un vrai serveur, captures d'écran desktop et mobile. **Vérifié avec des lots de test envoyés au serveur, pas avec le flux d'un vrai ACC** |
+| Playwright (front) | fait : `web/e2e/` lance `uvicorn` et Vite, envoie de vrais lots comme l'agent | `npm run test:e2e` depuis `web/` |
+| CI GitHub Actions | à faire | |
 
 ## Mise en route sur Windows
 
@@ -79,10 +80,12 @@ Objectif : confirmer que `probe` affiche des valeurs cohérentes avec le jeu.
    - le dernier `seq` par poste doit survivre à un redémarrage du serveur (aujourd'hui il est en
      mémoire : après un redémarrage, le premier lot reçu est pris en compte et le trou compté à
      tort comme manquant).
-4. Front `web/` (React + TypeScript, `EventSource` sur `/stream`) : courbes vitesse/frein/gaz
-   (uPlot conseillé), temps au tour et meilleur tour, trace de piste dessinée avec `track_pos` ou
-   les coordonnées, état des postes depuis `/stations`.
-5. Tests : pytest d'intégration avec PostgreSQL, Playwright sur le front, GitHub Actions.
+4. Front `web/` : le squelette est fait (voir l'état ci-dessus). Reste l'écran **Direct** (courbes
+   vitesse/frein/gaz avec uPlot et tampons hors de l'état React, temps au tour, trace de piste
+   dessinée avec `track_pos` ou les coordonnées) et l'écran **Intégrité** (compteurs et raisons de
+   rejet de `/stations`). Voir [docs/FRONT.md](FRONT.md).
+5. Tests : pytest d'intégration avec PostgreSQL, GitHub Actions (serveur, agent, `web/` : build,
+   Vitest, Playwright avec `npx playwright install chromium`).
 6. Durcissement : clé d'API par poste sur `/ingest/batches`, configuration par variables
    d'environnement, reprise `Last-Event-ID` côté SSE (les `id` sont déjà émis, pas de tampon).
 7. Optionnel : `docker-compose` complet (serveur + base + front), puis un adaptateur pour un

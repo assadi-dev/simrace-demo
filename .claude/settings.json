@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(git init *)",
-      "Bash(git config *)"
+      "Bash(git config *)",
+      "Read(//Users/assadi/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/bin/**)",
+      "Bash(echo \"\\(exit $?; 1 = non ignore\\)\")",
+      "Bash(pkill -f \"uvicorn app.main\")",
+      "Bash(pkill -f \"vite --strictPort\")",
+      "Bash(pkill -f \"node.*vite\")",
+      "Bash(lsof -i :8000 -i :5173 -sTCP:LISTEN)",
+      "Bash(pkill -9 -f \"uvicorn app.main\")",
+      "Bash(ps -o pid,ppid,etime,command -p 10958)",
+      "Bash(kill -9 10958)"
     ]
   }
 }

@@ -36,14 +36,14 @@ ACC -> mémoire partagée                  FastAPI
   -> agent Python --POST /ingest/batches--> validation, doublons, trous
        (lots numérotés, accusé,            |- GET /stations  (santé des postes)
         reprise après coupure)             |- GET /tracks/{circuit}/reference  (tracé de piste)
-                                           '- GET /stream    (SSE) --> React (à faire)
+                                           '- GET /stream    (SSE) --> React (web/)
 ```
 
 | Dossier | Rôle | Stack |
 |---|---|---|
 | `agent/` | Lit ACC (Windows), enregistre/rejoue des sessions, envoie des lots | Python >= 3.11, `httpx` seulement |
 | `server/` | Ingestion, contrôle d'intégrité, diffusion SSE, état des postes, enregistrement des tracés | FastAPI, Pydantic, Python >= 3.12, POO, `app/features/` + `app/shared/` |
-| `web/` | Interface React (n'existe pas encore) | React, TypeScript |
+| `web/` | Interface React (décision 0017) | Vite, React 19, TypeScript, shadcn/ui, TanStack Router/Table/Query, Zod, Zustand, nuqs |
 | `docs/` | Décisions et passation | Markdown |
 
 Deux projets `uv` indépendants (`agent/` et `server/`), chacun avec son `pyproject.toml`, son
@@ -81,6 +81,22 @@ uv run simrace-agent run --source replay --file ../recordings/session.jsonl --st
 uv run simrace-agent record --out ../recordings/session.jsonl
 ```
 
+```
+# front (depuis web/)
+npm install
+npm run dev          # http://localhost:5173 ; .env.local : VITE_API_URL, VITE_MAX_STATIONS (voir .env.example)
+npm run build        # tsc strict + build
+npm run lint
+npm test             # Vitest : contrats, store, fonctions pures
+npx playwright install chromium   # une seule fois
+npm run test:e2e     # Playwright : uvicorn (port 8100) et Vite (port 5273) dédiés, envoie de vrais lots
+```
+
+VS Code : `.vscode/launch.json` (à la racine) lance chaque projet dans le terminal intégré avec les
+commandes ci-dessus : `server`, `web`, `web: Chrome`, `agent: replay` (attend
+`recordings/session.jsonl`), `agent: ACC (Windows)`, `agent: probe (Windows)`. Deux ensembles :
+`server + web` et `demo: server + web + agent replay`.
+
 PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` avec
 `New-Item -ItemType Directory -Force recordings` et enchaîne les commandes sur des lignes séparées.
 
@@ -92,6 +108,12 @@ PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` 
   deux. `x` et `z` (position monde, décision 0011) et les mesures de pneus et de freins (4 valeurs par
   mesure, décision 0013), le carburant, les aides TC et ABS (décision 0014) et les forces G (décision 0015) et les drapeaux et pénalités (décision 0016) sont optionnels et
   existent des deux côtés.
+- **Front** (`web/`) : le contrat existe en Zod dans `web/src/contracts/`, troisième copie après
+  l'agent et le serveur. Si `server/app/shared/contract.py` change, regénère les fixtures
+  (`src/contracts/fixtures/`, capturées sur un vrai serveur) et mets le schéma Zod à jour : le test
+  `telemetry.test.ts` échoue quand les champs divergent. Les couleurs viennent des tokens de
+  `design.md` (`src/index.css`), jamais en dur. Les tableaux passent par `DataTable` (TanStack Table
+  v9, API différente de la v8). Une valeur que l'API ne fournit pas s'affiche `n.d.`, jamais inventée.
 - **Serveur en POO** : tout est classe (entités, services, contrôleurs, routes, dépôts, fabriques,
   stratégies), dépendances passées au constructeur, composition dans `app/container.py`. Un dépôt
   ou une stratégie est une classe abstraite avec une implémentation concrète séparée. Les
@@ -125,6 +147,9 @@ sur un tour réel : pas de saut, distance cohérente avec la vitesse. À noter :
 avancer `completed_laps` au passage de ligne du tour de sortie des stands (décision 0011).
 
 Le tour de sortie des stands d'une vraie session est enregistré en morceau (4783 m, 603 points).
+
+Le front (`web/`) n'a été vérifié qu'avec des lots de test envoyés au serveur (tests Playwright,
+faux agent), pas avec le flux d'un vrai ACC.
 
 **Jamais vu sur un vrai jeu** : la répartition de freinage `brake_bias` (lit 0,75, SimHub affiche 54,0, décision 0016), les valeurs des drapeaux et des pénalités (offsets 1220, 1224, 1228, décision 0016), la valeur des pneus et des freins en roulant (offsets 88, 152, 348, 740, 756 de la page physique, décision 0013 : lus à l'arrêt, plausibles), le champ `sector` d'ACC (déclencheur « secteur » des morceaux), un
 passage aux stands, le temps du dernier et du meilleur tour. Le serveur, le rejeu et l'envoi par lots sont testés de bout en bout avec
