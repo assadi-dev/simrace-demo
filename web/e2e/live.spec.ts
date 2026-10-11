@@ -31,6 +31,34 @@ test("la page Postes montre un poste qui vient d'envoyer un lot", async ({
   await expect(card.getByText("Alice Martin")).toBeVisible()
 })
 
+test("la carte d'un poste montre le meilleur tour d'ACC et les temperatures", async ({
+  page,
+  request,
+}) => {
+  const stationId = uniqueId("sim")
+  const agent = new FakeAgent(request, {
+    stationId,
+    track: "monza",
+    driver: "Pilote Meteo",
+  })
+  await agent.sendBatch()
+  await page.goto("/")
+  await expect(page.getByRole("status")).toContainText(
+    "Flux en direct connecté"
+  )
+
+  await agent.sendBatch({
+    best_lap_ms: 129_402,
+    air_temp_c: 27.1,
+    road_temp_c: 27.9,
+  })
+
+  const card = page.locator('[data-slot="card"]', { hasText: stationId })
+  await expect(card).toContainText("2:09,402")
+  await expect(card).toContainText(/Air\s*27,1\s°C/)
+  await expect(card).toContainText(/Piste\s*27,9\s°C/)
+})
+
 test("l'indicateur du flux passe a connecte", async ({ page }) => {
   await page.goto("/")
 

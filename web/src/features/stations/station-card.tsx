@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router"
 import { StatusBadge } from "@/components/status-badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { WeatherChips } from "@/components/weather-chips"
 import { Progress } from "@/components/ui/progress"
 import type { Station } from "@/contracts/stations"
 import { stationStatus } from "@/features/stations/status"
@@ -72,6 +73,13 @@ export function StationCard({
           </div>
         ))}
       </dl>
+
+      {/* meteo du dernier echantillon ; hors ligne, n.d. comme les autres valeurs en direct */}
+      <WeatherChips
+        compact
+        air={status === "offline" ? undefined : live?.latest.air_temp_c}
+        road={status === "offline" ? undefined : live?.latest.road_temp_c}
+      />
 
       <div className="flex flex-col gap-1.5">
         <div className="flex justify-between text-meta text-muted-foreground">
