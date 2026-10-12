@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { PauseIcon, PlayIcon } from "lucide-react"
+import { PauseIcon, PlayIcon, VideoIcon } from "lucide-react"
 import { parseAsNumberLiteral, useQueryState } from "nuqs"
 
 import { KpiCard } from "@/components/kpi-card"
@@ -158,6 +158,13 @@ function DirectPage() {
                 <PauseIcon aria-hidden="true" />
               )}
               {frozen ? "Reprendre le direct" : "Figer les courbes"}
+            </Button>
+            {/* video du poste (decision 0019) : vue en grand de la page Live */}
+            <Button asChild variant="secondary">
+              <Link to="/live/$stationId" params={{ stationId }}>
+                <VideoIcon aria-hidden="true" />
+                Live vidéo
+              </Link>
             </Button>
           </>
         }
