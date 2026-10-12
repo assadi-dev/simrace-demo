@@ -1,31 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git init *)",
-      "Bash(git config *)",
-      "Read(//Users/assadi/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/bin/**)",
-      "Bash(echo \"\\(exit $?; 1 = non ignore\\)\")",
-      "Bash(pkill -f \"uvicorn app.main\")",
-      "Bash(pkill -f \"vite --strictPort\")",
-      "Bash(pkill -f \"node.*vite\")",
-      "Bash(lsof -i :8000 -i :5173 -sTCP:LISTEN)",
-      "Bash(pkill -9 -f \"uvicorn app.main\")",
-      "Bash(ps -o pid,ppid,etime,command -p 10958)",
-      "Bash(kill -9 10958)",
-      "Bash(git stash *)",
-      "Bash(python3 -c ' *)",
-      "Bash(cd /Users/assadi/Projects/Python/simrace-demo/web && cat src/routes/stations.\\\\$stationId.index.tsx src/routes/__root.tsx src/stores/live-store.ts src/contracts/telemetry.ts src/hooks/*.ts && ls -R src/features src/components src/contracts/fixtures && cat package.json)",
-      "Read(//private/tmp/claude-501/-Users-assadi-Projects-Python-simrace-demo/d77abb4c-826f-4a6e-baa6-22eff8e9c590/scratchpad/direct/src/routes/**)",
-      "Bash(xargs cat)",
-      "Bash(npx ctx7@latest library uPlot \"time series line chart options series scales axes setData\")",
-      "Bash(export npm_config_cache=/private/tmp/claude-501/-Users-assadi-Projects-Python-simrace-demo/d77abb4c-826f-4a6e-baa6-22eff8e9c590/scratchpad/npm-cache)",
-      "Bash(npx -y ctx7@latest library uPlot \"time series line chart options series scales axes setData\")",
-      "Bash(npx -y ctx7@latest docs /leeoniya/uplot \"streaming data setData with fixed x scale range, null gaps spanGaps, axis values formatter, series stroke fill gradient, setSize resize\")",
-      "Bash(npm_config_cache=/private/tmp/claude-501/-Users-assadi-Projects-Python-simrace-demo/d77abb4c-826f-4a6e-baa6-22eff8e9c590/scratchpad/npm-cache npm install uplot@1.6.32)",
-      "Bash(npx prettier *)",
-      "Read(//Users/assadi/Projects/Python/simrace-demo/web/src/routes/**)",
-      "Bash(sed -i '' 's/flex-\\\\[1_1_170px\\\\]/flex-[1_1_150px]/' 'src/routes/stations.$stationId.index.tsx')",
-      "Bash(git switch *)"
+      "Bash(awk -F: '{print $1\": \"$3}')",
+      "Bash(awk -F: '{print $3}')"
     ]
   }
 }
