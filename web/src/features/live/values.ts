@@ -79,6 +79,13 @@ export type VideoOverlay = {
   text: string
 } | null
 
+/**
+ * Voile "Session en pause, image figee" quand ACC est en pause : desactive temporairement, le
+ * flux reste affiche tel quel (la pastille "En pause" signale toujours l'etat). `true` pour le
+ * remettre.
+ */
+export const SHOW_PAUSED_OVERLAY = false
+
 const unavailable = (reason: string): VideoOverlay => ({
   kind: "unavailable",
   text: `Flux indisponible : ${reason}`,
@@ -99,7 +106,7 @@ export function videoOverlay(
     return unavailable("serveur vidéo non configuré")
   if (state.kind === "connecting")
     return { kind: "loading", text: "Connexion au flux…" }
-  if (status === "paused")
+  if (status === "paused" && SHOW_PAUSED_OVERLAY)
     return { kind: "paused", text: "Session en pause, image figée" }
   return null
 }

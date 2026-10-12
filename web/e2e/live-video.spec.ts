@@ -95,14 +95,17 @@ test("la vue en grand puis le plein ecran, Echap revient a la vue en grand", asy
   await expect(page.getByText("1:54,812").first()).toBeVisible()
 
   // commandes du lecteur : invisibles, puis en fondu au survol de la video
-  const fullscreenControl = page.getByTitle("Plein écran")
-  const controls = fullscreenControl.locator("..")
+  const controls = page.locator('[data-slot="video-controls"]')
+  const fullscreenControl = controls.getByRole("link", { name: "Plein écran" })
   await page.mouse.move(0, 0)
   await expect(controls).toHaveCSS("opacity", "0")
   // le cadre du lecteur (sans MediaMTX en test, la video est sous l'etat "indisponible")
   await controls.locator("..").hover()
   await expect(controls).toHaveCSS("opacity", "1")
   await expect(controls.getByText("Direct", { exact: true })).toBeVisible()
+  // info-bulle au survol d'une commande
+  await fullscreenControl.hover()
+  await expect(page.getByRole("tooltip", { name: "Plein écran" })).toBeVisible()
   await fullscreenControl.click()
   const dialog = page.getByRole("dialog", { name: `Plein écran ${stationId}` })
   await expect(dialog).toBeVisible()

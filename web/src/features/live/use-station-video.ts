@@ -6,6 +6,7 @@ import {
   whepUrl,
   type Protocol,
 } from "@/features/live/media"
+import { useLivePrefs } from "@/features/live/prefs-store"
 import { config } from "@/lib/config"
 
 /*
@@ -48,6 +49,22 @@ function iceGathered(peer: RTCPeerConnection) {
         resolve()
       }
     })
+  })
+}
+
+/**
+ * Lance la lecture. Si le navigateur refuse le son sans geste de l'utilisateur (politique
+ * d'autolecture : URL ouverte directement, page rechargee), coupe le son et relance : la video
+ * demarre quand meme, et le reglage passe a "son coupe" pour que les commandes le montrent.
+ */
+function startPlayback(video: HTMLVideoElement) {
+  video.play().catch((error: unknown) => {
+    const blocked =
+      error instanceof DOMException && error.name === "NotAllowedError"
+    if (!blocked || video.muted) return
+    video.muted = true
+    useLivePrefs.getState().setMuted(true)
+    void video.play().catch(() => {})
   })
 }
 
@@ -112,7 +129,7 @@ function playWhep(
       if (peer !== current) return
       const stream = event.streams[0] ?? new MediaStream([event.track])
       if (video.srcObject !== stream) video.srcObject = stream
-      void video.play().catch(() => {})
+      startPlayback(video)
       if (snapshot && event.track.kind === "video") {
         frameRequest = video.requestVideoFrameCallback(() => {
           frameRequest = undefined
@@ -192,6 +209,7 @@ function playHls(
   video.addEventListener("playing", onPlaying)
   video.addEventListener("error", onError)
   video.src = url
+  startPlayback(video)
   if (snapshot) {
     frameRequest = video.requestVideoFrameCallback(() => {
       frameRequest = undefined

@@ -6,6 +6,7 @@ import {
   liveStats,
   overlayTelemetry,
   roundedSpeed,
+  SHOW_PAUSED_OVERLAY,
   videoOverlay,
 } from "@/features/live/values"
 
@@ -93,8 +94,16 @@ describe("flux video", () => {
     expect(videoOverlay("online", { kind: "unconfigured" })?.text).toBe(
       "Flux indisponible : serveur vidéo non configuré"
     )
-    expect(videoOverlay("paused", { kind: "snapshot", at: 0 })?.kind).toBe(
-      "paused"
-    )
+  })
+
+  it("ne pose rien sur le flux quand le jeu est en pause (voile desactive)", () => {
+    expect(SHOW_PAUSED_OVERLAY).toBe(false)
+    expect(videoOverlay("paused", { kind: "playing" })).toBeNull()
+    expect(videoOverlay("paused", { kind: "snapshot", at: 0 })).toBeNull()
+    // un flux absent reste signale, pause ou non
+    expect(
+      videoOverlay("paused", { kind: "error", reason: "aucun flux publié" })
+        ?.kind
+    ).toBe("unavailable")
   })
 })
