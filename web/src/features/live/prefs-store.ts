@@ -15,11 +15,14 @@ type LivePrefs = {
   muted: boolean
   /** Volume du lecteur, de 0 a 1 (garde quand le son est coupe). */
   volume: number
+  /** Surimpressions du plein ecran epinglees : elles ne se masquent plus d'elles-memes. */
+  overlaysPinned: boolean
   setProtocol: (protocol: Protocol) => void
   toggleMuted: () => void
   setMuted: (muted: boolean) => void
   /** Volume choisi au curseur : 0 coupe le son, une autre valeur le reactive. */
   setVolume: (volume: number) => void
+  toggleOverlaysPinned: () => void
 }
 
 /** Choix de lecture partages par la mosaique, la vue en grand et le plein ecran. */
@@ -27,6 +30,7 @@ export const useLivePrefs = create<LivePrefs>()((set) => ({
   protocol: "webrtc",
   muted: false,
   volume: DEFAULT_VOLUME,
+  overlaysPinned: false,
   setProtocol: (protocol) => set({ protocol }),
   toggleMuted: () =>
     set((state) =>
@@ -36,4 +40,6 @@ export const useLivePrefs = create<LivePrefs>()((set) => ({
     ),
   setMuted: (muted) => set({ muted }),
   setVolume: (volume) => set({ volume, muted: volume === 0 }),
+  toggleOverlaysPinned: () =>
+    set((state) => ({ overlaysPinned: !state.overlaysPinned })),
 }))

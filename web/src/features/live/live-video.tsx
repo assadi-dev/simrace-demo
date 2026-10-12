@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react"
+import { useEffect, useRef, type ReactNode, type RefObject } from "react"
 import { LoaderCircleIcon, PauseIcon, VideoOffIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -110,6 +110,7 @@ export function LiveVideo({
   controls = false,
   className,
   children,
+  videoRef: externalVideoRef,
 }: {
   stationId: string
   status: StationStatus
@@ -121,11 +122,16 @@ export function LiveVideo({
   className?: string
   /**
    * Surimpressions (pilote, statut, telemetrie). Fonction : recoit le statut a afficher, qui
-   * combine la telemetrie et l'etat du flux.
+   * combine la telemetrie et l'etat du flux, et si le flux est lu (commandes du plein ecran).
    */
-  children?: ReactNode | ((video: { badge: LiveBadgeStatus }) => ReactNode)
+  children?:
+    | ReactNode
+    | ((video: { badge: LiveBadgeStatus; playing: boolean }) => ReactNode)
+  /** Balise <video>, pour des commandes posees hors du lecteur (plein ecran). */
+  videoRef?: RefObject<HTMLVideoElement | null>
 }) {
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const ownVideoRef = useRef<HTMLVideoElement>(null)
+  const videoRef = externalVideoRef ?? ownVideoRef
   const snapshotRef = useRef<HTMLCanvasElement>(null)
   const protocol = useLivePrefs((s) => s.protocol)
   const muted = useLivePrefs((s) => s.muted)
@@ -142,7 +148,7 @@ export function LiveVideo({
   // le volume n'est pas un attribut HTML : il se regle sur l'element
   useEffect(() => {
     if (videoRef.current) videoRef.current.volume = volume
-  }, [volume])
+  }, [videoRef, volume])
   const OverlayIcon =
     overlay?.kind === "loading"
       ? LoaderCircleIcon
@@ -204,7 +210,10 @@ export function LiveVideo({
       ) : null}
 
       {typeof children === "function"
-        ? children({ badge: liveBadgeStatus(status, state) })
+        ? children({
+            badge: liveBadgeStatus(status, state),
+            playing: state.kind === "playing",
+          })
         : children}
 
       {controls ? (

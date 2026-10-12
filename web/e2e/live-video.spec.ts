@@ -116,6 +116,50 @@ test("la vue en grand puis le plein ecran, Echap revient a la vue en grand", asy
   await expect(dialog).toBeHidden()
 })
 
+test("le plein ecran masque ses surimpressions sans activite, sauf epinglees", async ({
+  page,
+  request,
+}) => {
+  const stationId = uniqueId("sim")
+  const agent = new FakeAgent(request, {
+    stationId,
+    track: "imola",
+    driver: "Inès Robert",
+  })
+  await agent.sendBatch()
+  await page.goto(`/live/${stationId}/plein-ecran`)
+
+  const dialog = page.getByRole("dialog", { name: `Plein écran ${stationId}` })
+  const overlays = dialog.locator('[data-slot="fullscreen-overlays"]')
+  await expect(overlays).toHaveCSS("opacity", "1")
+  // commandes du bandeau du bas, icones seules avec info-bulle
+  await expect(dialog.getByRole("button", { name: "Pause" })).toBeVisible()
+  await expect(dialog.getByRole("slider", { name: "Volume" })).toBeAttached()
+  await dialog.getByRole("link", { name: "Quitter le plein écran" }).hover()
+  await expect(
+    page.getByRole("tooltip", { name: "Quitter le plein écran (Échap)" })
+  ).toBeVisible()
+
+  // souris hors des surimpressions et immobile : tout se masque apres 3 s
+  await page.mouse.move(600, 300)
+  await expect(overlays).toHaveAttribute("data-hidden")
+  await expect(overlays).toHaveCSS("opacity", "0")
+  // un mouvement les fait revenir
+  await page.mouse.move(610, 310)
+  await expect(overlays).not.toHaveAttribute("data-hidden")
+
+  // epinglees : elles restent
+  const pin = dialog.getByRole("button", { name: "Épingler l'affichage" })
+  await pin.click()
+  await expect(pin).toHaveAttribute("aria-pressed", "true")
+  await page.mouse.move(600, 300)
+  await page.waitForTimeout(3500)
+  await expect(overlays).not.toHaveAttribute("data-hidden")
+
+  await dialog.getByRole("link", { name: "Quitter le plein écran" }).click()
+  await expect(page).toHaveURL(new RegExp(`/live/${stationId}$`))
+})
+
 test("un poste inconnu le dit, sans inventer de valeurs", async ({ page }) => {
   await page.goto("/live/inconnu-e2e")
   await expect(page.getByText("Poste inconnu", { exact: true })).toBeVisible()

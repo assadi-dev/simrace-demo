@@ -21,13 +21,14 @@ import { cn } from "@/lib/utils"
 /** Pilule sombre des commandes (comme celles de YouTube), posee sur la video. */
 const pill =
   "inline-flex h-10 items-center rounded-full bg-sand-950/70 text-white"
-const iconButton = cn(
+/** Bouton rond d'une commande, icone seule (le libelle passe par l'info-bulle). */
+export const iconButton = cn(
   pill,
   "w-10 justify-center outline-none hover:bg-sand-950/90 focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
 )
 
 /** Info-bulle d'une commande, au-dessus du bouton (survol et focus clavier). */
-function ControlTooltip({
+export function ControlTooltip({
   label,
   children,
 }: {
@@ -43,7 +44,7 @@ function ControlTooltip({
 }
 
 /** Lecture ou pause de la balise <video>, suivie par ses evenements. */
-function usePaused(videoRef: RefObject<HTMLVideoElement | null>) {
+export function usePaused(videoRef: RefObject<HTMLVideoElement | null>) {
   const [paused, setPaused] = useState(false)
   useEffect(() => {
     const video = videoRef.current
@@ -57,6 +58,95 @@ function usePaused(videoRef: RefObject<HTMLVideoElement | null>) {
     }
   }, [videoRef])
   return paused
+}
+
+/** Bouton lecture / pause, avec son info-bulle. `paused` vient de `usePaused`. */
+export function PlayButton({
+  videoRef,
+  paused,
+  playing,
+  className,
+}: {
+  videoRef: RefObject<HTMLVideoElement | null>
+  paused: boolean
+  /** Le flux est lu : sans flux, le bouton est desactive. */
+  playing: boolean
+  className?: string
+}) {
+  const label = paused ? "Lire" : "Pause"
+  const togglePlay = () => {
+    const video = videoRef.current
+    if (!video) return
+    if (video.paused) void video.play().catch(() => {})
+    else video.pause()
+  }
+  return (
+    <ControlTooltip label={label}>
+      <button
+        type="button"
+        onClick={togglePlay}
+        disabled={!playing}
+        aria-label={label}
+        className={cn(iconButton, className)}
+      >
+        {paused ? (
+          <PlayIcon aria-hidden="true" className="size-5 fill-current" />
+        ) : (
+          <PauseIcon aria-hidden="true" className="size-5 fill-current" />
+        )}
+      </button>
+    </ControlTooltip>
+  )
+}
+
+/** Son : bouton couper / activer, et curseur de volume deplie au survol ou au focus (YouTube). */
+export function VolumeControl({
+  playing,
+  className,
+}: {
+  /** Le flux est lu : sans flux, le son est desactive. */
+  playing: boolean
+  className?: string
+}) {
+  const muted = useLivePrefs((s) => s.muted)
+  const volume = useLivePrefs((s) => s.volume)
+  const toggleMuted = useLivePrefs((s) => s.toggleMuted)
+  const setVolume = useLivePrefs((s) => s.setVolume)
+  const shownVolume = muted ? 0 : volume
+  const VolumeIcon =
+    shownVolume === 0
+      ? VolumeXIcon
+      : shownVolume < 0.5
+        ? Volume1Icon
+        : Volume2Icon
+  const label = muted ? "Activer le son" : "Couper le son"
+
+  return (
+    <div className={cn(pill, "group/volume gap-1 pr-1", className)}>
+      <ControlTooltip label={label}>
+        <button
+          type="button"
+          onClick={toggleMuted}
+          disabled={!playing}
+          aria-label={label}
+          className="inline-flex size-10 items-center justify-center rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
+        >
+          <VolumeIcon aria-hidden="true" className="size-5" />
+        </button>
+      </ControlTooltip>
+      <input
+        type="range"
+        min={0}
+        max={1}
+        step={0.05}
+        value={shownVolume}
+        disabled={!playing}
+        onChange={(event) => setVolume(Number(event.target.value))}
+        aria-label="Volume"
+        className="w-0 cursor-pointer accent-white opacity-0 transition-[width,opacity] duration-200 group-focus-within/volume:mr-2 group-focus-within/volume:w-20 group-focus-within/volume:opacity-100 group-hover/volume:mr-2 group-hover/volume:w-20 group-hover/volume:opacity-100"
+      />
+    </div>
+  )
 }
 
 /**
@@ -76,27 +166,6 @@ export function VideoControls({
   playing: boolean
 }) {
   const paused = usePaused(videoRef)
-  const muted = useLivePrefs((s) => s.muted)
-  const volume = useLivePrefs((s) => s.volume)
-  const toggleMuted = useLivePrefs((s) => s.toggleMuted)
-  const setVolume = useLivePrefs((s) => s.setVolume)
-  const shownVolume = muted ? 0 : volume
-  const VolumeIcon =
-    shownVolume === 0
-      ? VolumeXIcon
-      : shownVolume < 0.5
-        ? Volume1Icon
-        : Volume2Icon
-
-  const playLabel = paused ? "Lire" : "Pause"
-  const muteLabel = muted ? "Activer le son" : "Couper le son"
-
-  const togglePlay = () => {
-    const video = videoRef.current
-    if (!video) return
-    if (video.paused) void video.play().catch(() => {})
-    else video.pause()
-  }
 
   return (
     <TooltipProvider>
@@ -110,47 +179,8 @@ export function VideoControls({
         )}
       >
         <div className="flex items-center gap-2">
-          <ControlTooltip label={playLabel}>
-            <button
-              type="button"
-              onClick={togglePlay}
-              disabled={!playing}
-              aria-label={playLabel}
-              className={iconButton}
-            >
-              {paused ? (
-                <PlayIcon aria-hidden="true" className="size-5 fill-current" />
-              ) : (
-                <PauseIcon aria-hidden="true" className="size-5 fill-current" />
-              )}
-            </button>
-          </ControlTooltip>
-
-          {/* son : le curseur se deplie au survol ou au focus, comme sur YouTube */}
-          <div className={cn(pill, "group/volume gap-1 pr-1")}>
-            <ControlTooltip label={muteLabel}>
-              <button
-                type="button"
-                onClick={toggleMuted}
-                disabled={!playing}
-                aria-label={muteLabel}
-                className="inline-flex size-10 items-center justify-center rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
-              >
-                <VolumeIcon aria-hidden="true" className="size-5" />
-              </button>
-            </ControlTooltip>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.05}
-              value={shownVolume}
-              disabled={!playing}
-              onChange={(event) => setVolume(Number(event.target.value))}
-              aria-label="Volume"
-              className="w-0 cursor-pointer accent-white opacity-0 transition-[width,opacity] duration-200 group-focus-within/volume:mr-2 group-focus-within/volume:w-20 group-focus-within/volume:opacity-100 group-hover/volume:mr-2 group-hover/volume:w-20 group-hover/volume:opacity-100"
-            />
-          </div>
+          <PlayButton videoRef={videoRef} paused={paused} playing={playing} />
+          <VolumeControl playing={playing} />
 
           <span className={cn(pill, "gap-2 px-3.5 text-label font-semibold")}>
             <span

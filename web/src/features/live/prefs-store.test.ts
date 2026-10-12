@@ -44,4 +44,12 @@ describe("reglages de lecture de la page Live", () => {
       volume: LOWERED_VOLUME,
     })
   })
+
+  it("masque les surimpressions du plein ecran par defaut, l'epingle les garde", () => {
+    expect(useLivePrefs.getState().overlaysPinned).toBe(false)
+    useLivePrefs.getState().toggleOverlaysPinned()
+    expect(useLivePrefs.getState().overlaysPinned).toBe(true)
+    useLivePrefs.getState().toggleOverlaysPinned()
+    expect(useLivePrefs.getState().overlaysPinned).toBe(false)
+  })
 })
