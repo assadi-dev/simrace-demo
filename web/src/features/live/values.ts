@@ -110,3 +110,23 @@ export function videoOverlay(
     return { kind: "paused", text: "Session en pause, image figée" }
   return null
 }
+
+/** Statut affiche sur la video : il combine la telemetrie et le flux video. */
+export type LiveBadgeStatus = "racing" | "paused" | "ready" | "offline"
+
+/**
+ * Pastille de statut des vues Live :
+ * - telemetrie recue : "En course" (ou "En pause" si ACC est en pause), flux ou pas ;
+ * - pas de telemetrie mais une image du flux (direct ou apercu) : "Pret" ;
+ * - ni telemetrie ni image (flux absent, en erreur ou en connexion) : "Hors ligne".
+ */
+export function liveBadgeStatus(
+  status: StationStatus,
+  state: VideoState
+): LiveBadgeStatus {
+  if (status === "online") return "racing"
+  if (status === "paused") return "paused"
+  return state.kind === "playing" || state.kind === "snapshot"
+    ? "ready"
+    : "offline"
+}

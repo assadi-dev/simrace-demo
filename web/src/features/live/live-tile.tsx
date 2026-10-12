@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card"
 import {
   LiveVideo,
   OverlayChip,
-  VideoStatusBadge,
+  LiveStatusBadge,
 } from "@/features/live/live-video"
 import type { LiveFeedEntry } from "@/features/live/use-live-feed"
 import { overlayTelemetry } from "@/features/live/values"
@@ -33,24 +33,26 @@ export function LiveTile({
   return (
     <Card className="min-w-0 gap-3 p-3">
       <LiveVideo stationId={stationId} status={status} size="tile" preview>
-        <>
-          <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
-            <span className="flex min-w-0 flex-col rounded-cell bg-sand-950/70 px-3 py-1.5 text-white">
-              <span className="truncate text-sm leading-5 font-semibold">
-                {session.driver}
+        {({ badge }) => (
+          <>
+            <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
+              <span className="flex min-w-0 flex-col rounded-cell bg-sand-950/70 px-3 py-1.5 text-white">
+                <span className="truncate text-sm leading-5 font-semibold">
+                  {session.driver}
+                </span>
+                <span className="truncate text-xs text-white/70">
+                  {stationId} · {station.machine ?? NOT_AVAILABLE}
+                </span>
               </span>
-              <span className="truncate text-xs text-white/70">
-                {stationId} · {station.machine ?? NOT_AVAILABLE}
-              </span>
-            </span>
-            <VideoStatusBadge status={status} />
-          </div>
-          <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2">
-            <OverlayChip className="px-3 py-1.5 text-label font-semibold">
-              {overlayTelemetry(status, live?.latest)}
-            </OverlayChip>
-          </div>
-        </>
+              <LiveStatusBadge status={badge} />
+            </div>
+            <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2">
+              <OverlayChip className="px-3 py-1.5 text-label font-semibold">
+                {overlayTelemetry(status, live?.latest)}
+              </OverlayChip>
+            </div>
+          </>
+        )}
       </LiveVideo>
 
       {/* hauteur fixe (12 unites, bouton h-11 + pb-1) : la mosaique calcule la taille des tuiles avec */}

@@ -37,7 +37,7 @@ test("la mosaique montre un poste qui envoie des lots, avec sa telemetrie", asyn
   const tile = page.locator('[data-slot="card"]', { hasText: stationId })
   await expect(tile.getByText("Alice Martin")).toBeVisible()
   await expect(tile.getByText(`${stationId} · PC-SIM-01`)).toBeVisible()
-  await expect(tile.getByText("En ligne", { exact: true })).toBeVisible()
+  await expect(tile.getByText("En course", { exact: true })).toBeVisible()
   await expect(tile.getByText("187 km/h · Tour 2")).toBeVisible()
   await expect(
     tile.getByText("Flux indisponible : serveur vidéo non configuré")

@@ -14,7 +14,7 @@ import {
 import { Progress } from "@/components/ui/progress"
 import { WeatherChips } from "@/components/weather-chips"
 import { ProtocolToggle } from "@/features/live/live-controls"
-import { LiveVideo, VideoStatusBadge } from "@/features/live/live-video"
+import { LiveStatusBadge, LiveVideo } from "@/features/live/live-video"
 import { StationThumb } from "@/features/live/station-thumb"
 import { useLiveFeed } from "@/features/live/use-live-feed"
 import { useTopOffset } from "@/features/live/use-top-offset"
@@ -147,9 +147,11 @@ function LiveFocusPage() {
             size="focus"
             controls
           >
-            <div className="absolute top-4 left-4">
-              <VideoStatusBadge status={status} />
-            </div>
+            {({ badge }) => (
+              <div className="absolute top-4 left-4">
+                <LiveStatusBadge status={badge} />
+              </div>
+            )}
           </LiveVideo>
         </Card>
 

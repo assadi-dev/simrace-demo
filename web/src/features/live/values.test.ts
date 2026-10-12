@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import samplesEvent from "@/contracts/fixtures/samples-event.json"
 import { samplesEventSchema } from "@/contracts/telemetry"
 import {
+  liveBadgeStatus,
   liveStats,
   overlayTelemetry,
   roundedSpeed,
@@ -115,5 +116,33 @@ describe("flux video", () => {
       videoOverlay("paused", { kind: "error", reason: "aucun flux publié" })
         ?.kind
     ).toBe("unavailable")
+  })
+})
+
+describe("pastille de statut des vues Live", () => {
+  const STREAM_PLAYING = { kind: "playing" } as const
+  const STREAM_SNAPSHOT = { kind: "snapshot", at: 0 } as const
+  const STREAM_MISSING = { kind: "error", reason: "aucun flux publié" } as const
+  const STREAM_CONNECTING = { kind: "connecting" } as const
+  const NO_VIDEO_SERVER = { kind: "unconfigured" } as const
+
+  it("dit En course des que la telemetrie arrive, avec ou sans flux", () => {
+    expect(liveBadgeStatus("online", STREAM_PLAYING)).toBe("racing")
+    expect(liveBadgeStatus("online", STREAM_MISSING)).toBe("racing")
+  })
+
+  it("garde En pause quand ACC est en pause", () => {
+    expect(liveBadgeStatus("paused", STREAM_PLAYING)).toBe("paused")
+  })
+
+  it("dit Pret quand seul le flux video est la", () => {
+    expect(liveBadgeStatus("offline", STREAM_PLAYING)).toBe("ready")
+    expect(liveBadgeStatus("offline", STREAM_SNAPSHOT)).toBe("ready")
+  })
+
+  it("dit Hors ligne sans telemetrie ni image du flux", () => {
+    for (const state of [STREAM_MISSING, STREAM_CONNECTING, NO_VIDEO_SERVER]) {
+      expect(liveBadgeStatus("offline", state)).toBe("offline")
+    }
   })
 })

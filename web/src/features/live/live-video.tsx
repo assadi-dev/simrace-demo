@@ -1,10 +1,14 @@
 import { useEffect, useRef, type ReactNode } from "react"
 import { LoaderCircleIcon, PauseIcon, VideoOffIcon } from "lucide-react"
 
-import { StatusBadge } from "@/components/status-badge"
+import { Badge } from "@/components/ui/badge"
 import { useLivePrefs } from "@/features/live/prefs-store"
 import { useStationVideo } from "@/features/live/use-station-video"
-import { videoOverlay } from "@/features/live/values"
+import {
+  liveBadgeStatus,
+  videoOverlay,
+  type LiveBadgeStatus,
+} from "@/features/live/values"
 import { VideoControls } from "@/features/live/video-controls"
 import type { StationStatus } from "@/features/stations/status"
 import { cn } from "@/lib/utils"
@@ -54,9 +58,48 @@ export function OverlayChip({
   )
 }
 
-/** Statut du poste sur la video : pilule blanche, texte et pastille du statut. */
-export function VideoStatusBadge({ status }: { status: StationStatus }) {
-  return <StatusBadge status={status} className="bg-white/90" />
+/*
+ * Pastilles des vues Live (design.md 1.5 : jamais la couleur seule). Formes : rond plein
+ * (en course), carre (pause), losange (pret : flux sans telemetrie), anneau (hors ligne).
+ */
+const LIVE_BADGE = {
+  racing: {
+    label: "En course",
+    variant: "success",
+    dot: "rounded-full bg-success",
+  },
+  paused: {
+    label: "En pause",
+    variant: "warning",
+    dot: "rounded-[2px] bg-warning",
+  },
+  ready: {
+    label: "Prêt",
+    variant: "info",
+    dot: "size-1.75 rotate-45 rounded-[1px] bg-info",
+  },
+  offline: {
+    label: "Hors ligne",
+    variant: "danger",
+    dot: "rounded-full border-2 border-danger",
+  },
+} as const
+
+/** Statut du poste sur la video (telemetrie + flux) : pilule blanche, libelle et pastille. */
+export function LiveStatusBadge({
+  status,
+  className,
+}: {
+  status: LiveBadgeStatus
+  className?: string
+}) {
+  const badge = LIVE_BADGE[status]
+  return (
+    <Badge variant={badge.variant} className={cn("bg-white/90", className)}>
+      <span aria-hidden="true" className={cn("size-2 shrink-0", badge.dot)} />
+      {badge.label}
+    </Badge>
+  )
 }
 
 export function LiveVideo({
@@ -76,8 +119,11 @@ export function LiveVideo({
   /** Commandes facon YouTube (lecture, son, Direct, plein ecran), en fondu au survol. */
   controls?: boolean
   className?: string
-  /** Surimpressions (pilote, statut, telemetrie). */
-  children?: ReactNode
+  /**
+   * Surimpressions (pilote, statut, telemetrie). Fonction : recoit le statut a afficher, qui
+   * combine la telemetrie et l'etat du flux.
+   */
+  children?: ReactNode | ((video: { badge: LiveBadgeStatus }) => ReactNode)
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const snapshotRef = useRef<HTMLCanvasElement>(null)
@@ -157,7 +203,9 @@ export function LiveVideo({
         </div>
       ) : null}
 
-      {children}
+      {typeof children === "function"
+        ? children({ badge: liveBadgeStatus(status, state) })
+        : children}
 
       {controls ? (
         <VideoControls

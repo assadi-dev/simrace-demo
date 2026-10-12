@@ -2,8 +2,7 @@ import { useEffect } from "react"
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { MinimizeIcon, Volume2Icon, VolumeXIcon } from "lucide-react"
 
-import { StatusBadge } from "@/components/status-badge"
-import { LiveVideo } from "@/features/live/live-video"
+import { LiveStatusBadge, LiveVideo } from "@/features/live/live-video"
 import { useLivePrefs } from "@/features/live/prefs-store"
 import { StationThumb } from "@/features/live/station-thumb"
 import { useLiveFeed } from "@/features/live/use-live-feed"
@@ -82,121 +81,128 @@ function LiveFullscreenPage() {
         status={status}
         size="fullscreen"
       >
-        <>
-          {/* Haut : identite et sortie */}
-          <div className="absolute inset-x-6 top-6 flex items-start justify-between gap-4">
-            <div
-              className={cn(
-                "flex min-w-0 flex-col gap-0.5 rounded-xl px-4.5 py-3",
-                glass
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <span className="truncate text-brand">
-                  {session?.driver ?? NOT_AVAILABLE} · {stationId}
-                </span>
-                <StatusBadge status={status} className="bg-white/90" />
-              </div>
-              <span className="truncate text-caption text-white/70">
-                {session
-                  ? [
-                      session.track,
-                      session.car,
-                      entry?.station.machine ?? NOT_AVAILABLE,
-                    ].join(" · ")
-                  : "Poste inconnu"}
-              </span>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <button
-                type="button"
-                onClick={toggleMuted}
-                aria-label={muted ? "Activer le son" : "Couper le son"}
-                aria-pressed={!muted}
+        {({ badge }) => (
+          <>
+            {/* Haut : identite et sortie */}
+            <div className="absolute inset-x-6 top-6 flex items-start justify-between gap-4">
+              <div
                 className={cn(
-                  "inline-flex size-11 items-center justify-center rounded-full outline-none hover:bg-sand-950/90 focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                  "flex min-w-0 flex-col gap-0.5 rounded-xl px-4.5 py-3",
                   glass
                 )}
               >
-                {muted ? (
-                  <VolumeXIcon aria-hidden="true" className="size-4.5" />
-                ) : (
-                  <Volume2Icon aria-hidden="true" className="size-4.5" />
-                )}
-              </button>
-              <Link
-                to="/live/$stationId"
-                params={{ stationId }}
-                className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-4.5 text-nav font-semibold whitespace-nowrap text-foreground outline-none hover:bg-white/90 focus-visible:ring-[3px] focus-visible:ring-ring/50"
-              >
-                <MinimizeIcon aria-hidden="true" className="size-4.5" />
-                Quitter (Échap)
-              </Link>
-            </div>
-          </div>
-
-          {/* Droite : changer de poste (208 px) */}
-          <nav
-            aria-label="Postes"
-            className={cn(
-              "absolute top-30 right-6 flex max-h-[calc(100%-120px-24px)] w-52 flex-col gap-2 overflow-y-auto rounded-xl p-2.5",
-              glass
-            )}
-          >
-            <span className="px-1 py-0.5 text-eyebrow text-white/70">
-              Postes
-            </span>
-            {feed.map((e) => (
-              <StationThumb
-                key={e.station.station_id}
-                entry={e}
-                selected={e.station.station_id === stationId}
-                tone="dark"
-              />
-            ))}
-          </nav>
-
-          {/* Bas : bandeau telemetrie, jusqu'a 256 px du bord droit (colonne des postes) */}
-          <div className="absolute right-64 bottom-6 left-6 flex flex-col gap-3.5 rounded-2xl border border-white/12 bg-sand-950/80 px-5.5 py-4.5">
-            <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
-              <div className="flex items-baseline gap-2 whitespace-nowrap">
-                <span className="text-display">
-                  {roundedSpeed(status, sample)}
-                </span>
-                <span className="text-nav font-normal text-white/70">km/h</span>
-              </div>
-              {liveStats(status, sample, { withSpeed: false }).map((stat) => (
-                <div
-                  key={stat.label}
-                  className="flex flex-col gap-0.5 whitespace-nowrap"
-                >
-                  <span className="text-xs font-medium text-white/70">
-                    {stat.label}
+                <div className="flex items-center gap-3">
+                  <span className="truncate text-brand">
+                    {session?.driver ?? NOT_AVAILABLE} · {stationId}
                   </span>
-                  <span
-                    className={cn("text-brand", stat.muted && "text-white/70")}
-                  >
-                    {stat.value}
+                  <LiveStatusBadge status={badge} />
+                </div>
+                <span className="truncate text-caption text-white/70">
+                  {session
+                    ? [
+                        session.track,
+                        session.car,
+                        entry?.station.machine ?? NOT_AVAILABLE,
+                      ].join(" · ")
+                    : "Poste inconnu"}
+                </span>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleMuted}
+                  aria-label={muted ? "Activer le son" : "Couper le son"}
+                  aria-pressed={!muted}
+                  className={cn(
+                    "inline-flex size-11 items-center justify-center rounded-full outline-none hover:bg-sand-950/90 focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                    glass
+                  )}
+                >
+                  {muted ? (
+                    <VolumeXIcon aria-hidden="true" className="size-4.5" />
+                  ) : (
+                    <Volume2Icon aria-hidden="true" className="size-4.5" />
+                  )}
+                </button>
+                <Link
+                  to="/live/$stationId"
+                  params={{ stationId }}
+                  className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-4.5 text-nav font-semibold whitespace-nowrap text-foreground outline-none hover:bg-white/90 focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                >
+                  <MinimizeIcon aria-hidden="true" className="size-4.5" />
+                  Quitter (Échap)
+                </Link>
+              </div>
+            </div>
+
+            {/* Droite : changer de poste (208 px) */}
+            <nav
+              aria-label="Postes"
+              className={cn(
+                "absolute top-30 right-6 flex max-h-[calc(100%-120px-24px)] w-52 flex-col gap-2 overflow-y-auto rounded-xl p-2.5",
+                glass
+              )}
+            >
+              <span className="px-1 py-0.5 text-eyebrow text-white/70">
+                Postes
+              </span>
+              {feed.map((e) => (
+                <StationThumb
+                  key={e.station.station_id}
+                  entry={e}
+                  selected={e.station.station_id === stationId}
+                  tone="dark"
+                />
+              ))}
+            </nav>
+
+            {/* Bas : bandeau telemetrie, jusqu'a 256 px du bord droit (colonne des postes) */}
+            <div className="absolute right-64 bottom-6 left-6 flex flex-col gap-3.5 rounded-2xl border border-white/12 bg-sand-950/80 px-5.5 py-4.5">
+              <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
+                <div className="flex items-baseline gap-2 whitespace-nowrap">
+                  <span className="text-display">
+                    {roundedSpeed(status, sample)}
+                  </span>
+                  <span className="text-nav font-normal text-white/70">
+                    km/h
                   </span>
                 </div>
-              ))}
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs whitespace-nowrap text-white/70">
-                Position sur le tour
-              </span>
-              <div className="h-2 grow overflow-hidden rounded-full bg-white/15">
-                <div
-                  className="h-full rounded-full bg-gradient-flame"
-                  style={{ width: `${values.positionPercent}%` }}
-                />
+                {liveStats(status, sample, { withSpeed: false }).map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="flex flex-col gap-0.5 whitespace-nowrap"
+                  >
+                    <span className="text-xs font-medium text-white/70">
+                      {stat.label}
+                    </span>
+                    <span
+                      className={cn(
+                        "text-brand",
+                        stat.muted && "text-white/70"
+                      )}
+                    >
+                      {stat.value}
+                    </span>
+                  </div>
+                ))}
               </div>
-              <span className="min-w-10 text-right text-xs font-semibold whitespace-nowrap">
-                {values.position}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs whitespace-nowrap text-white/70">
+                  Position sur le tour
+                </span>
+                <div className="h-2 grow overflow-hidden rounded-full bg-white/15">
+                  <div
+                    className="h-full rounded-full bg-gradient-flame"
+                    style={{ width: `${values.positionPercent}%` }}
+                  />
+                </div>
+                <span className="min-w-10 text-right text-xs font-semibold whitespace-nowrap">
+                  {values.position}
+                </span>
+              </div>
             </div>
-          </div>
-        </>
+          </>
+        )}
       </LiveVideo>
     </div>
   )
