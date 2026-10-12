@@ -14,7 +14,7 @@ function TemperatureChip({
   value: number | null | undefined
 }) {
   return (
-    <div className="flex flex-[1_1_140px] items-center gap-2.5 rounded-md border border-card-border bg-card-inner px-3.5 py-2.5 whitespace-nowrap">
+    <div className="flex flex-[1_1_--spacing(35)] items-center gap-2.5 rounded-md border border-card-border bg-card-inner px-3.5 py-2.5 whitespace-nowrap">
       {icon}
       <div className="flex flex-col">
         <span className="text-meta text-muted-foreground">{label}</span>

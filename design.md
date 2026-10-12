@@ -4,6 +4,8 @@ Direction artistique du front SimRace (thème **Flame & Sand**). Ce fichier est 
 
 Source : design system « Open MDM — Flame & Sand » (tokens.json, cible shadcn/ui + Tailwind v4), appliqué aux 4 écrans du wireframe SimRace (Postes, Direct, Intégrité, Leaderboard).
 
+**Échelle de l'interface** : les tailles de texte (taille, interligne, interlettrage), les espacements (`--spacing`, donc paddings, gaps, hauteurs, tailles d'icônes) et les rayons sont multipliés par `--ui-scale` (`src/index.css`), **0,75** aujourd'hui. Les valeurs en px de ce fichier sont les valeurs de référence à l'échelle 1 : un texte `metric` de 32px s'affiche en 24px. Les couleurs ne changent pas. Les graphiques uPlot (canvas) lisent la même échelle. Pour une largeur en dur dans un composant, utiliser `--spacing(n)` (ex. `flex-[1_1_--spacing(50)]`), jamais des px.
+
 ---
 
 ## 1. Principes
@@ -201,7 +203,7 @@ Base Tailwind v4 : `--spacing: 4px`.
 
 | Élément | Valeur |
 |---|---|
-| Cible tactile minimum | 44px de haut (boutons, liens de nav, pills cliquables) |
+| Cible tactile minimum | 44px de haut (boutons, liens de nav, pills cliquables), soit 33px à l'échelle 0,75 : sous la recommandation de 44px pour le tactile |
 | Select / Input | 46px de haut |
 | Segment de ToggleGroup | 38px dans un conteneur à padding 4px |
 | Pastille de statut | 8×8px |
@@ -227,7 +229,7 @@ Base Tailwind v4 : `--spacing: 4px`.
 | `ToggleGroup` | `ToggleGroup` | Conteneur verre `rounded-2xl p-1` ; item actif `ink` |
 | `Select` | `Select` | `h-11.5 rounded-md bg-card-strong border-card-border` |
 | `FlameProgress` | `Progress` | Piste `chart-track`, indicateur `gradient-flame`, `h-2 rounded-full` |
-| `SpeedGauge` | — (SVG) | Demi-cercle 0–320 km/h (`SPEED_GAUGE_MAX_KMH`), 24 segments ; valeur entière `metric` au centre ; régime `metric-sm` dessous ; carré 1:1 |
+| `SpeedGauge` | — (SVG) | Demi-cercle 0–320 km/h (`SPEED_GAUGE_MAX_KMH`), 24 segments ; valeur entière `metric` au centre ; régime `metric-sm` dessous ; hauteur limitée à 38 % de la fenêtre (plus de carré 1:1) : la carte Vitesse tient entière dans la fenêtre, 80 % de sa hauteur au plus (test Playwright) |
 | `TrackMap` | — (SVG) | Tracé schématique (pas de coordonnées dans le flux) ; trait `border-strong` 16px ; points pilote `chart-n` cerclés de blanc ; carré = pause |
 | `TemperatureChip` | — | Mini-carte `card-inner`, `rounded-md`, icône Lucide `thermometer` (air) / `route` (piste) en `primary-text` |
 | `DeltaValue` | — | `+0,512` vert / `−1,203` rouge / `0,000` gris, `font-semibold` |

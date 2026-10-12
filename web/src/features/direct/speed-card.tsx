@@ -27,7 +27,7 @@ export function SpeedCard({
         </span>
       </div>
       <div className="flex flex-wrap items-stretch gap-5">
-        <div className="flex min-w-0 flex-[1_1_220px] flex-col gap-2">
+        <div className="flex min-w-0 flex-[1_1_--spacing(55)] flex-col gap-2">
           <dl className="flex flex-1 flex-col justify-between gap-2">
             {gaugeStats(sample, history).map((stat) => (
               <div

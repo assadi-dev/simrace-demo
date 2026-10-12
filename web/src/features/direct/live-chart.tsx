@@ -58,7 +58,10 @@ export function LiveChart({
     if (!container) return
     const muted = cssVar("--muted-foreground")
     const grid = cssVar("--border")
-    const font = `12px ${cssVar("--font-sans") || "sans-serif"}`
+    // le canvas ne lit pas le CSS : tailles multipliees par l'echelle de l'interface (index.css)
+    const scale = Number.parseFloat(cssVar("--ui-scale")) || 1
+    const chartHeight = Math.round(height * scale)
+    const font = `${12 * scale}px ${cssVar("--font-sans") || "sans-serif"}`
     const axis = {
       stroke: muted,
       font,
@@ -69,7 +72,7 @@ export function LiveChart({
     const chart = new uPlot(
       {
         width: container.clientWidth,
-        height,
+        height: chartHeight,
         legend: { show: false },
         cursor: { sync: { key: "direct" }, drag: { x: false, y: false } },
         scales: {
@@ -79,14 +82,14 @@ export function LiveChart({
         axes: [
           {
             ...axis,
-            space: 60,
+            space: 60 * scale,
             values: (_u, splits) =>
               splits.map((v) => `${tickFormat.format(v)}\u00a0s`),
           },
           {
             ...axis,
             // l'unite est dans la legende : des graduations courtes ne sont pas coupees
-            size: 44,
+            size: 44 * scale,
             values: (_u, splits) => splits.map((v) => tickFormat.format(v)),
           },
         ],
@@ -109,7 +112,7 @@ export function LiveChart({
     )
 
     const resize = new ResizeObserver(() =>
-      chart.setSize({ width: container.clientWidth, height })
+      chart.setSize({ width: container.clientWidth, height: chartHeight })
     )
     resize.observe(container)
 
