@@ -3,21 +3,40 @@ import { describe, expect, it } from "vitest"
 import { parseConfig } from "./config"
 
 describe("parseConfig", () => {
-  it("prend les valeurs par defaut quand rien n'est defini (1 poste max)", () => {
-    expect(parseConfig({})).toEqual({ apiUrl: "http://localhost:8000", maxStations: 1 })
-  })
-
-  it("traite une valeur vide comme absente", () => {
-    expect(parseConfig({ VITE_API_URL: "", VITE_MAX_STATIONS: "" })).toEqual({
+  it("prend les valeurs par defaut quand rien n'est defini (1 poste max, pas de video)", () => {
+    expect(parseConfig({})).toEqual({
       apiUrl: "http://localhost:8000",
       maxStations: 1,
+      mediaHost: null,
     })
   })
 
-  it("lit l'URL du serveur et le nombre de postes max (texte du .env)", () => {
+  it("traite une valeur vide comme absente", () => {
     expect(
-      parseConfig({ VITE_API_URL: "http://10.192.2.241:8000/", VITE_MAX_STATIONS: "4" })
-    ).toEqual({ apiUrl: "http://10.192.2.241:8000", maxStations: 4 })
+      parseConfig({
+        VITE_API_URL: "",
+        VITE_MAX_STATIONS: "",
+        VITE_MEDIA_HOST: "",
+      })
+    ).toEqual({
+      apiUrl: "http://localhost:8000",
+      maxStations: 1,
+      mediaHost: null,
+    })
+  })
+
+  it("lit l'URL du serveur, le nombre de postes max et l'hote MediaMTX (texte du .env)", () => {
+    expect(
+      parseConfig({
+        VITE_API_URL: "http://10.192.2.241:8000/",
+        VITE_MAX_STATIONS: "4",
+        VITE_MEDIA_HOST: "10.192.2.241",
+      })
+    ).toEqual({
+      apiUrl: "http://10.192.2.241:8000",
+      maxStations: 4,
+      mediaHost: "10.192.2.241",
+    })
   })
 
   it("refuse un nombre de postes invalide plutot que de l'afficher", () => {
@@ -28,5 +47,14 @@ describe("parseConfig", () => {
 
   it("refuse une URL de serveur invalide", () => {
     expect(() => parseConfig({ VITE_API_URL: "10.192.2.241:8000" })).toThrow()
+  })
+
+  it("refuse un hote MediaMTX avec schema ou port", () => {
+    expect(() =>
+      parseConfig({ VITE_MEDIA_HOST: "http://10.192.2.241" })
+    ).toThrow()
+    expect(() =>
+      parseConfig({ VITE_MEDIA_HOST: "10.192.2.241:8889" })
+    ).toThrow()
   })
 })

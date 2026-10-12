@@ -1,6 +1,6 @@
 # 0019 Capture d'écran du jeu : OBS vers MediaMTX
 
-Statut : Acceptée, flux vidéo non encore affiché dans le front. Date : 2026-10-12.
+Statut : Acceptée, flux vidéo lu par la page Live du front (WebRTC/WHEP, HLS natif). Date : 2026-10-12.
 
 ## Contexte
 
@@ -30,5 +30,7 @@ jeu sur le PC de jeu et pouvoir le revoir dans le navigateur, à côté des cour
   profil `baseline` ou `main` (WebRTC refuse certains profils).
 - Lecture de test : `http://localhost:8889/live/sim-1` (WebRTC) ou `http://localhost:8888/live/sim-1` (HLS).
 - Si le front est ouvert depuis un autre appareil, mettre l'IP du serveur dans `webrtcAdditionalHosts`.
-- À faire plus tard : lecteur vidéo dans la page Direct (WHEP), et authentification avant tout
-  usage hors réseau local.
+- Front : hôte MediaMTX dans `VITE_MEDIA_HOST` (hôte seul, ports ci-dessus). Page Live : un
+  lecteur WHEP par poste (`web/src/features/live/use-station-video.ts`), HLS lu nativement par le
+  navigateur quand il sait le faire (pas de hls.js).
+- À faire plus tard : authentification avant tout usage hors réseau local.

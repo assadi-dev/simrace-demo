@@ -88,7 +88,7 @@ uv run simrace-agent record --out ../recordings/session.jsonl
 ```
 # front (depuis web/)
 npm install
-npm run dev          # http://localhost:5173 ; .env.local : VITE_API_URL, VITE_MAX_STATIONS (voir .env.example)
+npm run dev          # http://localhost:5173 ; .env.local : VITE_API_URL, VITE_MAX_STATIONS, VITE_MEDIA_HOST (voir .env.example)
 npm run build        # tsc strict + build
 npm run lint
 npm test             # Vitest : contrats, store, fonctions pures

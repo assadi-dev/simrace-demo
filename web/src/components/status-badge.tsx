@@ -1,28 +1,32 @@
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import type { StationStatus } from "@/features/stations/status"
+import { STATUS_LABEL, type StationStatus } from "@/features/stations/status"
 
 /*
  * Un statut ne se lit jamais a la couleur seule (design.md 1.5) : libelle + pastille dont la
  * forme change (rond plein, carre arrondi, anneau), pour qu'un daltonien les distingue.
  */
 const STATUS = {
-  online: {
-    label: "En ligne",
-    variant: "success",
-    dot: "rounded-full bg-success",
-  },
-  paused: {
-    label: "En pause",
-    variant: "warning",
-    dot: "rounded-[2px] bg-warning",
-  },
-  offline: {
-    label: "Hors ligne",
-    variant: "danger",
-    dot: "rounded-full border-2 border-danger",
-  },
+  online: { variant: "success", dot: "rounded-full bg-success" },
+  paused: { variant: "warning", dot: "rounded-[2px] bg-warning" },
+  offline: { variant: "danger", dot: "rounded-full border-2 border-danger" },
 } as const
+
+/** Pastille seule, quand le libelle est ecrit a cote (vignettes du plein ecran). */
+export function StatusDot({
+  status,
+  className,
+}: {
+  status: StationStatus
+  className?: string
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn("size-2 shrink-0", STATUS[status].dot, className)}
+    />
+  )
+}
 
 export function StatusBadge({
   status,
@@ -34,14 +38,10 @@ export function StatusBadge({
   label?: string
   className?: string
 }) {
-  const config = STATUS[status]
   return (
-    <Badge variant={config.variant} className={className}>
-      <span
-        aria-hidden="true"
-        className={cn("size-2 shrink-0", config.dot)}
-      />
-      {label ?? config.label}
+    <Badge variant={STATUS[status].variant} className={className}>
+      <StatusDot status={status} />
+      {label ?? STATUS_LABEL[status]}
     </Badge>
   )
 }

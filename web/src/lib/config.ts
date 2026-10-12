@@ -17,6 +17,17 @@ const envSchema = z.object({
     emptyAsUndefined,
     z.coerce.number().int().positive().default(1)
   ),
+  /**
+   * Hote du serveur MediaMTX (decision 0019), sans schema ni port : `10.192.2.241`. Les ports
+   * WebRTC et HLS sont ceux de la decision. Absent ou vide = pas de video, affiches seulement.
+   */
+  VITE_MEDIA_HOST: z.preprocess(
+    emptyAsUndefined,
+    z
+      .string()
+      .regex(/^[A-Za-z0-9.-]+$/, "hote seul, sans http:// ni port")
+      .optional()
+  ),
 })
 
 export function parseConfig(env: Record<string, unknown>) {
@@ -24,6 +35,7 @@ export function parseConfig(env: Record<string, unknown>) {
   return {
     apiUrl: parsed.VITE_API_URL.replace(/\/+$/, ""),
     maxStations: parsed.VITE_MAX_STATIONS,
+    mediaHost: parsed.VITE_MEDIA_HOST ?? null,
   }
 }
 

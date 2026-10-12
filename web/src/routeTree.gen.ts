@@ -11,6 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as LiveIndexRouteImport } from './routes/live.index'
+import { Route as LiveStationIdIndexRouteImport } from './routes/live.$stationId.index'
+import { Route as LiveStationIdPleinEcranRouteImport } from './routes/live.$stationId.plein-ecran'
 import { Route as StationsStationIdIndexRouteImport } from './routes/stations.$stationId.index'
 import { Route as StationsStationIdIntegriteRouteImport } from './routes/stations.$stationId.integrite'
 
@@ -22,6 +25,21 @@ const IndexRoute = IndexRouteImport.update({
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
   path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveIndexRoute = LiveIndexRouteImport.update({
+  id: '/live/',
+  path: '/live/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveStationIdIndexRoute = LiveStationIdIndexRouteImport.update({
+  id: '/live/$stationId/',
+  path: '/live/$stationId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveStationIdPleinEcranRoute = LiveStationIdPleinEcranRouteImport.update({
+  id: '/live/$stationId/plein-ecran',
+  path: '/live/$stationId/plein-ecran',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StationsStationIdIndexRoute = StationsStationIdIndexRouteImport.update({
@@ -39,20 +57,29 @@ const StationsStationIdIntegriteRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/live/': typeof LiveIndexRoute
+  '/live/$stationId/plein-ecran': typeof LiveStationIdPleinEcranRoute
   '/stations/$stationId/integrite': typeof StationsStationIdIntegriteRoute
+  '/live/$stationId/': typeof LiveStationIdIndexRoute
   '/stations/$stationId/': typeof StationsStationIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/live': typeof LiveIndexRoute
+  '/live/$stationId/plein-ecran': typeof LiveStationIdPleinEcranRoute
   '/stations/$stationId/integrite': typeof StationsStationIdIntegriteRoute
+  '/live/$stationId': typeof LiveStationIdIndexRoute
   '/stations/$stationId': typeof StationsStationIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/live/': typeof LiveIndexRoute
+  '/live/$stationId/plein-ecran': typeof LiveStationIdPleinEcranRoute
   '/stations/$stationId/integrite': typeof StationsStationIdIntegriteRoute
+  '/live/$stationId/': typeof LiveStationIdIndexRoute
   '/stations/$stationId/': typeof StationsStationIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -60,26 +87,38 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/leaderboard'
+    | '/live/'
+    | '/live/$stationId/plein-ecran'
     | '/stations/$stationId/integrite'
+    | '/live/$stationId/'
     | '/stations/$stationId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/leaderboard'
+    | '/live'
+    | '/live/$stationId/plein-ecran'
     | '/stations/$stationId/integrite'
+    | '/live/$stationId'
     | '/stations/$stationId'
   id:
     | '__root__'
     | '/'
     | '/leaderboard'
+    | '/live/'
+    | '/live/$stationId/plein-ecran'
     | '/stations/$stationId/integrite'
+    | '/live/$stationId/'
     | '/stations/$stationId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LeaderboardRoute: typeof LeaderboardRoute
+  LiveIndexRoute: typeof LiveIndexRoute
+  LiveStationIdPleinEcranRoute: typeof LiveStationIdPleinEcranRoute
   StationsStationIdIntegriteRoute: typeof StationsStationIdIntegriteRoute
+  LiveStationIdIndexRoute: typeof LiveStationIdIndexRoute
   StationsStationIdIndexRoute: typeof StationsStationIdIndexRoute
 }
 
@@ -97,6 +136,27 @@ declare module '@tanstack/react-router' {
       path: '/leaderboard'
       fullPath: '/leaderboard'
       preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live/': {
+      id: '/live/'
+      path: '/live'
+      fullPath: '/live/'
+      preLoaderRoute: typeof LiveIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live/$stationId/': {
+      id: '/live/$stationId/'
+      path: '/live/$stationId'
+      fullPath: '/live/$stationId/'
+      preLoaderRoute: typeof LiveStationIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live/$stationId/plein-ecran': {
+      id: '/live/$stationId/plein-ecran'
+      path: '/live/$stationId/plein-ecran'
+      fullPath: '/live/$stationId/plein-ecran'
+      preLoaderRoute: typeof LiveStationIdPleinEcranRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stations/$stationId/': {
@@ -119,7 +179,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LeaderboardRoute: LeaderboardRoute,
+  LiveIndexRoute: LiveIndexRoute,
+  LiveStationIdPleinEcranRoute: LiveStationIdPleinEcranRoute,
   StationsStationIdIntegriteRoute: StationsStationIdIntegriteRoute,
+  LiveStationIdIndexRoute: LiveStationIdIndexRoute,
   StationsStationIdIndexRoute: StationsStationIdIndexRoute,
 }
 export const routeTree = rootRouteImport

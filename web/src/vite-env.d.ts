@@ -5,6 +5,8 @@ interface ImportMetaEnv {
   readonly VITE_API_URL?: string
   /** Nombre de postes du centre (KPI "Postes en ligne"). */
   readonly VITE_MAX_STATIONS?: string
+  /** Hote MediaMTX (decision 0019), sans schema ni port. */
+  readonly VITE_MEDIA_HOST?: string
 }
 
 interface ImportMeta {
