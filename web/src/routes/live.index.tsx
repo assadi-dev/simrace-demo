@@ -1,4 +1,4 @@
-import { useRef, type CSSProperties } from "react"
+import type { CSSProperties } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { PageHeader } from "@/components/page-header"
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card"
 import { ProtocolToggle } from "@/features/live/live-controls"
 import { LiveTile } from "@/features/live/live-tile"
-import { useGridTop } from "@/features/live/use-grid-top"
+import { useTopOffset } from "@/features/live/use-top-offset"
 import { useLiveFeed } from "@/features/live/use-live-feed"
 import { useNow } from "@/hooks/use-now"
 
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/live/")({
  * Mosaique : 1 colonne sur telephone, 2 des sm, 3 des lg, 4 des xl. Une tuile prend la largeur
  * de sa colonne, plafonnee des sm pour que deux rangees tiennent toujours dans la fenetre (les
  * 4 premiers postes visibles sans defiler en 2 colonnes) ; au-dela, la page defile.
- * - hauteur visible : 100svh, moins le haut de la grille (`--grid-top`, mesure) et la marge
+ * - hauteur visible : 100svh, moins le haut de la grille (`--top-offset`, mesure) et la marge
  *   basse de la page (6 unites) ;
  * - hors video 16/9, une tuile mesure 84 unites + 2 px de haut (padding 2 x 3, espace 3, pied
  *   12, bordures) et 6 unites + 2 px de large. `--spacing` porte deja --ui-scale ;
@@ -33,7 +33,7 @@ const MOSAIC_VARS = {
   "--gap": "calc(var(--spacing) * 5)",
   "--column": "calc((100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols))",
   "--two-rows":
-    "calc(((100svh - var(--grid-top, 0px) - var(--spacing) * 6 - var(--gap)) / 2 - var(--spacing) * 21 - 2px) * 16 / 9 + var(--spacing) * 6 + 2px)",
+    "calc(((100svh - var(--top-offset, 0px) - var(--spacing) * 6 - var(--gap)) / 2 - var(--spacing) * 21 - 2px) * 16 / 9 + var(--spacing) * 6 + 2px)",
 } as CSSProperties
 
 /** Accord au pluriel : `s` au-dela de 1. */
@@ -47,8 +47,7 @@ function LivePage() {
   const { feed, query } = useLiveFeed()
   const now = useNow()
   const withVideo = feed.filter((e) => e.station.online).length
-  const gridRef = useRef<HTMLDivElement>(null)
-  useGridTop(gridRef)
+  const gridRef = useTopOffset()
 
   return (
     <>
