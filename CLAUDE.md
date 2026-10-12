@@ -69,6 +69,10 @@ uv run pytest
 ```
 
 ```
+# dependances Docker (PostgreSQL, MediaMTX), depuis la racine
+docker compose -f .\dependencies\docker-compose.yml up -d
+docker compose -f .\dependencies\docker-compose.yml down
+
 # serveur
 cd server && uv run uvicorn app.main:app --reload
 

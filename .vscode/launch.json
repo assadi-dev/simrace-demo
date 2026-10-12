@@ -2,6 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "dependencies (Docker)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "docker compose -f ./dependencies/docker-compose.yml up -d",
+      "cwd": "${workspaceFolder}"
+    },
+    {
       "name": "server",
       "type": "node-terminal",
       "request": "launch",
