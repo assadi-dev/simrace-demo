@@ -20,7 +20,7 @@ webrtcAddress: :8889
 webrtcAllowOrigin: '*'
 # Adresse des candidats ICE : "localhost" suffit pour le navigateur de la meme machine,
 # a remplacer par l'IP du serveur si le front est ouvert depuis un autre appareil
-webrtcAdditionalHosts: [localhost]
+webrtcAdditionalHosts: [10.192.2.241]
 webrtcLocalUDPAddress: :8189
 
 hls: yes

@@ -15,14 +15,19 @@ services:
 
   # Relais video : OBS (PC de jeu) publie, le navigateur relit. Decision 0019.
   mediamtx:
-    image: bluenviron/mediamtx:1.12.3
+    image: bluenviron/mediamtx:latest
     container_name: simrace-mediamtx
     volumes:
       - ./volumes/mediamtx/mediamtx.yml:/mediamtx.yml:ro
+    environment:
+      - MTX_RTSPTRANSPORTS=tcp
+      - MTX_WEBRTCADDITIONALHOSTS=10.192.2.241
     ports:
       - "1935:1935" # RTMP : entree OBS
-      - "8890:8890/udp" # SRT : entree OBS (option)
+      - "8888:8888" # HLS : lecture de repli
       - "8889:8889" # WebRTC : lecture navigateur (WHEP)
       - "8189:8189/udp" # WebRTC : media (ICE)
-      - "8888:8888" # HLS : lecture de repli
+      - "8890:8890/udp" # SRT : entree OBS (option)
+      - "8892:8892/udp"
+      - "8893:8893/udp"
       - "127.0.0.1:9997:9997" # API de controle, en local seulement
