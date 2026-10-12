@@ -78,9 +78,6 @@ describe("flux video", () => {
       kind: "unavailable",
       text: "Flux indisponible : aucun flux publié",
     })
-    expect(videoOverlay("offline", { kind: "off" })?.text).toBe(
-      "Flux indisponible : poste hors ligne"
-    )
     // l'erreur l'emporte sur la pause
     expect(
       videoOverlay("paused", { kind: "error", reason: "MediaMTX injoignable" })
@@ -94,6 +91,19 @@ describe("flux video", () => {
     expect(videoOverlay("online", { kind: "unconfigured" })?.text).toBe(
       "Flux indisponible : serveur vidéo non configuré"
     )
+  })
+
+  it("montre le flux d'un poste sans telemetrie (hors ligne) quand OBS diffuse", () => {
+    expect(videoOverlay("offline", { kind: "playing" })).toBeNull()
+    expect(videoOverlay("offline", { kind: "snapshot", at: 0 })).toBeNull()
+    expect(videoOverlay("offline", { kind: "connecting" })?.kind).toBe(
+      "loading"
+    )
+    // sans flux non plus : la vraie raison, pas "poste hors ligne"
+    expect(
+      videoOverlay("offline", { kind: "error", reason: "aucun flux publié" })
+        ?.text
+    ).toBe("Flux indisponible : aucun flux publié")
   })
 
   it("ne pose rien sur le flux quand le jeu est en pause (voile desactive)", () => {

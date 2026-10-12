@@ -46,7 +46,7 @@ const s = (count: number) => (count > 1 ? "s" : "")
 function LivePage() {
   const { feed, query } = useLiveFeed()
   const now = useNow()
-  const withVideo = feed.filter((e) => e.station.online).length
+  const online = feed.filter((e) => e.station.online).length
   const gridRef = useTopOffset()
 
   return (
@@ -56,7 +56,7 @@ function LivePage() {
         badges={<PhaseBadge />}
         description={
           query.data
-            ? `${feed.length} poste${s(feed.length)}, ${withVideo} flux vidéo attendu${s(withVideo)} (postes en ligne ou en pause)`
+            ? `${feed.length} poste${s(feed.length)}, ${online} en ligne (télémétrie reçue depuis moins de 5 s)`
             : undefined
         }
         actions={<ProtocolToggle />}

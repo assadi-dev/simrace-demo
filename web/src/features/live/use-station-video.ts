@@ -22,8 +22,6 @@ import { config } from "@/lib/config"
 export type VideoState =
   /** Pas d'hote MediaMTX configure (VITE_MEDIA_HOST) : aucune video. */
   | { kind: "unconfigured" }
-  /** Poste hors ligne : aucune connexion tentee. */
-  | { kind: "off" }
   | { kind: "connecting" }
   | { kind: "playing" }
   /** Apercu : premiere image copiee a `at` (horloge du navigateur), flux ferme. */
@@ -230,7 +228,8 @@ const canPlayHls = () =>
       .canPlayType("application/vnd.apple.mpegurl") !== "")
 
 /**
- * Branche le flux du poste sur `videoRef`. `enabled` faux (poste hors ligne) : rien n'est ouvert.
+ * Branche le flux du poste sur `videoRef`, que sa telemetrie soit arrivee ou non : OBS peut
+ * diffuser avant que l'agent n'envoie son premier lot (ou apres qu'il s'est arrete).
  * Changer de poste ou de protocole ferme le flux precedent. Avec `snapshotRef`, mode apercu :
  * la premiere image est copiee dans ce canvas et le flux est ferme. L'URL du flux utilise le nom
  * MediaMTX du poste (identifiant en minuscules, media.ts), jamais l'identifiant brut.
@@ -240,12 +239,10 @@ export function useStationVideo(
   {
     stationId,
     protocol,
-    enabled,
     snapshotRef,
   }: {
     stationId: string
     protocol: Protocol
-    enabled: boolean
     snapshotRef?: RefObject<HTMLCanvasElement | null>
   }
 ): VideoState {
@@ -253,7 +250,7 @@ export function useStationVideo(
   const streamName = toMediaStreamName(stationId)
   const unsupported = protocol === "hls" && host !== null && !canPlayHls()
   const key =
-    host && enabled && streamName && !unsupported
+    host && streamName && !unsupported
       ? `${snapshotRef ? "apercu" : "direct"}:${protocol}:${host}:${streamName}`
       : null
   const [result, setResult] = useState<{
@@ -272,7 +269,6 @@ export function useStationVideo(
   }, [key, host, protocol, streamName, videoRef, snapshotRef])
 
   if (!host) return { kind: "unconfigured" }
-  if (!enabled) return { kind: "off" }
   if (!streamName)
     return {
       kind: "error",

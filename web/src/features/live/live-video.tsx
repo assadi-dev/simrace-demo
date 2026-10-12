@@ -84,11 +84,10 @@ export function LiveVideo({
   const protocol = useLivePrefs((s) => s.protocol)
   const muted = useLivePrefs((s) => s.muted)
   const volume = useLivePrefs((s) => s.volume)
-  const offline = status === "offline"
+  // la video ne depend pas de la telemetrie : un poste "hors ligne" peut diffuser quand meme
   const state = useStationVideo(videoRef, {
     stationId,
     protocol,
-    enabled: !offline,
     snapshotRef: preview ? snapshotRef : undefined,
   })
   const sizing = SIZES[size]
@@ -97,7 +96,7 @@ export function LiveVideo({
   // le volume n'est pas un attribut HTML : il se regle sur l'element
   useEffect(() => {
     if (videoRef.current) videoRef.current.volume = volume
-  }, [volume, offline])
+  }, [volume])
   const OverlayIcon =
     overlay?.kind === "loading"
       ? LoaderCircleIcon
@@ -113,22 +112,20 @@ export function LiveVideo({
         className
       )}
     >
-      {offline ? null : (
-        <video
-          ref={videoRef}
-          muted={preview || muted}
-          autoPlay
-          playsInline
-          aria-label={`Vidéo du poste ${stationId}`}
-          className={cn(
-            "absolute inset-0 size-full",
-            size === "fullscreen" ? "object-contain" : "object-cover"
-          )}
-        />
-      )}
+      <video
+        ref={videoRef}
+        muted={preview || muted}
+        autoPlay
+        playsInline
+        aria-label={`Vidéo du poste ${stationId}`}
+        className={cn(
+          "absolute inset-0 size-full",
+          size === "fullscreen" ? "object-contain" : "object-cover"
+        )}
+      />
 
       {/* apercu : premiere image du flux, visible une fois copiee */}
-      {preview && !offline ? (
+      {preview ? (
         <canvas
           ref={snapshotRef}
           aria-hidden="true"
@@ -162,7 +159,7 @@ export function LiveVideo({
 
       {children}
 
-      {controls && !offline ? (
+      {controls ? (
         <VideoControls
           videoRef={videoRef}
           stationId={stationId}

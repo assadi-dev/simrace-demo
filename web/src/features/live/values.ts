@@ -93,14 +93,14 @@ const unavailable = (reason: string): VideoOverlay => ({
 
 /**
  * Ce qui recouvre la video d'un poste. Un flux absent ou en erreur l'emporte : on montre
- * l'etat, jamais une image qui laisserait croire a un flux. Le chargement n'est affiche qu'a la
+ * l'etat, jamais une image qui laisserait croire a un flux. La telemetrie n'y joue pas : un
+ * poste "hors ligne" (aucun lot depuis 5 s) dont OBS diffuse montre son flux. Le chargement n'est affiche qu'a la
  * premiere connexion (les nouveaux essais gardent l'etat d'erreur, sans clignoter).
  */
 export function videoOverlay(
   status: StationStatus,
   state: VideoState
 ): VideoOverlay {
-  if (status === "offline") return unavailable("poste hors ligne")
   if (state.kind === "error") return unavailable(state.reason)
   if (state.kind === "unconfigured")
     return unavailable("serveur vidéo non configuré")
