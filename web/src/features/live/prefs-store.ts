@@ -1,7 +1,5 @@
 import { create } from "zustand"
 
-import type { Protocol } from "@/features/live/media"
-
 /**
  * Volume par defaut (30 %), repris aussi quand on reactive le son apres l'avoir baisse a zero.
  * Son actif par defaut : si le navigateur refuse la lecture avec son (aucune interaction avec
@@ -10,14 +8,12 @@ import type { Protocol } from "@/features/live/media"
 export const DEFAULT_VOLUME = 0.3
 
 type LivePrefs = {
-  protocol: Protocol
   /** Son coupe. Les apercus de la mosaique sont toujours muets, quel que soit ce choix. */
   muted: boolean
   /** Volume du lecteur, de 0 a 1 (garde quand le son est coupe). */
   volume: number
   /** Surimpressions du plein ecran epinglees : elles ne se masquent plus d'elles-memes. */
   overlaysPinned: boolean
-  setProtocol: (protocol: Protocol) => void
   toggleMuted: () => void
   setMuted: (muted: boolean) => void
   /** Volume choisi au curseur : 0 coupe le son, une autre valeur le reactive. */
@@ -25,13 +21,14 @@ type LivePrefs = {
   toggleOverlaysPinned: () => void
 }
 
-/** Choix de lecture partages par la mosaique, la vue en grand et le plein ecran. */
+/**
+ * Choix de lecture partages par la mosaique, la vue en grand et le plein ecran. Le protocole,
+ * lui, vit dans l'URL (use-protocol.ts).
+ */
 export const useLivePrefs = create<LivePrefs>()((set) => ({
-  protocol: "webrtc",
   muted: false,
   volume: DEFAULT_VOLUME,
   overlaysPinned: false,
-  setProtocol: (protocol) => set({ protocol }),
   toggleMuted: () =>
     set((state) =>
       state.muted && state.volume === 0

@@ -3,6 +3,7 @@ import { LoaderCircleIcon, PauseIcon, VideoOffIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { useLivePrefs } from "@/features/live/prefs-store"
+import { useProtocol } from "@/features/live/use-protocol"
 import { useStationVideo } from "@/features/live/use-station-video"
 import {
   liveBadgeStatus,
@@ -133,7 +134,7 @@ export function LiveVideo({
   const ownVideoRef = useRef<HTMLVideoElement>(null)
   const videoRef = externalVideoRef ?? ownVideoRef
   const snapshotRef = useRef<HTMLCanvasElement>(null)
-  const protocol = useLivePrefs((s) => s.protocol)
+  const [protocol] = useProtocol()
   const muted = useLivePrefs((s) => s.muted)
   const volume = useLivePrefs((s) => s.volume)
   // la video ne depend pas de la telemetrie : un poste "hors ligne" peut diffuser quand meme

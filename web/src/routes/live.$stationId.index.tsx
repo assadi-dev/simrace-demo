@@ -32,6 +32,7 @@ export const Route = createFileRoute("/live/$stationId/")({
 const mosaicLink = (
   <Link
     to="/live"
+    search
     className="font-medium text-primary-text underline-offset-4 hover:underline"
   >
     Live
@@ -116,13 +117,17 @@ function LiveFocusPage() {
           <>
             <ProtocolToggle />
             <Button asChild variant="secondary">
-              <Link to="/live">
+              <Link to="/live" search>
                 <LayoutGridIcon aria-hidden="true" className="size-4.5" />
                 Retour à la mosaïque
               </Link>
             </Button>
             <Button asChild>
-              <Link to="/live/$stationId/plein-ecran" params={{ stationId }}>
+              <Link
+                to="/live/$stationId/plein-ecran"
+                params={{ stationId }}
+                search
+              >
                 <MaximizeIcon aria-hidden="true" className="size-4.5" />
                 Plein écran
               </Link>

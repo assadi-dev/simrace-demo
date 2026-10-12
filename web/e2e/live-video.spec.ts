@@ -160,6 +160,53 @@ test("le plein ecran masque ses surimpressions sans activite, sauf epinglees", a
   await expect(page).toHaveURL(new RegExp(`/live/${stationId}$`))
 })
 
+test("le choix HLS vit dans l'URL et suit le plein ecran", async ({
+  page,
+  request,
+}) => {
+  const stationId = uniqueId("sim")
+  const agent = new FakeAgent(request, {
+    stationId,
+    track: "spa",
+    driver: "Léa Garnier",
+  })
+  await agent.sendBatch()
+  await page.goto(`/live/${stationId}`)
+
+  // WebRTC par defaut, absent de l'URL
+  const toggle = page.getByRole("radiogroup", { name: "Protocole vidéo" })
+  await expect(toggle.getByRole("radio", { name: "WebRTC" })).toBeChecked()
+  await expect(page).toHaveURL(new RegExp(`/live/${stationId}$`))
+
+  await toggle.getByRole("radio", { name: "HLS" }).click()
+  await expect(page).toHaveURL(
+    new RegExp(`/live/${stationId}\\?protocole=hls$`)
+  )
+
+  // plein ecran puis retour : le choix est garde
+  await page
+    .getByRole("link", { name: "Plein écran", exact: true })
+    .first()
+    .click()
+  await expect(page).toHaveURL(
+    new RegExp(`/live/${stationId}/plein-ecran\\?protocole=hls$`)
+  )
+  await expect(
+    page.getByRole("dialog", { name: `Plein écran ${stationId}` })
+  ).toBeVisible()
+  await page.keyboard.press("Escape")
+  await expect(page).toHaveURL(
+    new RegExp(`/live/${stationId}\\?protocole=hls$`)
+  )
+  await expect(toggle.getByRole("radio", { name: "HLS" })).toBeChecked()
+
+  // rechargement et retour a la mosaique : toujours HLS
+  await page.reload()
+  await expect(toggle.getByRole("radio", { name: "HLS" })).toBeChecked()
+  await page.getByRole("link", { name: "Retour à la mosaïque" }).click()
+  await expect(page).toHaveURL(/\/live\?protocole=hls$/)
+})
+
 test("un poste inconnu le dit, sans inventer de valeurs", async ({ page }) => {
   await page.goto("/live/inconnu-e2e")
   await expect(page.getByText("Poste inconnu", { exact: true })).toBeVisible()

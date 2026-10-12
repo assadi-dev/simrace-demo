@@ -29,6 +29,7 @@ export function StationThumb({
     <Link
       to={dark ? "/live/$stationId/plein-ecran" : "/live/$stationId"}
       params={{ stationId: station.station_id }}
+      search
       replace={dark}
       aria-current={selected ? "true" : undefined}
       className={cn(

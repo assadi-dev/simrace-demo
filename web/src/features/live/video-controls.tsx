@@ -198,6 +198,7 @@ export function VideoControls({
           <Link
             to="/live/$stationId/plein-ecran"
             params={{ stationId }}
+            search
             aria-label="Plein écran"
             className={iconButton}
           >

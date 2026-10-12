@@ -70,6 +70,7 @@ export function LiveTile({
             <Link
               to="/live/$stationId"
               params={{ stationId }}
+              search
               aria-label={`Voir en grand ${stationId}`}
               title="Voir en grand"
             >
@@ -80,6 +81,7 @@ export function LiveTile({
             <Link
               to="/live/$stationId/plein-ecran"
               params={{ stationId }}
+              search
               aria-label={`Plein écran ${stationId}`}
               title="Plein écran"
             >

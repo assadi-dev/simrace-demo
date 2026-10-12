@@ -50,7 +50,11 @@ function LiveFullscreenPage() {
 
   useEffect(() => {
     const exit = () =>
-      void navigate({ to: "/live/$stationId", params: { stationId } })
+      void navigate({
+        to: "/live/$stationId",
+        params: { stationId },
+        search: true,
+      })
     // le clic qui a ouvert la page autorise le plein ecran ; sinon la couche fixe suffit
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen?.().catch(() => {})
@@ -287,6 +291,7 @@ function FullscreenOverlays({
               <Link
                 to="/live/$stationId"
                 params={{ stationId }}
+                search
                 aria-label="Quitter le plein écran"
                 className={cn(iconButton, barButton)}
               >
