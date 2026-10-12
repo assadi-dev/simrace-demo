@@ -8,12 +8,12 @@ import {
   NOT_AVAILABLE,
 } from "@/lib/format"
 
-/** Tri de la page Postes : en ligne d'abord, puis par identifiant. */
+/** Tri de la page Postes : en ligne d'abord, puis par identifiant (sim-2 avant sim-10). */
 export function sortStations(stations: readonly Station[]): Station[] {
   return [...stations].sort(
     (a, b) =>
       Number(b.online) - Number(a.online) ||
-      a.station_id.localeCompare(b.station_id)
+      a.station_id.localeCompare(b.station_id, "fr", { numeric: true })
   )
 }
 
