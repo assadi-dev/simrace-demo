@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils"
 
 /*
  * Lecteur d'un poste (maquettes 5, 6 et 7). Les tailles suivent les maquettes : icone de 40,
- * 64 et 80 px, texte de 13, 15 et 16 px. En tuile et en grand, cadre 16/9 ; en plein ecran,
+ * 64 et 80 px, texte de 13, 15 et 16 px, le tout multiplie par --ui-scale. En tuile et en grand, cadre 16/9 ; en plein ecran,
  * la video remplit l'ecran sans etre deformee (bandes noires si l'ecran n'est pas en 16/9).
  */
 const SIZES = {
@@ -26,12 +26,13 @@ const SIZES = {
   },
   focus: {
     frame: "relative aspect-video rounded-md",
-    placeholder: "gap-2.5 text-[15px] leading-5 text-white/70",
+    placeholder: "gap-2.5 text-nav font-normal text-white/70",
     icon: "size-16",
   },
   fullscreen: {
     frame: "absolute inset-0",
-    placeholder: "gap-3 text-base leading-6 text-white/50",
+    placeholder:
+      "gap-3 text-[calc(16px*var(--ui-scale))] leading-6 text-white/50",
     icon: "size-20",
   },
 } as const

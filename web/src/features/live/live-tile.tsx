@@ -58,8 +58,9 @@ export function LiveTile({
         )}
       </LiveVideo>
 
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-1 pb-1">
-        <div className="flex min-w-0 flex-col">
+      {/* hauteur fixe (12 unites, bouton h-11 + pb-1) : la mosaique calcule la taille des tuiles avec */}
+      <div className="flex items-center justify-between gap-3 px-1 pb-1">
+        <div className="flex min-w-0 flex-1 flex-col">
           <span className="truncate text-sm font-medium">
             {session.track} · {session.car}
           </span>

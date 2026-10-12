@@ -172,7 +172,7 @@ function LiveFullscreenPage() {
                   <span className="text-display">
                     {roundedSpeed(status, sample)}
                   </span>
-                  <span className="text-[15px] leading-5 text-white/70">
+                  <span className="text-nav font-normal text-white/70">
                     km/h
                   </span>
                 </div>

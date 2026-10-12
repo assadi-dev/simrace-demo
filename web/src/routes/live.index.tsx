@@ -40,11 +40,29 @@ function LivePage() {
         }
       />
 
-      {/* 560 px minimum par tuile (maquette) : 2 colonnes sur un ecran de 1360 px */}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,560px),1fr))] gap-5">
-        {feed.map((entry) => (
-          <LiveTile key={entry.station.station_id} entry={entry} now={now} />
-        ))}
+      {/*
+        Des sm, les 4 tuiles tiennent dans la fenetre (2 x 2, sans defiler) : le conteneur prend
+        la hauteur restante sous l'en-tete (unites cqw/cqh) et une tuile mesure le plus petit de
+        - la moitie de la largeur, moins la moitie de l'espace gap-5 (2,5 unites) ;
+        - la largeur ou deux rangees tiennent en hauteur. Hors video 16/9, une tuile a une
+          hauteur fixe de 84 unites x echelle + 2 px (padding 2 x 3, espace 3, pied 12 unites,
+          bordures), et 6 unites + 2 px en largeur. `--spacing` porte deja --ui-scale.
+        Le conteneur est une couche absolue : la hauteur d'un element flex sous un min-h-svh
+        n'est pas "definie" et Chrome y resout cqh a 0.
+        Sur telephone : une colonne, la page defile.
+      */}
+      <div className="sm:relative sm:min-h-120 sm:flex-1">
+        <div className="sm:@container-size sm:absolute sm:inset-0">
+          <div className="grid gap-5 sm:grid-cols-[repeat(2,var(--tile-w))] sm:justify-center sm:[--tile-w:min(calc(50cqw-var(--spacing)*2.5),calc((50cqh-var(--spacing)*23.5-2px)*16/9+var(--spacing)*6+2px))]">
+            {feed.map((entry) => (
+              <LiveTile
+                key={entry.station.station_id}
+                entry={entry}
+                now={now}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </>
   )
