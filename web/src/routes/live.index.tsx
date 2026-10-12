@@ -3,7 +3,12 @@ import { createFileRoute } from "@tanstack/react-router"
 
 import { PageHeader } from "@/components/page-header"
 import { PhaseBadge } from "@/components/status-badge"
-import { Badge } from "@/components/ui/badge"
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { ProtocolToggle } from "@/features/live/live-controls"
 import { LiveTile } from "@/features/live/live-tile"
 import { useGridTop } from "@/features/live/use-grid-top"
@@ -31,13 +36,15 @@ const MOSAIC_VARS = {
     "calc(((100svh - var(--grid-top, 0px) - var(--spacing) * 6 - var(--gap)) / 2 - var(--spacing) * 21 - 2px) * 16 / 9 + var(--spacing) * 6 + 2px)",
 } as CSSProperties
 
+/** Accord au pluriel : `s` au-dela de 1. */
+const s = (count: number) => (count > 1 ? "s" : "")
+
 /**
  * Live (maquette 5) : un apercu par poste (premiere image du flux, sans son), telemetrie du
  * flux /stream en surimpression. La video en direct est dans la vue en grand et le plein ecran.
- * Postes et telemetrie : donnees de demo au format du serveur (features/live/mock.ts).
  */
 function LivePage() {
-  const feed = useLiveFeed()
+  const { feed, query } = useLiveFeed()
   const now = useNow()
   const withVideo = feed.filter((e) => e.station.online).length
   const gridRef = useRef<HTMLDivElement>(null)
@@ -47,15 +54,34 @@ function LivePage() {
     <>
       <PageHeader
         title="Live"
-        badges={
-          <>
-            <PhaseBadge />
-            <Badge variant="secondary">Données de démo</Badge>
-          </>
+        badges={<PhaseBadge />}
+        description={
+          query.data
+            ? `${feed.length} poste${s(feed.length)}, ${withVideo} flux vidéo attendu${s(withVideo)} (postes en ligne ou en pause)`
+            : undefined
         }
-        description={`${feed.length} postes, ${withVideo} flux vidéo attendus (postes en ligne ou en pause)`}
         actions={<ProtocolToggle />}
       />
+
+      {query.isPending ? (
+        <p className="px-1 text-muted-foreground">Chargement des postes…</p>
+      ) : query.isError ? (
+        <Card className="px-6">
+          <CardHeader className="px-0">
+            <CardTitle>Serveur injoignable</CardTitle>
+            <CardDescription>{query.error.message}</CardDescription>
+          </CardHeader>
+        </Card>
+      ) : feed.length === 0 ? (
+        <Card className="px-6">
+          <CardHeader className="px-0">
+            <CardTitle>Aucun poste déclaré</CardTitle>
+            <CardDescription>
+              Un poste apparaît dès que l'agent envoie son premier lot.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : null}
 
       <div className="@container">
         <div

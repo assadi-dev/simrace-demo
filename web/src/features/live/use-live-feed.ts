@@ -1,55 +1,37 @@
-import { useEffect, useMemo } from "react"
-import { create } from "zustand"
+import { useMemo } from "react"
+import { useQuery } from "@tanstack/react-query"
 
+import type { Station } from "@/contracts/stations"
+import { stationsQueryOptions } from "@/features/stations/queries"
 import { sortStations } from "@/features/stations/summary"
-import {
-  createMockFeed,
-  tickMockFeed,
-  type LiveFeedEntry,
-} from "@/features/live/mock"
+import { useLiveStore, type LiveStation } from "@/stores/live-store"
 
-/** Rythme des lots de l'agent : un toutes les 200 ms par poste. */
-const BATCH_MS = 200
-
-/** Demo partagee par la mosaique, la vue en grand et le plein ecran (pas de remise a zero). */
-const useMockFeed = create<{
-  feed: LiveFeedEntry[]
-  tick: (now: number) => void
-}>()((set) => ({
-  feed: createMockFeed(Date.now()),
-  tick: (now) => set((s) => ({ feed: tickMockFeed(s.feed, BATCH_MS, now) })),
-}))
-
-let readers = 0
-let timer: ReturnType<typeof setInterval> | undefined
+/** Un poste vu par la page Live : sa ligne de GET /stations et son etat du flux /stream. */
+export type LiveFeedEntry = {
+  station: Station
+  /** Absent tant que le flux n'a apporte aucun echantillon de ce poste. */
+  live: LiveStation | undefined
+}
 
 /**
- * Postes de la page Live et leur dernier echantillon, en ligne d'abord. Pour l'instant, donnees
- * de demo au format du serveur (mock.ts), qui avancent d'un lot toutes les 200 ms tant qu'un
- * ecran Live est ouvert. Pour brancher le vrai serveur : `useQuery(stationsQueryOptions)` et
- * `useLiveStore((s) => s.stations)`, meme forme.
+ * Postes de la page Live, en ligne d'abord : GET /stations (toutes les 2 s) pour la liste, le
+ * nom du PC et l'etat en ligne, le store du direct (/stream) pour le dernier echantillon.
+ * `query` sert aux etats de chargement et d'erreur.
  */
-export function useLiveFeed(): LiveFeedEntry[] {
-  const feed = useMockFeed((s) => s.feed)
+export function useLiveFeed() {
+  const query = useQuery(stationsQueryOptions)
+  const live = useLiveStore((state) => state.stations)
 
-  useEffect(() => {
-    readers += 1
-    if (readers === 1) {
-      timer = setInterval(
-        () => useMockFeed.getState().tick(Date.now()),
-        BATCH_MS
-      )
-    }
-    return () => {
-      readers -= 1
-      if (readers === 0) clearInterval(timer)
-    }
-  }, [])
+  const feed = useMemo<LiveFeedEntry[]>(
+    () =>
+      query.data
+        ? sortStations(query.data).map((station) => ({
+            station,
+            live: live[station.station_id],
+          }))
+        : [],
+    [query.data, live]
+  )
 
-  return useMemo(() => {
-    const byId = new Map(feed.map((e) => [e.station.station_id, e]))
-    return sortStations(feed.map((e) => e.station)).flatMap(
-      (s) => byId.get(s.station_id) ?? []
-    )
-  }, [feed])
+  return { feed, query }
 }

@@ -3,7 +3,6 @@ import { LayoutGridIcon, MaximizeIcon } from "lucide-react"
 
 import { PageHeader } from "@/components/page-header"
 import { PhaseBadge } from "@/components/status-badge"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -47,11 +46,19 @@ const mosaicLink = (
  */
 function LiveFocusPage() {
   const { stationId } = Route.useParams()
-  const feed = useLiveFeed()
+  const { feed, query } = useLiveFeed()
   const now = useNow()
   const entry = feed.find((e) => e.station.station_id === stationId)
 
   if (!entry) {
+    const [title, detail] = query.isPending
+      ? ["Chargement des postes…", undefined]
+      : query.isError
+        ? ["Serveur injoignable", query.error.message]
+        : [
+            "Poste inconnu",
+            `Aucun poste ${stationId} dans la liste. Revenez à la mosaïque pour en choisir un.`,
+          ]
     return (
       <>
         <PageHeader
@@ -64,11 +71,8 @@ function LiveFocusPage() {
         />
         <Card className="px-6">
           <CardHeader className="px-0">
-            <CardTitle>Poste inconnu</CardTitle>
-            <CardDescription>
-              Aucun poste {stationId} dans la liste. Revenez à la mosaïque pour
-              en choisir un.
-            </CardDescription>
+            <CardTitle>{title}</CardTitle>
+            {detail ? <CardDescription>{detail}</CardDescription> : null}
           </CardHeader>
         </Card>
       </>
@@ -91,12 +95,7 @@ function LiveFocusPage() {
           </>
         }
         title={`${session.driver} · ${stationId}`}
-        badges={
-          <>
-            <PhaseBadge />
-            <Badge variant="secondary">Données de démo</Badge>
-          </>
-        }
+        badges={<PhaseBadge />}
         description={[
           session.track,
           session.car,

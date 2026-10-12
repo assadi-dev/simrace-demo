@@ -6,7 +6,7 @@ import { config } from "@/lib/config"
 /*
  * Lecture du flux video d'un poste (decision 0019). WebRTC : client WHEP ecrit a la main, comme
  * tools/video-viewer.html. HLS : lecture native du navigateur (Safari, Chrome recent), sans
- * bibliotheque. Tant que rien n'est lu, la balise <video> montre son affiche.
+ * bibliotheque.
  *
  * Mode apercu (tuiles de la mosaique) : video seule, sans piste audio. La premiere image decodee
  * est copiee dans un <canvas>, puis la connexion est fermee : une tuile ne consomme du reseau que
@@ -14,8 +14,8 @@ import { config } from "@/lib/config"
  */
 
 export type VideoState =
-  /** Pas d'hote MediaMTX configure (VITE_MEDIA_HOST) : affiche seulement. */
-  | { kind: "demo" }
+  /** Pas d'hote MediaMTX configure (VITE_MEDIA_HOST) : aucune video. */
+  | { kind: "unconfigured" }
   /** Poste hors ligne : aucune connexion tentee. */
   | { kind: "off" }
   | { kind: "connecting" }
@@ -246,7 +246,7 @@ export function useStationVideo(
       : playHls(video, hlsUrl(host, stationId), report, snapshot)
   }, [key, host, protocol, stationId, videoRef, snapshotRef])
 
-  if (!host) return { kind: "demo" }
+  if (!host) return { kind: "unconfigured" }
   if (!enabled) return { kind: "off" }
   if (unsupported)
     return { kind: "error", reason: "HLS non lu par ce navigateur" }

@@ -97,7 +97,7 @@ tampons --requestAnimationFrame (20 images/s)--> uPlot (vitesse, gaz et frein)
 | `/stations/:id` | **Direct** : KPI, courbes, position sur la piste, tours | Pilote, opérateur | flux `samples` filtré sur le poste |
 | `/stations/:id/integrite` | **Intégrité** : compteurs, raisons de rejet, runs | Opérateur, démo recruteur | `/stations` (+ phase 2 : lots) |
 | `/leaderboard` | **Leaderboard** : pilotes par circuit (`?circuit=`), position, temps en direct | Pilotes, centre | `/stations` + dernier échantillon du flux |
-| `/live`, `/live/:id`, `/live/:id/plein-ecran` | **Live** (maquettes 5, 6, 7) : mosaïque vidéo, vue en grand, plein écran | Opérateur, spectateurs | Vidéo MediaMTX (décision 0019) ; postes et télémétrie : **données de démo** au format du serveur (`features/live/mock.ts`) |
+| `/live`, `/live/:id`, `/live/:id/plein-ecran` | **Live** (maquettes 5, 6, 7) : mosaïque vidéo, vue en grand, plein écran | Opérateur, spectateurs | Vidéo MediaMTX (décision 0019) ; `/stations` + dernier échantillon du flux |
 
 ## Stack
 
@@ -124,11 +124,12 @@ direct), nuqs (état dans l'URL), Vitest et Playwright. uPlot pour les courbes.
 5. Playwright : **socle fait** (`web/e2e/`, 13 scénarios, vrai serveur, de vrais lots, données
    du serveur de test dans un dossier temporaire). Une courbe qui se dessine et une carte réelle
    enregistrée par un faux tour sont vérifiées. Reste : un doublon injecté incrémente le compteur.
-6. Live : **fait** (maquettes 5, 6, 7). Mosaïque de 1 à 4 colonnes (sm, lg, xl), deux rangées
-   toujours visibles dans la fenêtre dès sm ; 15 postes de démo. Vraie vidéo WebRTC si `VITE_MEDIA_HOST` est défini, sinon
-   affiches 16/9 (générées, `features/live/posters/`). Postes et télémétrie simulés au format exact
-   de `GET /stations` et de `/stream` (validés par les schémas Zod) ; pour brancher le serveur,
-   remplacer `useLiveFeed` par la requête des postes et le store du direct. Latence et delta : n.d.
+6. Live : **fait** (maquettes 5, 6, 7), branché sur `GET /stations` et le flux `/stream`.
+   Mosaïque de 1 à 4 colonnes (sm, lg, xl), deux rangées toujours visibles dans la fenêtre dès
+   sm. Chaque tuile montre la première image du flux WebRTC (vidéo seule, connexion fermée
+   ensuite) ; la vue en grand et le plein écran lisent le direct avec le son. Sans
+   `VITE_MEDIA_HOST`, ou si le flux est absent ou en erreur, la carte le dit (« Flux
+   indisponible : … »), sans image de remplacement. Latence et delta : n.d.
 7. Phase 2 selon l'avancement : chaîne des lots, validité du tour, coordonnées de piste.
 
 ## Décisions à trancher

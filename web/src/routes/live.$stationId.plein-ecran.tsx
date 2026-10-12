@@ -27,7 +27,7 @@ const glass = "border border-white/12 bg-sand-950/70"
 function LiveFullscreenPage() {
   const { stationId } = Route.useParams()
   const navigate = useNavigate()
-  const feed = useLiveFeed()
+  const { feed } = useLiveFeed()
   const muted = useLivePrefs((s) => s.muted)
   const toggleMuted = useLivePrefs((s) => s.toggleMuted)
 

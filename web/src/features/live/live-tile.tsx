@@ -8,7 +8,7 @@ import {
   OverlayChip,
   VideoStatusBadge,
 } from "@/features/live/live-video"
-import type { LiveFeedEntry } from "@/features/live/mock"
+import type { LiveFeedEntry } from "@/features/live/use-live-feed"
 import { overlayTelemetry } from "@/features/live/values"
 import { stationStatus } from "@/features/stations/status"
 import { formatAgo, NOT_AVAILABLE } from "@/lib/format"

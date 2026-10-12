@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import { createMockFeed } from "@/features/live/mock"
+import samplesEvent from "@/contracts/fixtures/samples-event.json"
+import { samplesEventSchema } from "@/contracts/telemetry"
 import { hlsUrl, whepUrl } from "@/features/live/media"
 import {
   liveStats,
@@ -9,9 +10,17 @@ import {
   videoOverlay,
 } from "@/features/live/values"
 
-const sample = createMockFeed(Date.UTC(2026, 9, 12, 18)).find(
-  (e) => e.station.station_id === "sim-1"
-)!.live!.latest
+// echantillon capture sur un vrai serveur, avec les valeurs d'un tour en cours
+const sample = {
+  ...samplesEventSchema.parse(samplesEvent).samples[0],
+  speed_kmh: 186.9,
+  gear: 4,
+  rpm: 8029,
+  completed_laps: 1,
+  lap_time_ms: 55_200,
+  last_lap_ms: 114_812,
+  best_lap_ms: 114_812,
+}
 
 describe("surimpressions de la page Live", () => {
   it("resume vitesse arrondie, tour et chrono", () => {
@@ -65,7 +74,7 @@ describe("flux video", () => {
   })
 
   it("montre le chargement a la premiere connexion", () => {
-    expect(videoOverlay("online", { kind: "connecting" }, true)).toEqual({
+    expect(videoOverlay("online", { kind: "connecting" })).toEqual({
       kind: "loading",
       text: "Connexion au flux…",
     })
@@ -73,39 +82,29 @@ describe("flux video", () => {
 
   it("montre l'etat du flux absent ou en erreur, jamais une image a la place", () => {
     expect(
-      videoOverlay(
-        "online",
-        { kind: "error", reason: "aucun flux publié" },
-        true
-      )
+      videoOverlay("online", { kind: "error", reason: "aucun flux publié" })
     ).toEqual({
       kind: "unavailable",
       text: "Flux indisponible : aucun flux publié",
     })
-    expect(videoOverlay("offline", { kind: "off" }, true)?.text).toBe(
+    expect(videoOverlay("offline", { kind: "off" })?.text).toBe(
       "Flux indisponible : poste hors ligne"
     )
     // l'erreur l'emporte sur la pause
     expect(
-      videoOverlay(
-        "paused",
-        { kind: "error", reason: "MediaMTX injoignable" },
-        true
-      )?.kind
+      videoOverlay("paused", { kind: "error", reason: "MediaMTX injoignable" })
+        ?.kind
     ).toBe("unavailable")
   })
 
-  it("laisse voir l'image : apercu, direct, ou affiche en demo", () => {
-    expect(
-      videoOverlay("online", { kind: "snapshot", at: 0 }, false)
-    ).toBeNull()
-    expect(videoOverlay("online", { kind: "playing" }, false)).toBeNull()
-    expect(videoOverlay("online", { kind: "demo" }, true)).toBeNull()
-    expect(videoOverlay("online", { kind: "demo" }, false)?.kind).toBe(
-      "unavailable"
+  it("laisse voir l'image de l'apercu ou du direct, rien sans serveur video", () => {
+    expect(videoOverlay("online", { kind: "snapshot", at: 0 })).toBeNull()
+    expect(videoOverlay("online", { kind: "playing" })).toBeNull()
+    expect(videoOverlay("online", { kind: "unconfigured" })?.text).toBe(
+      "Flux indisponible : serveur vidéo non configuré"
     )
-    expect(
-      videoOverlay("paused", { kind: "snapshot", at: 0 }, false)?.kind
-    ).toBe("paused")
+    expect(videoOverlay("paused", { kind: "snapshot", at: 0 })?.kind).toBe(
+      "paused"
+    )
   })
 })

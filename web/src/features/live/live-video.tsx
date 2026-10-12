@@ -2,7 +2,6 @@ import { useRef, type ReactNode } from "react"
 import { LoaderCircleIcon, PauseIcon, VideoOffIcon } from "lucide-react"
 
 import { StatusBadge } from "@/components/status-badge"
-import { MOCK_POSTERS } from "@/features/live/mock"
 import { useLivePrefs } from "@/features/live/prefs-store"
 import { useStationVideo } from "@/features/live/use-station-video"
 import { videoOverlay } from "@/features/live/values"
@@ -88,13 +87,7 @@ export function LiveVideo({
     snapshotRef: preview ? snapshotRef : undefined,
   })
   const sizing = SIZES[size]
-  // affiche seulement en demo : sinon une image fixe passerait pour le flux
-  const poster = state.kind === "demo" ? MOCK_POSTERS[stationId] : undefined
-  const overlay = videoOverlay(
-    status,
-    state,
-    MOCK_POSTERS[stationId] !== undefined
-  )
+  const overlay = videoOverlay(status, state)
   const OverlayIcon =
     overlay?.kind === "loading"
       ? LoaderCircleIcon
@@ -113,7 +106,6 @@ export function LiveVideo({
       {offline ? null : (
         <video
           ref={videoRef}
-          poster={poster}
           muted={preview || muted}
           autoPlay
           playsInline

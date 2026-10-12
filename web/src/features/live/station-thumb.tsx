@@ -2,14 +2,14 @@ import { Link } from "@tanstack/react-router"
 import { VideoIcon } from "lucide-react"
 
 import { StatusBadge, StatusDot } from "@/components/status-badge"
-import { MOCK_POSTERS, type LiveFeedEntry } from "@/features/live/mock"
+import type { LiveFeedEntry } from "@/features/live/use-live-feed"
 import { STATUS_LABEL, stationStatus } from "@/features/stations/status"
 import { cn } from "@/lib/utils"
 
 /*
  * Vignette d'un poste pour changer de lecteur : "Autres postes" de la vue en grand (clair,
  * maquette 6) et colonne "Postes" du plein ecran (sombre, maquette 7). Une vignette n'ouvre
- * aucun flux : un seul lecteur actif, l'affiche suffit.
+ * aucun flux : un seul lecteur actif.
  */
 export function StationThumb({
   entry,
@@ -23,8 +23,6 @@ export function StationThumb({
   const { station, live } = entry
   const status = stationStatus(station.online, live)
   const session = live?.session ?? station.session
-  const poster =
-    status === "offline" ? undefined : MOCK_POSTERS[station.station_id]
   const dark = tone === "dark"
 
   return (
@@ -51,19 +49,11 @@ export function StationThumb({
           dark ? "bg-sand-900 text-white/40" : "bg-sand-950 text-white/50"
         )}
       >
-        {poster ? (
-          <img
-            src={poster}
-            alt=""
-            className="absolute inset-0 size-full object-cover"
-          />
-        ) : (
-          <VideoIcon
-            aria-hidden="true"
-            strokeWidth={1.5}
-            className={dark ? "size-5.5" : "size-7"}
-          />
-        )}
+        <VideoIcon
+          aria-hidden="true"
+          strokeWidth={1.5}
+          className={dark ? "size-5.5" : "size-7"}
+        />
         {dark ? (
           <StatusDot status={status} className="absolute top-1.5 right-1.5" />
         ) : (

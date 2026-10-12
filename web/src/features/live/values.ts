@@ -88,16 +88,14 @@ const unavailable = (reason: string): VideoOverlay => ({
  * Ce qui recouvre la video d'un poste. Un flux absent ou en erreur l'emporte : on montre
  * l'etat, jamais une image qui laisserait croire a un flux. Le chargement n'est affiche qu'a la
  * premiere connexion (les nouveaux essais gardent l'etat d'erreur, sans clignoter).
- * `hasPoster` : en demo (pas de serveur video), l'affiche du poste tient lieu d'image.
  */
 export function videoOverlay(
   status: StationStatus,
-  state: VideoState,
-  hasPoster: boolean
+  state: VideoState
 ): VideoOverlay {
   if (status === "offline") return unavailable("poste hors ligne")
   if (state.kind === "error") return unavailable(state.reason)
-  if (state.kind === "demo" && !hasPoster)
+  if (state.kind === "unconfigured")
     return unavailable("serveur vidéo non configuré")
   if (state.kind === "connecting")
     return { kind: "loading", text: "Connexion au flux…" }
