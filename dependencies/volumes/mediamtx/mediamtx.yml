@@ -17,7 +17,7 @@ srtAddress: :8890
 # Sorties pour le navigateur
 webrtc: yes
 webrtcAddress: :8889
-webrtcAllowOrigins: ['*']
+webrtcAllowOrigin: '*'
 # Adresse des candidats ICE : "localhost" suffit pour le navigateur de la meme machine,
 # a remplacer par l'IP du serveur si le front est ouvert depuis un autre appareil
 webrtcAdditionalHosts: [localhost]
@@ -25,7 +25,7 @@ webrtcLocalUDPAddress: :8189
 
 hls: yes
 hlsAddress: :8888
-hlsAllowOrigins: ['*']
+hlsAllowOrigin: '*'
 
 # Protocoles inutiles ici
 rtsp: no
