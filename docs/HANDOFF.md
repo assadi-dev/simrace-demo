@@ -90,6 +90,8 @@ Objectif : confirmer que `probe` affiche des valeurs cohérentes avec le jeu.
    d'environnement, reprise `Last-Event-ID` côté SSE (les `id` sont déjà émis, pas de tampon).
 7. Optionnel : `docker-compose` complet (serveur + base + front), puis un adaptateur pour un
    deuxième jeu (voir la décision 0001 pour les contraintes).
+8. Plus tard, sur un PC Windows avec ACC : aperçu vidéo en direct des postes (OBS en WHIP,
+   MediaMTX, liens et autorisation par FastAPI, décision 0019).
 
 ## Limites connues
 
