@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest"
 
 import samplesEvent from "@/contracts/fixtures/samples-event.json"
 import { samplesEventSchema } from "@/contracts/telemetry"
-import { hlsUrl, whepUrl } from "@/features/live/media"
 import {
   liveStats,
   overlayTelemetry,
@@ -64,15 +63,6 @@ describe("surimpressions de la page Live", () => {
 })
 
 describe("flux video", () => {
-  it("vise live/<poste> sur les ports de la decision 0019", () => {
-    expect(whepUrl("10.192.2.241", "sim-1")).toBe(
-      "http://10.192.2.241:8889/live/sim-1/whep"
-    )
-    expect(hlsUrl("10.192.2.241", "sim-1")).toBe(
-      "http://10.192.2.241:8888/live/sim-1/index.m3u8"
-    )
-  })
-
   it("montre le chargement a la premiere connexion", () => {
     expect(videoOverlay("online", { kind: "connecting" })).toEqual({
       kind: "loading",

@@ -1,6 +1,11 @@
 import { useEffect, useState, type RefObject } from "react"
 
-import { hlsUrl, whepUrl, type Protocol } from "@/features/live/media"
+import {
+  hlsUrl,
+  toMediaStreamName,
+  whepUrl,
+  type Protocol,
+} from "@/features/live/media"
 import { config } from "@/lib/config"
 
 /*
@@ -209,7 +214,8 @@ const canPlayHls = () =>
 /**
  * Branche le flux du poste sur `videoRef`. `enabled` faux (poste hors ligne) : rien n'est ouvert.
  * Changer de poste ou de protocole ferme le flux precedent. Avec `snapshotRef`, mode apercu :
- * la premiere image est copiee dans ce canvas et le flux est ferme.
+ * la premiere image est copiee dans ce canvas et le flux est ferme. L'URL du flux utilise le nom
+ * MediaMTX du poste (identifiant en minuscules, media.ts), jamais l'identifiant brut.
  */
 export function useStationVideo(
   videoRef: RefObject<HTMLVideoElement | null>,
@@ -226,10 +232,11 @@ export function useStationVideo(
   }
 ): VideoState {
   const host = config.mediaHost
+  const streamName = toMediaStreamName(stationId)
   const unsupported = protocol === "hls" && host !== null && !canPlayHls()
   const key =
-    host && enabled && !unsupported
-      ? `${snapshotRef ? "apercu" : "direct"}:${protocol}:${host}:${stationId}`
+    host && enabled && streamName && !unsupported
+      ? `${snapshotRef ? "apercu" : "direct"}:${protocol}:${host}:${streamName}`
       : null
   const [result, setResult] = useState<{
     key: string
@@ -238,16 +245,21 @@ export function useStationVideo(
 
   useEffect(() => {
     const video = videoRef.current
-    if (!key || !host || !video) return
+    if (!key || !host || !streamName || !video) return
     const snapshot = snapshotRef?.current ?? null
     const report: Report = (state) => setResult({ key, state })
     return protocol === "webrtc"
-      ? playWhep(video, whepUrl(host, stationId), report, snapshot)
-      : playHls(video, hlsUrl(host, stationId), report, snapshot)
-  }, [key, host, protocol, stationId, videoRef, snapshotRef])
+      ? playWhep(video, whepUrl(host, streamName), report, snapshot)
+      : playHls(video, hlsUrl(host, streamName), report, snapshot)
+  }, [key, host, protocol, streamName, videoRef, snapshotRef])
 
   if (!host) return { kind: "unconfigured" }
   if (!enabled) return { kind: "off" }
+  if (!streamName)
+    return {
+      kind: "error",
+      reason: "identifiant de poste invalide pour la vidéo",
+    }
   if (unsupported)
     return { kind: "error", reason: "HLS non lu par ce navigateur" }
   return result?.key === key ? result.state : { kind: "connecting" }
