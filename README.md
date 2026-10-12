@@ -21,7 +21,7 @@ ACC -> memoire partagee                  FastAPI
 |---|---|
 | `agent/` lecture ACC, enregistrement/rejeu, envoi par lots | fait, lecture ACC verifiee (vitesse, pedales, tours), **position x/z (trace de piste) ecrite mais pas encore verifiee** |
 | `server/` ingestion, controle d'integrite, `/stations`, `/stream` (SSE), trace des circuits (`/tracks`) | fait, 218 tests, postes **en memoire**, traces (tours et morceaux) en fichiers JSON |
-| PostgreSQL / SQLAlchemy / Alembic (sessions, tours) | a faire (`docker-compose.yml` fournit la base) |
+| PostgreSQL / SQLAlchemy / Alembic (sessions, tours) | a faire (`dependencies/docker-compose.yml` fournit la base) |
 | `web/` React (courbes, temps au tour, trace de piste, sante des postes) | a faire |
 | CI GitHub Actions, Playwright | a faire |
 
@@ -38,6 +38,10 @@ documentation communautaire et sont a verifier.
 ## Lancer l'ensemble
 
 ```bash
+# dependances (PostgreSQL, relais video MediaMTX), depuis la racine
+docker compose -f .\dependencies\docker-compose.yml up -d
+docker compose -f .\dependencies\docker-compose.yml down    # pour arreter
+
 # serveur
 cd server && uv sync && uv run uvicorn app.main:app --reload
 
