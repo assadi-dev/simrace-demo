@@ -146,6 +146,8 @@ const $ = (id) => document.getElementById(id);
 const video = $("video");
 const RETRY_MS = 2000;
 const ICE_GATHERING_TIMEOUT_MS = 2000;
+// "disconnected" est transitoire (verifications ICE manquees) : on laisse le temps de revenir.
+const DISCONNECT_GRACE_MS = 5000;
 
 // Etat de la session en cours. `generation` invalide les rappels d'une session arretee.
 let pc = null;
@@ -153,6 +155,7 @@ let sessionUrl = null;
 let generation = 0;
 let retryTimer = null;
 let statsTimer = null;
+let disconnectTimer = null;
 let startedAt = 0;
 let previous = null;
 
@@ -313,12 +316,22 @@ async function start() {
       if (myGeneration !== generation) return;
       const s = peer.connectionState;
       log(`connexion WebRTC : ${s}`);
+      clearTimeout(disconnectTimer);
+      disconnectTimer = null;
       if (s === "connected") {
         setState("ok", "En direct");
         startStats();
         updateAudioInfo();
-      } else if (s === "failed" || s === "disconnected") {
-        fail("connexion WebRTC perdue" + (s === "failed" ? " (UDP 8189 bloqué ?)" : ""));
+      } else if (s === "disconnected") {
+        // ICE se retablit souvent seul : on n'abandonne que si l'etat dure.
+        setState("wait", "Signal perdu");
+        disconnectTimer = setTimeout(() => {
+          if (myGeneration === generation && peer.connectionState !== "connected") {
+            fail("connexion WebRTC perdue");
+          }
+        }, DISCONNECT_GRACE_MS);
+      } else if (s === "failed") {
+        fail("connexion WebRTC perdue (UDP 8189 bloqué ?)");
       }
     };
 
@@ -373,9 +386,12 @@ function fail(message) {
 function closePeer() {
   clearInterval(statsTimer);
   statsTimer = null;
+  clearTimeout(disconnectTimer);
+  disconnectTimer = null;
   if (sessionUrl) {
     // Libere la session cote MediaMTX ; sans effet bloquant si elle a deja expire.
-    fetch(sessionUrl, { method: "DELETE", headers: authHeaders() }).catch(() => {});
+    // keepalive : la requete part meme si la page se ferme (beforeunload).
+    fetch(sessionUrl, { method: "DELETE", headers: authHeaders(), keepalive: true }).catch(() => {});
     sessionUrl = null;
   }
   if (pc) {
@@ -422,8 +438,17 @@ function startStats() {
 }
 
 async function readStats() {
-  if (!pc) return;
-  const report = await pc.getStats();
+  // Reference locale : closePeer() peut remplacer ou fermer `pc` pendant l'attente.
+  const peer = pc;
+  const myGeneration = generation;
+  if (!peer) return;
+  let report;
+  try {
+    report = await peer.getStats();
+  } catch {
+    return;
+  }
+  if (myGeneration !== generation || peer !== pc) return;
   let inbound = null;
   let pair = null;
   const byId = new Map();
