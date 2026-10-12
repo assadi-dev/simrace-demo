@@ -6,7 +6,7 @@ import {
   liveStats,
   overlayTelemetry,
   roundedSpeed,
-  videoLabel,
+  videoOverlay,
 } from "@/features/live/values"
 
 const sample = createMockFeed(Date.UTC(2026, 9, 12, 18)).find(
@@ -64,15 +64,48 @@ describe("flux video", () => {
     )
   })
 
-  it("decrit l'etat de la lecture dans la pastille du protocole", () => {
-    expect(videoLabel("WebRTC", { kind: "playing" })).toBe(
-      "WebRTC · latence n.d."
+  it("montre le chargement a la premiere connexion", () => {
+    expect(videoOverlay("online", { kind: "connecting" }, true)).toEqual({
+      kind: "loading",
+      text: "Connexion au flux…",
+    })
+  })
+
+  it("montre l'etat du flux absent ou en erreur, jamais une image a la place", () => {
+    expect(
+      videoOverlay(
+        "online",
+        { kind: "error", reason: "aucun flux publié" },
+        true
+      )
+    ).toEqual({
+      kind: "unavailable",
+      text: "Flux indisponible : aucun flux publié",
+    })
+    expect(videoOverlay("offline", { kind: "off" }, true)?.text).toBe(
+      "Flux indisponible : poste hors ligne"
     )
-    expect(videoLabel("WebRTC", { kind: "demo" })).toBe(
-      "WebRTC · image de démo"
+    // l'erreur l'emporte sur la pause
+    expect(
+      videoOverlay(
+        "paused",
+        { kind: "error", reason: "MediaMTX injoignable" },
+        true
+      )?.kind
+    ).toBe("unavailable")
+  })
+
+  it("laisse voir l'image : apercu, direct, ou affiche en demo", () => {
+    expect(
+      videoOverlay("online", { kind: "snapshot", at: 0 }, false)
+    ).toBeNull()
+    expect(videoOverlay("online", { kind: "playing" }, false)).toBeNull()
+    expect(videoOverlay("online", { kind: "demo" }, true)).toBeNull()
+    expect(videoOverlay("online", { kind: "demo" }, false)?.kind).toBe(
+      "unavailable"
     )
     expect(
-      videoLabel("HLS", { kind: "error", reason: "aucun flux publié" })
-    ).toBe("HLS · aucun flux publié")
+      videoOverlay("paused", { kind: "snapshot", at: 0 }, false)?.kind
+    ).toBe("paused")
   })
 })

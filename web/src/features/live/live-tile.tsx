@@ -1,12 +1,11 @@
 import { Link } from "@tanstack/react-router"
-import { MaximizeIcon } from "lucide-react"
+import { ArrowUpRightIcon, MaximizeIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import {
   LiveVideo,
   OverlayChip,
-  ProtocolChip,
   VideoStatusBadge,
 } from "@/features/live/live-video"
 import type { LiveFeedEntry } from "@/features/live/mock"
@@ -15,8 +14,8 @@ import { stationStatus } from "@/features/stations/status"
 import { formatAgo, NOT_AVAILABLE } from "@/lib/format"
 
 /**
- * Tuile de la mosaique (maquette 5) : video 16/9 avec pilote, statut, telemetrie et protocole
- * en surimpression, puis circuit, voiture et actions.
+ * Tuile de la mosaique (maquette 5) : apercu 16/9 (premiere image du flux) avec pilote, statut,
+ * telemetrie et protocole en surimpression, puis circuit, voiture et actions (icones).
  */
 export function LiveTile({
   entry,
@@ -33,28 +32,25 @@ export function LiveTile({
 
   return (
     <Card className="min-w-0 gap-3 p-3">
-      <LiveVideo stationId={stationId} status={status} size="tile">
-        {(video) => (
-          <>
-            <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
-              <span className="flex min-w-0 flex-col rounded-cell bg-sand-950/70 px-3 py-1.5 text-white">
-                <span className="truncate text-sm leading-5 font-semibold">
-                  {session.driver}
-                </span>
-                <span className="truncate text-xs text-white/70">
-                  {stationId} · {station.machine ?? NOT_AVAILABLE}
-                </span>
+      <LiveVideo stationId={stationId} status={status} size="tile" preview>
+        <>
+          <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
+            <span className="flex min-w-0 flex-col rounded-cell bg-sand-950/70 px-3 py-1.5 text-white">
+              <span className="truncate text-sm leading-5 font-semibold">
+                {session.driver}
               </span>
-              <VideoStatusBadge status={status} />
-            </div>
-            <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2">
-              <OverlayChip className="px-3 py-1.5 text-label font-semibold">
-                {overlayTelemetry(status, live?.latest)}
-              </OverlayChip>
-              <ProtocolChip label={video.label} />
-            </div>
-          </>
-        )}
+              <span className="truncate text-xs text-white/70">
+                {stationId} · {station.machine ?? NOT_AVAILABLE}
+              </span>
+            </span>
+            <VideoStatusBadge status={status} />
+          </div>
+          <div className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-2">
+            <OverlayChip className="px-3 py-1.5 text-label font-semibold">
+              {overlayTelemetry(status, live?.latest)}
+            </OverlayChip>
+          </div>
+        </>
       </LiveVideo>
 
       {/* hauteur fixe (12 unites, bouton h-11 + pb-1) : la mosaique calcule la taille des tuiles avec */}
@@ -68,9 +64,14 @@ export function LiveTile({
           </span>
         </div>
         <div className="flex gap-2">
-          <Button asChild>
-            <Link to="/live/$stationId" params={{ stationId }}>
-              Voir en grand
+          <Button asChild size="icon">
+            <Link
+              to="/live/$stationId"
+              params={{ stationId }}
+              aria-label={`Voir en grand ${stationId}`}
+              title="Voir en grand"
+            >
+              <ArrowUpRightIcon aria-hidden="true" className="size-4.5" />
             </Link>
           </Button>
           <Button asChild variant="secondary" size="icon">
@@ -78,6 +79,7 @@ export function LiveTile({
               to="/live/$stationId/plein-ecran"
               params={{ stationId }}
               aria-label={`Plein écran ${stationId}`}
+              title="Plein écran"
             >
               <MaximizeIcon aria-hidden="true" className="size-4.5" />
             </Link>

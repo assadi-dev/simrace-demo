@@ -74,18 +74,34 @@ export function liveStats(
   }))
 }
 
-/** Libelle de la pastille du protocole : etat de la lecture, latence non mesuree (n.d.). */
-export function videoLabel(protocol: string, state: VideoState): string {
-  switch (state.kind) {
-    case "playing":
-      return `${protocol} · latence n.d.`
-    case "connecting":
-      return `${protocol} · connexion…`
-    case "error":
-      return `${protocol} · ${state.reason}`
-    case "off":
-      return `${protocol} · pas de flux`
-    case "demo":
-      return `${protocol} · image de démo`
-  }
+export type VideoOverlay = {
+  kind: "loading" | "unavailable" | "paused"
+  text: string
+} | null
+
+const unavailable = (reason: string): VideoOverlay => ({
+  kind: "unavailable",
+  text: `Flux indisponible : ${reason}`,
+})
+
+/**
+ * Ce qui recouvre la video d'un poste. Un flux absent ou en erreur l'emporte : on montre
+ * l'etat, jamais une image qui laisserait croire a un flux. Le chargement n'est affiche qu'a la
+ * premiere connexion (les nouveaux essais gardent l'etat d'erreur, sans clignoter).
+ * `hasPoster` : en demo (pas de serveur video), l'affiche du poste tient lieu d'image.
+ */
+export function videoOverlay(
+  status: StationStatus,
+  state: VideoState,
+  hasPoster: boolean
+): VideoOverlay {
+  if (status === "offline") return unavailable("poste hors ligne")
+  if (state.kind === "error") return unavailable(state.reason)
+  if (state.kind === "demo" && !hasPoster)
+    return unavailable("serveur vidéo non configuré")
+  if (state.kind === "connecting")
+    return { kind: "loading", text: "Connexion au flux…" }
+  if (status === "paused")
+    return { kind: "paused", text: "Session en pause, image figée" }
+  return null
 }

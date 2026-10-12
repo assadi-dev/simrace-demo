@@ -17,7 +17,6 @@ import { MuteButton, ProtocolToggle } from "@/features/live/live-controls"
 import {
   LiveVideo,
   OverlayChip,
-  ProtocolChip,
   VideoStatusBadge,
 } from "@/features/live/live-video"
 import { StationThumb } from "@/features/live/station-thumb"
@@ -132,17 +131,14 @@ function LiveFocusPage() {
             status={status}
             size="focus"
           >
-            {(video) => (
-              <>
-                <div className="absolute inset-x-4 top-4 flex items-center justify-between gap-2">
-                  <VideoStatusBadge status={status} />
-                  <ProtocolChip label={video.label} />
-                </div>
-                <OverlayChip className="absolute bottom-4 left-4 px-3.5 py-2 text-nav font-semibold">
-                  {overlayTelemetry(status, live?.latest)}
-                </OverlayChip>
-              </>
-            )}
+            <>
+              <div className="absolute inset-x-4 top-4 flex items-center justify-between gap-2">
+                <VideoStatusBadge status={status} />
+              </div>
+              <OverlayChip className="absolute bottom-4 left-4 px-3.5 py-2 text-nav font-semibold">
+                {overlayTelemetry(status, live?.latest)}
+              </OverlayChip>
+            </>
           </LiveVideo>
           <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-1">
             <MuteButton className="px-4" />

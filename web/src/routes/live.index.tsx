@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { PageHeader } from "@/components/page-header"
 import { PhaseBadge } from "@/components/status-badge"
 import { Badge } from "@/components/ui/badge"
-import { MuteButton, ProtocolToggle } from "@/features/live/live-controls"
+import { ProtocolToggle } from "@/features/live/live-controls"
 import { LiveTile } from "@/features/live/live-tile"
 import { useGridTop } from "@/features/live/use-grid-top"
 import { useLiveFeed } from "@/features/live/use-live-feed"
@@ -32,7 +32,8 @@ const MOSAIC_VARS = {
 } as CSSProperties
 
 /**
- * Live (maquette 5) : un lecteur video par poste, telemetrie du flux en surimpression.
+ * Live (maquette 5) : un apercu par poste (premiere image du flux, sans son), telemetrie du
+ * flux /stream en surimpression. La video en direct est dans la vue en grand et le plein ecran.
  * Postes et telemetrie : donnees de demo au format du serveur (features/live/mock.ts).
  */
 function LivePage() {
@@ -53,12 +54,7 @@ function LivePage() {
           </>
         }
         description={`${feed.length} postes, ${withVideo} flux vidéo attendus (postes en ligne ou en pause)`}
-        actions={
-          <>
-            <ProtocolToggle />
-            <MuteButton />
-          </>
-        }
+        actions={<ProtocolToggle />}
       />
 
       <div className="@container">

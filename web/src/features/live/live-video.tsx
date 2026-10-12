@@ -1,22 +1,19 @@
 import { useRef, type ReactNode } from "react"
-import { PauseIcon, VideoIcon, VideoOffIcon } from "lucide-react"
+import { LoaderCircleIcon, PauseIcon, VideoOffIcon } from "lucide-react"
 
 import { StatusBadge } from "@/components/status-badge"
-import { PROTOCOL_LABEL } from "@/features/live/media"
 import { MOCK_POSTERS } from "@/features/live/mock"
 import { useLivePrefs } from "@/features/live/prefs-store"
-import {
-  useStationVideo,
-  type VideoState,
-} from "@/features/live/use-station-video"
-import { videoLabel } from "@/features/live/values"
+import { useStationVideo } from "@/features/live/use-station-video"
+import { videoOverlay } from "@/features/live/values"
 import type { StationStatus } from "@/features/stations/status"
 import { cn } from "@/lib/utils"
 
 /*
  * Lecteur d'un poste (maquettes 5, 6 et 7). Les tailles suivent les maquettes : icone de 40,
- * 64 et 80 px, texte de 13, 15 et 16 px, le tout multiplie par --ui-scale. En tuile et en grand, cadre 16/9 ; en plein ecran,
- * la video remplit l'ecran sans etre deformee (bandes noires si l'ecran n'est pas en 16/9).
+ * 64 et 80 px, texte de 13, 15 et 16 px, le tout multiplie par --ui-scale. En tuile et en
+ * grand, cadre 16/9 ; en plein ecran, la video remplit l'ecran sans etre deformee (bandes noires
+ * si l'ecran n'est pas en 16/9). Pas de pastille de protocole ni de latence : valeurs non mesurees.
  */
 const SIZES = {
   tile: {
@@ -57,21 +54,6 @@ export function OverlayChip({
   )
 }
 
-/**
- * Pastille du protocole et de l'etat de la lecture. Bloc (pas flex) pour que le texte trop long
- * se termine par une ellipse ; le texte complet reste au survol.
- */
-export function ProtocolChip({ label }: { label: string }) {
-  return (
-    <span
-      title={label}
-      className="block min-w-0 truncate rounded-full bg-sand-950/70 px-2.5 py-1 text-badge text-white/70"
-    >
-      {label}
-    </span>
-  )
-}
-
 /** Statut du poste sur la video : pilule blanche, texte et pastille du statut. */
 export function VideoStatusBadge({ status }: { status: StationStatus }) {
   return <StatusBadge status={status} className="bg-white/90" />
@@ -81,17 +63,21 @@ export function LiveVideo({
   stationId,
   status,
   size,
+  preview = false,
   className,
   children,
 }: {
   stationId: string
   status: StationStatus
   size: keyof typeof SIZES
+  /** Apercu (tuiles de la mosaique) : premiere image du flux seulement, sans son. */
+  preview?: boolean
   className?: string
-  /** Surimpressions, avec l'etat de la lecture et le libelle de la pastille du protocole. */
-  children?: (video: { state: VideoState; label: string }) => ReactNode
+  /** Surimpressions (pilote, statut, telemetrie). */
+  children?: ReactNode
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const snapshotRef = useRef<HTMLCanvasElement>(null)
   const protocol = useLivePrefs((s) => s.protocol)
   const muted = useLivePrefs((s) => s.muted)
   const offline = status === "offline"
@@ -99,21 +85,22 @@ export function LiveVideo({
     stationId,
     protocol,
     enabled: !offline,
+    snapshotRef: preview ? snapshotRef : undefined,
   })
-  const poster = MOCK_POSTERS[stationId]
   const sizing = SIZES[size]
-  const protocolLabel = PROTOCOL_LABEL[protocol]
-
-  const placeholder = offline
-    ? { icon: VideoOffIcon, text: "Flux indisponible : poste hors ligne" }
-    : status === "paused"
-      ? { icon: PauseIcon, text: "Session en pause, image figée" }
-      : !poster && state.kind !== "playing"
-        ? {
-            icon: VideoIcon,
-            text: `Flux vidéo ${protocolLabel} du poste ${stationId}`,
-          }
-        : null
+  // affiche seulement en demo : sinon une image fixe passerait pour le flux
+  const poster = state.kind === "demo" ? MOCK_POSTERS[stationId] : undefined
+  const overlay = videoOverlay(
+    status,
+    state,
+    MOCK_POSTERS[stationId] !== undefined
+  )
+  const OverlayIcon =
+    overlay?.kind === "loading"
+      ? LoaderCircleIcon
+      : overlay?.kind === "paused"
+        ? PauseIcon
+        : VideoOffIcon
 
   return (
     <div
@@ -127,7 +114,7 @@ export function LiveVideo({
         <video
           ref={videoRef}
           poster={poster}
-          muted={muted}
+          muted={preview || muted}
           autoPlay
           playsInline
           aria-label={`Vidéo du poste ${stationId}`}
@@ -138,24 +125,40 @@ export function LiveVideo({
         />
       )}
 
-      {placeholder ? (
+      {/* apercu : premiere image du flux, visible une fois copiee */}
+      {preview && !offline ? (
+        <canvas
+          ref={snapshotRef}
+          aria-hidden="true"
+          className={cn(
+            "absolute inset-0 size-full object-cover",
+            state.kind !== "snapshot" && "invisible"
+          )}
+        />
+      ) : null}
+
+      {overlay ? (
         <div
           className={cn(
-            "absolute inset-0 flex flex-col items-center justify-center",
-            status === "paused" && "bg-sand-950/55",
+            "absolute inset-0 flex flex-col items-center justify-center text-center",
+            // chargement et flux absent : fond plein, rien de l'image en dessous
+            overlay.kind === "paused" ? "bg-sand-950/55" : "bg-sand-950",
             sizing.placeholder
           )}
         >
-          <placeholder.icon
+          <OverlayIcon
             aria-hidden="true"
             strokeWidth={1.5}
-            className={sizing.icon}
+            className={cn(
+              sizing.icon,
+              overlay.kind === "loading" && "motion-safe:animate-spin"
+            )}
           />
-          <span>{placeholder.text}</span>
+          <span>{overlay.text}</span>
         </div>
       ) : null}
 
-      {children?.({ state, label: videoLabel(protocolLabel, state) })}
+      {children}
     </div>
   )
 }

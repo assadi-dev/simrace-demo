@@ -27,7 +27,6 @@ test("la mosaique montre un lecteur par poste avec son statut", async ({
 
   const paused = page.locator('[data-slot="card"]', { hasText: "sim-3 ·" })
   await expect(paused.getByText("Session en pause, image figée")).toBeVisible()
-  await expect(page.getByText("WebRTC · image de démo").first()).toBeVisible()
 })
 
 test("la vue en grand puis le plein ecran, Echap revient a la vue en grand", async ({
