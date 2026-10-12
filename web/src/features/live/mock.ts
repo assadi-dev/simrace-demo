@@ -6,15 +6,22 @@ import {
   type SessionInfo,
 } from "@/contracts/telemetry"
 
+import barcelonaPoster from "./posters/barcelona.webp"
+import imolaPoster from "./posters/imola.webp"
 import monzaPoster from "./posters/monza.webp"
 import nurburgringPoster from "./posters/nurburgring.webp"
 import pitPoster from "./posters/pit.webp"
+import silverstonePoster from "./posters/silverstone.webp"
+import spaPoster from "./posters/spa.webp"
+import suzukaPoster from "./posters/suzuka.webp"
+import zandvoortPoster from "./posters/zandvoort.webp"
 
 /*
  * Donnees de demo de la page Live, en attendant que le serveur expose les flux video
  * (maquette 5, notes). Meme forme que le serveur : GET /stations (JSON brut, dates ISO) et
  * evenements `samples` de /stream, valides par les memes schemas Zod que les vraies reponses.
- * Memes postes que les maquettes : deux en ligne, un en pause, un hors ligne.
+ * 15 postes : les 4 des maquettes (sim-1 a sim-4 : en ligne, en pause, hors ligne), puis 11
+ * postes generes pour remplir la mosaique (13 en ligne dont 2 en pause, 2 hors ligne).
  */
 
 /** Etat d'un poste vu par la page Live : sa ligne de GET /stations et son dernier echantillon. */
@@ -60,6 +67,93 @@ type MockStation = {
   silentMs: number
   batches: number
   sample: Record<string, unknown>
+}
+
+/** Profil de vitesse d'un tour de demo : cinq freinages, entre 80 et 240 km/h. */
+function profileAt(trackPos: number) {
+  const speed = 160 + 80 * Math.sin(trackPos * 2 * Math.PI * 5)
+  return {
+    speed_kmh: Math.round(speed * 10) / 10,
+    gear: Math.min(6, 1 + Math.floor(speed / 45)),
+    rpm: Math.round(5000 + ((speed % 45) / 45) * 3500),
+  }
+}
+
+type StationRow = {
+  id: number
+  machine: string
+  track: string
+  car: string
+  driver: string
+}
+
+const session = (row: StationRow): SessionInfo => ({
+  track: row.track,
+  car: row.car,
+  driver: row.driver,
+  fuel_capacity_l: 120,
+})
+
+/** Poste qui roule : chrono, position et vitesse coherents avec son tour de reference. */
+function rolling(
+  row: StationRow,
+  lapMs: number,
+  completedLaps: number,
+  trackPos: number
+): MockStation {
+  return {
+    station_id: `sim-${row.id}`,
+    machine: row.machine,
+    session: session(row),
+    silentMs: 0,
+    batches: 300 + completedLaps * Math.round(lapMs / 200),
+    sample: {
+      ...profileAt(trackPos),
+      gas: 0.8,
+      brake: 0,
+      steer: 0,
+      status: ACC_STATUS.live,
+      completed_laps: completedLaps,
+      lap_time_ms: Math.round(trackPos * lapMs),
+      last_lap_ms: lapMs + 412,
+      best_lap_ms: lapMs,
+      sector: Math.min(2, Math.floor(trackPos * 3)),
+      in_pit: false,
+      track_pos: trackPos,
+    },
+  }
+}
+
+/** Poste en pause aux stands (statut ACC 3) : toujours en ligne, rien n'avance. */
+function paused(row: StationRow): MockStation {
+  return {
+    station_id: `sim-${row.id}`,
+    machine: row.machine,
+    session: session(row),
+    silentMs: 0,
+    batches: 120,
+    sample: {
+      speed_kmh: 0,
+      gas: 0,
+      brake: 0,
+      gear: 1,
+      rpm: 1150,
+      steer: 0,
+      status: ACC_STATUS.pause,
+      completed_laps: 0,
+      lap_time_ms: 2210,
+      last_lap_ms: 0,
+      best_lap_ms: 0,
+      sector: 0,
+      in_pit: true,
+      track_pos: 0.02,
+    },
+  }
+}
+
+/** Poste muet depuis `silentMs` : le serveur le dit hors ligne apres 5 s. */
+function silent(row: StationRow, silentMs: number, lapMs: number): MockStation {
+  return { ...rolling(row, lapMs, 5, 0.6), silentMs }
 }
 
 const MOCK_STATIONS: MockStation[] = [
@@ -179,14 +273,159 @@ const MOCK_STATIONS: MockStation[] = [
       track_pos: 0.39,
     },
   },
+  rolling(
+    {
+      id: 5,
+      machine: "PC-SIM-05",
+      track: "spa",
+      car: "mercedes_amg_gt3_evo",
+      driver: "Emma Petit",
+    },
+    138_420,
+    3,
+    0.22
+  ),
+  rolling(
+    {
+      id: 6,
+      machine: "PC-SIM-06",
+      track: "silverstone",
+      car: "mclaren_720s_gt3_evo",
+      driver: "Farid Benali",
+    },
+    118_950,
+    2,
+    0.64
+  ),
+  rolling(
+    {
+      id: 7,
+      machine: "PC-SIM-07",
+      track: "suzuka",
+      car: "honda_nsx_gt3_evo",
+      driver: "Gaëlle Roux",
+    },
+    119_870,
+    5,
+    0.81
+  ),
+  rolling(
+    {
+      id: 8,
+      machine: "PC-SIM-08",
+      track: "zandvoort",
+      car: "lamborghini_huracan_gt3_evo2",
+      driver: "Hugo Lambert",
+    },
+    95_310,
+    7,
+    0.12
+  ),
+  rolling(
+    {
+      id: 9,
+      machine: "PC-SIM-09",
+      track: "barcelona",
+      car: "aston_martin_v8_vantage_gt3",
+      driver: "Inès Garnier",
+    },
+    103_640,
+    4,
+    0.55
+  ),
+  rolling(
+    {
+      id: 10,
+      machine: "PC-SIM-10",
+      track: "imola",
+      car: "bmw_m4_gt3",
+      driver: "Julien Faure",
+    },
+    100_880,
+    1,
+    0.37
+  ),
+  rolling(
+    {
+      id: 11,
+      machine: "PC-SIM-11",
+      track: "monza",
+      car: "porsche_992_gt3_r",
+      driver: "Karim Haddad",
+    },
+    107_455,
+    9,
+    0.93
+  ),
+  paused({
+    id: 12,
+    machine: "DESKTOP-9H1Q",
+    track: "spa",
+    car: "ferrari_296_gt3",
+    driver: "Léa Fontaine",
+  }),
+  rolling(
+    {
+      id: 13,
+      machine: "PC-SIM-13",
+      track: "nurburgring",
+      car: "audi_r8_lms_evo_ii",
+      driver: "Mathis Girard",
+    },
+    115_230,
+    2,
+    0.05
+  ),
+  rolling(
+    {
+      id: 14,
+      machine: "PC-SIM-14",
+      track: "silverstone",
+      car: "ford_mustang_gt3",
+      driver: "Nora Chevalier",
+    },
+    119_400,
+    3,
+    0.48
+  ),
+  silent(
+    {
+      id: 15,
+      machine: "PC-SIM-15",
+      track: "kyalami",
+      car: "nissan_gt_r_nismo_gt3_2018",
+      driver: "Omar Diallo",
+    },
+    12 * 60_000,
+    101_330
+  ),
 ]
 
-/** Image fixe affichee tant qu'aucun flux video n'est lu (placeholder genere, pas une capture). */
-export const MOCK_POSTERS: Record<string, string> = {
-  "sim-1": nurburgringPoster,
-  "sim-2": monzaPoster,
-  "sim-3": pitPoster,
+/** Affiche par circuit (placeholders generes, pas des captures). */
+const TRACK_POSTERS: Record<string, string> = {
+  nurburgring: nurburgringPoster,
+  monza: monzaPoster,
+  spa: spaPoster,
+  silverstone: silverstonePoster,
+  suzuka: suzukaPoster,
+  zandvoort: zandvoortPoster,
+  barcelona: barcelonaPoster,
+  imola: imolaPoster,
 }
+
+/**
+ * Image fixe de chaque poste, affichee tant qu'aucun flux video n'est lu : celle de son circuit,
+ * ou les stands pour un poste en pause. Un circuit sans affiche (kyalami, misano) n'en a pas.
+ */
+export const MOCK_POSTERS: Record<string, string> = Object.fromEntries(
+  MOCK_STATIONS.flatMap((s) => {
+    const poster =
+      s.sample.status === ACC_STATUS.pause
+        ? pitPoster
+        : TRACK_POSTERS[s.session.track]
+    return poster ? [[s.station_id, poster]] : []
+  })
+)
 
 /** GET /stations tel que le serveur le renvoie. */
 export function mockStationsJson(now: number): unknown[] {
@@ -261,16 +500,11 @@ export function advanceMockSample(sample: Sample, dtMs: number): Sample {
     lastLapMs = lapMs
   }
   const trackPos = lapTimeMs / lapMs
-  // cinq freinages par tour : la vitesse oscille entre 80 et 240 km/h
-  const speed = 160 + 80 * Math.sin(trackPos * 2 * Math.PI * 5)
-  const gear = Math.min(6, 1 + Math.floor(speed / 45))
   return {
     ...sample,
+    ...profileAt(trackPos),
     t_ms: sample.t_ms + dtMs,
     packet_id: sample.packet_id + Math.round(dtMs / (1000 / 60)),
-    speed_kmh: Math.round(speed * 10) / 10,
-    gear,
-    rpm: Math.round(5000 + ((speed % 45) / 45) * 3500),
     completed_laps: completedLaps,
     lap_time_ms: lapTimeMs,
     last_lap_ms: lastLapMs,

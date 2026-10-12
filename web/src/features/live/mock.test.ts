@@ -5,6 +5,7 @@ import { ACC_STATUS, samplesEventSchema } from "@/contracts/telemetry"
 import {
   advanceMockSample,
   createMockFeed,
+  MOCK_POSTERS,
   mockSamplesEventsJson,
   mockStationsJson,
   tickMockFeed,
@@ -20,11 +21,28 @@ describe("donnees de demo de la page Live", () => {
     }
   })
 
+  it("remplissent la mosaique : 15 postes, 13 en ligne dont 2 en pause, 2 hors ligne", () => {
+    const feed = createMockFeed(NOW)
+    const status = (e: (typeof feed)[number]) => e.live?.latest.status
+    expect(feed).toHaveLength(15)
+    expect(feed.filter((e) => !e.station.online)).toHaveLength(2)
+    expect(
+      feed.filter((e) => e.station.online && status(e) === ACC_STATUS.pause)
+    ).toHaveLength(2)
+    expect(new Set(feed.map((e) => e.station.station_id)).size).toBe(15)
+  })
+
+  it("donnent a chaque poste l'affiche de son circuit, les stands en pause", () => {
+    const sim3 = MOCK_POSTERS["sim-3"]
+    expect(MOCK_POSTERS["sim-12"]).toBe(sim3)
+    expect(MOCK_POSTERS["sim-13"]).toBe(MOCK_POSTERS["sim-1"])
+    expect(MOCK_POSTERS["sim-15"]).toBeUndefined()
+  })
+
   it("couvrent les trois etats des maquettes : en ligne, en pause, hors ligne", () => {
     const feed = createMockFeed(NOW)
     const sim3 = feed.find((e) => e.station.station_id === "sim-3")
     const sim4 = feed.find((e) => e.station.station_id === "sim-4")
-    expect(feed.filter((e) => e.station.online)).toHaveLength(3)
     expect(sim3?.live?.latest.status).toBe(ACC_STATUS.pause)
     // le serveur dit un poste hors ligne apres 5 s sans lot
     expect(sim4?.station.online).toBe(false)

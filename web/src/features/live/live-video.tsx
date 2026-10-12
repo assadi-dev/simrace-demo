@@ -57,6 +57,21 @@ export function OverlayChip({
   )
 }
 
+/**
+ * Pastille du protocole et de l'etat de la lecture. Bloc (pas flex) pour que le texte trop long
+ * se termine par une ellipse ; le texte complet reste au survol.
+ */
+export function ProtocolChip({ label }: { label: string }) {
+  return (
+    <span
+      title={label}
+      className="block min-w-0 truncate rounded-full bg-sand-950/70 px-2.5 py-1 text-badge text-white/70"
+    >
+      {label}
+    </span>
+  )
+}
+
 /** Statut du poste sur la video : pilule blanche, texte et pastille du statut. */
 export function VideoStatusBadge({ status }: { status: StationStatus }) {
   return <StatusBadge status={status} className="bg-white/90" />

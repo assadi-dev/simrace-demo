@@ -124,7 +124,8 @@ direct), nuqs (état dans l'URL), Vitest et Playwright. uPlot pour les courbes.
 5. Playwright : **socle fait** (`web/e2e/`, 13 scénarios, vrai serveur, de vrais lots, données
    du serveur de test dans un dossier temporaire). Une courbe qui se dessine et une carte réelle
    enregistrée par un faux tour sont vérifiées. Reste : un doublon injecté incrémente le compteur.
-6. Live : **fait** (maquettes 5, 6, 7). Vraie vidéo WebRTC si `VITE_MEDIA_HOST` est défini, sinon
+6. Live : **fait** (maquettes 5, 6, 7). Mosaïque de 1 à 4 colonnes (sm, lg, xl), deux rangées
+   toujours visibles dans la fenêtre dès sm ; 15 postes de démo. Vraie vidéo WebRTC si `VITE_MEDIA_HOST` est défini, sinon
    affiches 16/9 (générées, `features/live/posters/`). Postes et télémétrie simulés au format exact
    de `GET /stations` et de `/stream` (validés par les schémas Zod) ; pour brancher le serveur,
    remplacer `useLiveFeed` par la requête des postes et le store du direct. Latence et delta : n.d.

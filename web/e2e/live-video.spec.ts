@@ -14,16 +14,18 @@ test("la mosaique montre un lecteur par poste avec son statut", async ({
     page.getByRole("heading", { name: "Live", level: 1 })
   ).toBeVisible()
   await expect(page.getByText("Données de démo")).toBeVisible()
-  await expect(page.getByRole("link", { name: "Voir en grand" })).toHaveCount(4)
+  await expect(page.getByRole("link", { name: "Voir en grand" })).toHaveCount(
+    15
+  )
 
-  const offline = page.locator('[data-slot="card"]', { hasText: "sim-4" })
+  const offline = page.locator('[data-slot="card"]', { hasText: "sim-4 ·" })
   await expect(offline.getByText("Hors ligne", { exact: true })).toBeVisible()
   await expect(
     offline.getByText("Flux indisponible : poste hors ligne")
   ).toBeVisible()
   await expect(offline.getByText("Télémétrie n.d.")).toBeVisible()
 
-  const paused = page.locator('[data-slot="card"]', { hasText: "sim-3" })
+  const paused = page.locator('[data-slot="card"]', { hasText: "sim-3 ·" })
   await expect(paused.getByText("Session en pause, image figée")).toBeVisible()
   await expect(page.getByText("WebRTC · image de démo").first()).toBeVisible()
 })
@@ -33,7 +35,7 @@ test("la vue en grand puis le plein ecran, Echap revient a la vue en grand", asy
 }) => {
   await page.goto("/live")
   await page
-    .locator('[data-slot="card"]', { hasText: "sim-1" })
+    .locator('[data-slot="card"]', { hasText: "sim-1 ·" })
     .getByRole("link", { name: "Voir en grand" })
     .click()
 

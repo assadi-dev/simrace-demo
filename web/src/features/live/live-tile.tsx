@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card"
 import {
   LiveVideo,
   OverlayChip,
+  ProtocolChip,
   VideoStatusBadge,
 } from "@/features/live/live-video"
 import type { LiveFeedEntry } from "@/features/live/mock"
@@ -50,9 +51,7 @@ export function LiveTile({
               <OverlayChip className="px-3 py-1.5 text-label font-semibold">
                 {overlayTelemetry(status, live?.latest)}
               </OverlayChip>
-              <OverlayChip className="min-w-0 truncate px-2.5 py-1 text-badge text-white/70">
-                {video.label}
-              </OverlayChip>
+              <ProtocolChip label={video.label} />
             </div>
           </>
         )}
