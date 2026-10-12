@@ -1,0 +1,38 @@
+# Configuration MediaMTX de la demo (decision 0019).
+# OBS sur le PC de jeu publie un flux par poste sur le chemin live/<station-id> ;
+# le navigateur le relit en WebRTC (faible latence) ou en HLS (repli).
+
+logLevel: info
+
+# API de controle (liste des flux) : exposee en local seulement via docker-compose
+api: yes
+apiAddress: :9997
+
+# Entrees pour OBS
+rtmp: yes
+rtmpAddress: :1935
+srt: yes
+srtAddress: :8890
+
+# Sorties pour le navigateur
+webrtc: yes
+webrtcAddress: :8889
+webrtcAllowOrigin: '*'
+# Adresse des candidats ICE : "localhost" suffit pour le navigateur de la meme machine,
+# a remplacer par l'IP du serveur si le front est ouvert depuis un autre appareil
+webrtcAdditionalHosts: [10.192.2.241]
+webrtcLocalUDPAddress: :8189
+
+hls: yes
+hlsAddress: :8888
+hlsAllowOrigin: '*'
+
+# Protocoles inutiles ici
+rtsp: no
+rtspAddress: :8554
+
+paths:
+  # Un flux par poste : live/sim-1, live/sim-2, etc.
+  # Demo sur reseau local : pas d'authentification (voir decision 0019).
+  "~^live/[a-z0-9-]+$":
+    source: publisher
