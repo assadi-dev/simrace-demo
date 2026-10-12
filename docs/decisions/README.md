@@ -25,3 +25,5 @@ Format d'un fichier : Statut, Date, Contexte, Décision, Raisons, Conséquences.
 | [0015](0015-forces-g-acceleration-et-freinage.md) | Forces G (accélération, freinage, virage) | Acceptée |
 | [0016](0016-drapeaux-et-penalites.md) | Drapeaux et pénalités (codes et raisons) | Acceptée, valeurs non vérifiées |
 | [0017](0017-pile-du-front.md) | Pile du front : Vite, React, shadcn/ui, TanStack, Zod, Zustand, nuqs | Acceptée |
+| [0018](0018-ecran-direct-carte-courbes-tours-valides.md) | Écran Direct : carte réelle, trace hors piste, courbes et tours valides | Acceptée |
+| [0019](0019-apercu-video-en-direct-des-postes.md) | Aperçu vidéo en direct des postes : OBS, MediaMTX, FastAPI | Acceptée, prévue pour plus tard |

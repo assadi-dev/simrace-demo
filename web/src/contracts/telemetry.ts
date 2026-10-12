@@ -22,6 +22,7 @@ export const TRACK_FLAGS = [
   "chequered",
   "red",
 ] as const
+export type TrackFlag = (typeof TRACK_FLAGS)[number]
 
 /** Quatre mesures : avant gauche, avant droit, arriere gauche, arriere droit. */
 const perWheel = (min: number, max: number) => {

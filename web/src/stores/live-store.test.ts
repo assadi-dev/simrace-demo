@@ -7,7 +7,11 @@ import { useLiveStore } from "./live-store"
 const base = samplesEventSchema.parse(samplesEvent)
 
 /** Evenement `samples` pour un poste, un echantillon par valeur de t_ms. */
-function event(stationId: string, times: number[], overrides = {}): SamplesEvent {
+function event(
+  stationId: string,
+  times: number[],
+  overrides = {}
+): SamplesEvent {
   return {
     ...base,
     station_id: stationId,
@@ -48,6 +52,19 @@ describe("live-store", () => {
 
     expect(Object.keys(state().stations).sort()).toEqual(["sim-1", "sim-2"])
     expect(state().stations["sim-1"].latest.t_ms).toBe(100)
+  })
+
+  it("deduit les tours d'un lot a l'autre, sans compter les echantillons ecartes", () => {
+    state().pushSamples(event("sim-1", [100], { completed_laps: 0 }))
+    // 50 recule : ecarte, il ne doit pas faire croire a un tour
+    state().pushSamples(event("sim-1", [50], { completed_laps: 7 }))
+    state().pushSamples(
+      event("sim-1", [200], { completed_laps: 1, last_lap_ms: 108_431 })
+    )
+
+    expect(state().stations["sim-1"].history.laps).toMatchObject([
+      { number: 1, timeMs: 108_431, valid: null },
+    ])
   })
 
   it("ignore un lot vide", () => {

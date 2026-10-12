@@ -102,20 +102,27 @@ tampons --requestAnimationFrame (20 images/s)--> uPlot (vitesse, gaz et frein)
 
 Voir la décision [0017](decisions/0017-pile-du-front.md) : Vite, React 19, TypeScript strict,
 Tailwind v4 et shadcn/ui, TanStack Router, Table et Query, Zod (contrats), Zustand (état du
-direct), nuqs (état dans l'URL), Vitest et Playwright. uPlot reste prévu pour les courbes, à
-ajouter avec l'écran Direct.
+direct), nuqs (état dans l'URL), Vitest et Playwright. uPlot pour les courbes.
 
 ## Ordre de construction
 
 1. **Fait** : squelette Vite, client de flux et store (dernier échantillon par poste, `t_ms` qui
-   recule ignoré), tests Vitest. Reste : tampons de courbes et déduction des tours.
+   recule ignoré, historique des tours, drapeaux, distance et trace), tampons des courbes hors
+   de l'état React, tests Vitest.
 2. **Fait** : écran Postes conforme à la maquette 1 (KPI, cartes, valeurs en direct, position
    sur le tour, pilules d'intégrité). Écart : grille à colonnes égales au lieu de flex. Le Leaderboard
    (tableau TanStack Table) est aussi fait en version minimale, sans la colonne Delta.
-3. Écran Direct : KPI, puis courbes uPlot, puis tracé schématique, puis tableau des tours.
+3. Écran Direct : **fait** (maquette 2 et décision 0018) : titre et choix du poste, fenêtre
+   10/30/60 s (`?fenetre=`) et « Figer les courbes », 6 KPI, courbes uPlot (vitesse, accélérateur,
+   frein), carte Vitesse (jauge, rapport, distance et vitesse moyenne avec remise à zéro), Position
+   sur la piste (vraie carte de `GET /tracks/{circuit}/reference`, trace du tour orange sur la
+   piste et bleue atténuée hors piste ou aux stands ; tracé schématique sans carte), Tours (valides
+   selon ACC seulement), Pénalités et drapeaux. Logique pure dans `src/features/direct/`, testée par
+   Vitest. Reste : remise à zéro sur nouveau `run_id` (le flux ne le transmet pas).
 4. Écran Intégrité (compteurs et raisons).
-5. Playwright : **socle fait** (`web/e2e/`, 8 scénarios, vrai serveur, de vrais lots). Reste :
-   vérifier qu'une courbe se dessine et qu'un doublon injecté incrémente le compteur.
+5. Playwright : **socle fait** (`web/e2e/`, 13 scénarios, vrai serveur, de vrais lots, données
+   du serveur de test dans un dossier temporaire). Une courbe qui se dessine et une carte réelle
+   enregistrée par un faux tour sont vérifiées. Reste : un doublon injecté incrémente le compteur.
 6. Phase 2 selon l'avancement : chaîne des lots, validité du tour, coordonnées de piste.
 
 ## Décisions à trancher

@@ -6,7 +6,7 @@ import { API_URL } from "./env.ts"
 export const uniqueId = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
 
-type Overrides = Record<string, number | boolean>
+export type Overrides = Record<string, number | boolean | string[]>
 
 /** Un echantillon valide au sens du contrat (server/app/shared/contract.py). */
 function sample(tMs: number, overrides: Overrides) {
@@ -56,8 +56,13 @@ export class FakeAgent {
   }
 
   async sendBatch(overrides: Overrides = {}, count = 5) {
+    return this.sendSamples(Array.from({ length: count }, () => overrides))
+  }
+
+  /** Un lot ou chaque echantillon a ses propres valeurs (un tour qui avance, par exemple). */
+  async sendSamples(list: Overrides[]) {
     this.seq += 1
-    const samples = Array.from({ length: count }, () => {
+    const samples = list.map((overrides) => {
       this.clockMs += 17
       return sample(this.clockMs, overrides)
     })
@@ -76,8 +81,14 @@ export class FakeAgent {
       },
     })
     if (!response.ok()) {
-      throw new Error(`lot refuse (${response.status()}) : ${await response.text()}`)
+      throw new Error(
+        `lot refuse (${response.status()}) : ${await response.text()}`
+      )
     }
-    return response.json() as Promise<{ status: string; accepted: number; rejected: number }>
+    return response.json() as Promise<{
+      status: string
+      accepted: number
+      rejected: number
+    }>
   }
 }

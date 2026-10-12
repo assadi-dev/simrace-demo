@@ -20,6 +20,15 @@ export default defineConfig([
     },
     rules: {
       'react-refresh/only-export-components': 'off',
+      // les tailles de texte du design system sont declarees dans src/lib/utils.ts
+      'no-restricted-imports': [
+        'error',
+        { paths: [{ name: 'cn', message: 'Importer cn depuis "@/lib/utils".' }] },
+      ],
     },
+  },
+  {
+    files: ['src/lib/utils.ts'],
+    rules: { 'no-restricted-imports': 'off' },
   },
 ])
