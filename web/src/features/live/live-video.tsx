@@ -1,10 +1,11 @@
-import { useRef, type ReactNode } from "react"
+import { useEffect, useRef, type ReactNode } from "react"
 import { LoaderCircleIcon, PauseIcon, VideoOffIcon } from "lucide-react"
 
 import { StatusBadge } from "@/components/status-badge"
 import { useLivePrefs } from "@/features/live/prefs-store"
 import { useStationVideo } from "@/features/live/use-station-video"
 import { videoOverlay } from "@/features/live/values"
+import { VideoControls } from "@/features/live/video-controls"
 import type { StationStatus } from "@/features/stations/status"
 import { cn } from "@/lib/utils"
 
@@ -63,6 +64,7 @@ export function LiveVideo({
   status,
   size,
   preview = false,
+  controls = false,
   className,
   children,
 }: {
@@ -71,6 +73,8 @@ export function LiveVideo({
   size: keyof typeof SIZES
   /** Apercu (tuiles de la mosaique) : premiere image du flux seulement, sans son. */
   preview?: boolean
+  /** Commandes facon YouTube (lecture, son, Direct, plein ecran), en fondu au survol. */
+  controls?: boolean
   className?: string
   /** Surimpressions (pilote, statut, telemetrie). */
   children?: ReactNode
@@ -79,6 +83,7 @@ export function LiveVideo({
   const snapshotRef = useRef<HTMLCanvasElement>(null)
   const protocol = useLivePrefs((s) => s.protocol)
   const muted = useLivePrefs((s) => s.muted)
+  const volume = useLivePrefs((s) => s.volume)
   const offline = status === "offline"
   const state = useStationVideo(videoRef, {
     stationId,
@@ -88,6 +93,11 @@ export function LiveVideo({
   })
   const sizing = SIZES[size]
   const overlay = videoOverlay(status, state)
+
+  // le volume n'est pas un attribut HTML : il se regle sur l'element
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.volume = volume
+  }, [volume, offline])
   const OverlayIcon =
     overlay?.kind === "loading"
       ? LoaderCircleIcon
@@ -98,7 +108,7 @@ export function LiveVideo({
   return (
     <div
       className={cn(
-        "overflow-hidden bg-sand-950 text-white",
+        "group/player overflow-hidden bg-sand-950 text-white",
         sizing.frame,
         className
       )}
@@ -151,6 +161,14 @@ export function LiveVideo({
       ) : null}
 
       {children}
+
+      {controls && !offline ? (
+        <VideoControls
+          videoRef={videoRef}
+          stationId={stationId}
+          playing={state.kind === "playing"}
+        />
+      ) : null}
     </div>
   )
 }

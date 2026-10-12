@@ -60,7 +60,11 @@ export function VideoControls({
   const setVolume = useLivePrefs((s) => s.setVolume)
   const shownVolume = muted ? 0 : volume
   const VolumeIcon =
-    shownVolume === 0 ? VolumeXIcon : shownVolume < 0.5 ? Volume1Icon : Volume2Icon
+    shownVolume === 0
+      ? VolumeXIcon
+      : shownVolume < 0.5
+        ? Volume1Icon
+        : Volume2Icon
 
   const togglePlay = () => {
     const video = videoRef.current

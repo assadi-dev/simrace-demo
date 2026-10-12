@@ -13,16 +13,12 @@ import {
 } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { WeatherChips } from "@/components/weather-chips"
-import { MuteButton, ProtocolToggle } from "@/features/live/live-controls"
-import {
-  LiveVideo,
-  OverlayChip,
-  VideoStatusBadge,
-} from "@/features/live/live-video"
+import { ProtocolToggle } from "@/features/live/live-controls"
+import { LiveVideo, VideoStatusBadge } from "@/features/live/live-video"
 import { StationThumb } from "@/features/live/station-thumb"
 import { useLiveFeed } from "@/features/live/use-live-feed"
 import { useTopOffset } from "@/features/live/use-top-offset"
-import { liveStats, overlayTelemetry } from "@/features/live/values"
+import { liveStats } from "@/features/live/values"
 import { stationStatus } from "@/features/stations/status"
 import { liveValues } from "@/features/stations/summary"
 import { useNow } from "@/hooks/use-now"
@@ -45,13 +41,13 @@ const mosaicLink = (
 /*
  * Plafond du lecteur pour qu'il tienne en entier dans la fenetre : la video 16/9 prend la
  * hauteur visible (100svh, moins le haut du lecteur `--top-offset` et la marge basse de la page,
- * 6 unites), moins la hauteur fixe de la carte (21 unites + 2 px : padding 2 x 3, espace 3,
- * barre 12, bordures) ; en largeur, on y ajoute 6 unites + 2 px. Plancher de 80 unites pour
- * une fenetre tres basse.
+ * 6 unites), moins la hauteur fixe de la carte (6 unites + 2 px : padding 2 x 3, bordures ;
+ * les commandes sont posees sur la video) ; en largeur, on y ajoute autant. Plancher de 80
+ * unites pour une fenetre tres basse.
  */
 const PLAYER_VARS = {
   "--player-max":
-    "max(var(--spacing) * 80, calc((100svh - var(--top-offset, 0px) - var(--spacing) * 27 - 2px) * 16 / 9 + var(--spacing) * 6 + 2px))",
+    "max(var(--spacing) * 80, calc((100svh - var(--top-offset, 0px) - var(--spacing) * 12 - 2px) * 16 / 9 + var(--spacing) * 6 + 2px))",
 } as CSSProperties
 
 /**
@@ -141,7 +137,7 @@ function LiveFocusPage() {
         <Card
           ref={playerRef}
           style={PLAYER_VARS}
-          className="min-w-0 flex-[999_1_720px] gap-3 p-3 sm:max-w-(--player-max)"
+          className="min-w-0 flex-[999_1_720px] p-3 sm:max-w-(--player-max)"
         >
           <LiveVideo
             // un lecteur par poste : changer de poste ferme le flux precedent
@@ -149,24 +145,12 @@ function LiveFocusPage() {
             stationId={stationId}
             status={status}
             size="focus"
+            controls
           >
-            <>
-              <div className="absolute inset-x-4 top-4 flex items-center justify-between gap-2">
-                <VideoStatusBadge status={status} />
-              </div>
-              <OverlayChip className="absolute bottom-4 left-4 px-3.5 py-2 text-nav font-semibold">
-                {overlayTelemetry(status, live?.latest)}
-              </OverlayChip>
-            </>
+            <div className="absolute top-4 left-4">
+              <VideoStatusBadge status={status} />
+            </div>
           </LiveVideo>
-          {/* hauteur fixe (12 unites, bouton h-11 + pb-1) : le plafond du lecteur la compte */}
-          <div className="flex items-center justify-between gap-2 px-1 pb-1">
-            <MuteButton className="px-4" />
-            <span className="min-w-0 truncate text-meta text-muted-foreground">
-              {seenAt ? `Vu ${formatAgo(now - seenAt)}` : "Jamais vu"} ·
-              surimpressions issues du flux /stream
-            </span>
-          </div>
         </Card>
 
         <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-5 sm:max-w-140">
@@ -207,6 +191,9 @@ function LiveFocusPage() {
                 aria-label="Position sur le tour"
               />
             </div>
+            <span className="px-1 text-meta text-muted-foreground">
+              {seenAt ? `Vu ${formatAgo(now - seenAt)}` : "Jamais vu"}
+            </span>
           </Card>
 
           <WeatherChips
