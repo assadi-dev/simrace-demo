@@ -26,3 +26,4 @@ Format d'un fichier : Statut, Date, Contexte, Décision, Raisons, Conséquences.
 | [0016](0016-drapeaux-et-penalites.md) | Drapeaux et pénalités (codes et raisons) | Acceptée, valeurs non vérifiées |
 | [0017](0017-pile-du-front.md) | Pile du front : Vite, React, shadcn/ui, TanStack, Zod, Zustand, nuqs | Acceptée |
 | [0018](0018-ecran-direct-carte-courbes-tours-valides.md) | Écran Direct : carte réelle, trace hors piste, courbes et tours valides | Acceptée |
+| [0019](0019-capture-ecran-obs-mediamtx.md) | Capture d'écran du jeu : OBS vers MediaMTX (Docker) | Acceptée |

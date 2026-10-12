@@ -1,0 +1,28 @@
+name: simrace-demo
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: simrace-postgres
+    environment:
+      POSTGRES_USER: simrace
+      POSTGRES_PASSWORD: simrace
+      POSTGRES_DB: simrace
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+  # Relais video : OBS (PC de jeu) publie, le navigateur relit. Decision 0019.
+  mediamtx:
+    image: bluenviron/mediamtx:1.12.3
+    container_name: simrace-mediamtx
+    volumes:
+      - ./volumes/mediamtx/mediamtx.yml:/mediamtx.yml:ro
+    ports:
+      - "1935:1935" # RTMP : entree OBS
+      - "8890:8890/udp" # SRT : entree OBS (option)
+      - "8889:8889" # WebRTC : lecture navigateur (WHEP)
+      - "8189:8189/udp" # WebRTC : media (ICE)
+      - "8888:8888" # HLS : lecture de repli
+      - "127.0.0.1:9997:9997" # API de controle, en local seulement
