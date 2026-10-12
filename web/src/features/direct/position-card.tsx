@@ -1,41 +1,15 @@
 import type { ReactNode } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { RouteIcon, ThermometerIcon } from "lucide-react"
 
 import { Card } from "@/components/ui/card"
+import { WeatherChips } from "@/components/weather-chips"
 import { ACC_STATUS, type Sample } from "@/contracts/telemetry"
 import { pointAt, type Point } from "@/features/direct/geometry"
 import type { TrailPoint } from "@/features/direct/history"
 import { trackMapQueryOptions } from "@/features/direct/queries"
 import { RealTrackMap, SchematicMap } from "@/features/direct/track-maps"
-import {
-  formatDecimal,
-  formatLapTime,
-  formatNumber,
-  formatTemperature,
-} from "@/lib/format"
+import { formatDecimal, formatLapTime, formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
-
-/** Mini-carte de temperature (design.md 8 : TemperatureChip). */
-function TemperatureChip({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode
-  label: string
-  value: number | null | undefined
-}) {
-  return (
-    <div className="flex flex-[1_1_140px] items-center gap-2.5 rounded-md border border-card-border bg-card-inner px-3.5 py-2.5 whitespace-nowrap">
-      {icon}
-      <div className="flex flex-col">
-        <span className="text-meta text-muted-foreground">{label}</span>
-        <span className="text-card-title">{formatTemperature(value)}</span>
-      </div>
-    </div>
-  )
-}
 
 function LegendLine({
   className,
@@ -134,28 +108,7 @@ export function PositionCard({
         </span>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <TemperatureChip
-          icon={
-            <ThermometerIcon
-              aria-hidden="true"
-              className="size-5.5 text-primary-text"
-            />
-          }
-          label="Température de l'air"
-          value={sample.air_temp_c}
-        />
-        <TemperatureChip
-          icon={
-            <RouteIcon
-              aria-hidden="true"
-              className="size-5.5 text-primary-text"
-            />
-          }
-          label="Température de la piste"
-          value={sample.road_temp_c}
-        />
-      </div>
+      <WeatherChips air={sample.air_temp_c} road={sample.road_temp_c} />
 
       {drawing}
 
