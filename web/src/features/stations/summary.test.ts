@@ -20,6 +20,19 @@ const sample = (overrides: Partial<Sample>): Sample => ({
 })
 
 describe("sortStations", () => {
+  it("compare les numeros de poste comme des nombres (sim-2 avant sim-10)", () => {
+    const sorted = sortStations([
+      station("sim-10", true),
+      station("sim-2", true),
+      station("sim-1", true),
+    ])
+    expect(sorted.map((s) => s.station_id)).toEqual([
+      "sim-1",
+      "sim-2",
+      "sim-10",
+    ])
+  })
+
   it("met les postes en ligne d'abord, puis trie par identifiant", () => {
     const sorted = sortStations([
       station("sim-3", false),

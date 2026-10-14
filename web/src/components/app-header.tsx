@@ -91,6 +91,9 @@ export function AppHeader() {
         <Link to="/leaderboard" className={navClass}>
           Leaderboard
         </Link>
+        <Link to="/live" className={navClass}>
+          Live
+        </Link>
       </nav>
 
       <div className="flex flex-wrap items-center gap-3">

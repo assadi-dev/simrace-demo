@@ -1,0 +1,132 @@
+import type { Sample } from "@/contracts/telemetry"
+import { gearLabel } from "@/features/direct/values"
+import type { VideoState } from "@/features/live/use-station-video"
+import type { StationStatus } from "@/features/stations/status"
+import { liveValues } from "@/features/stations/summary"
+import { formatNumber, NOT_AVAILABLE } from "@/lib/format"
+
+/*
+ * Textes des surimpressions de la page Live (maquettes 5, 6 et 7). Ils viennent du flux /stream,
+ * jamais de la video. Hors ligne, rien n'est "en direct" : n.d.
+ */
+
+/** Dernier echantillon s'il est encore "en direct", sinon undefined. */
+const liveSample = (status: StationStatus, sample: Sample | undefined) =>
+  status === "offline" ? undefined : sample
+
+/** Vitesse arrondie au km/h (`187`), pour les surimpressions. */
+export function roundedSpeed(
+  status: StationStatus,
+  sample: Sample | undefined
+): string {
+  const live = liveSample(status, sample)
+  return live ? formatNumber(Math.round(live.speed_kmh)) : NOT_AVAILABLE
+}
+
+/** Pastille du bas de la video : `187 km/h · Tour 2 · 0:55,200`. */
+export function overlayTelemetry(
+  status: StationStatus,
+  sample: Sample | undefined
+): string {
+  if (!liveSample(status, sample)) return `Télémétrie ${NOT_AVAILABLE}`
+  const values = liveValues(status, sample)
+  return [
+    `${roundedSpeed(status, sample)}\u00a0km/h`,
+    values.lapLabel,
+    values.lapTime,
+  ].join(" · ")
+}
+
+export type LiveStat = {
+  label: string
+  value: string
+  /** Valeur absente (n.d.) : affichee en gris. */
+  muted: boolean
+}
+
+/**
+ * Valeurs de la vue en grand et du plein ecran. Le delta compare le dernier tour au meilleur
+ * tour precedent : il faut l'historique des tours, que la page Live ne garde pas encore (n.d.).
+ */
+export function liveStats(
+  status: StationStatus,
+  sample: Sample | undefined,
+  { withSpeed }: { withSpeed: boolean }
+): LiveStat[] {
+  const values = liveValues(status, sample)
+  const live = liveSample(status, sample)
+  const stats = [
+    ...(withSpeed ? [{ label: "Vitesse", value: values.speed }] : []),
+    {
+      label: "Rapport · tr/min",
+      value: live
+        ? `${gearLabel(live.gear)} · ${formatNumber(live.rpm)}`
+        : NOT_AVAILABLE,
+    },
+    { label: `${values.lapLabel} · temps actuel`, value: values.lapTime },
+    { label: "Tour précédent", value: values.lastLap },
+    { label: "Meilleur tour", value: values.bestLap },
+    { label: "Delta", value: NOT_AVAILABLE },
+  ]
+  return stats.map((stat) => ({
+    ...stat,
+    muted: stat.value === NOT_AVAILABLE,
+  }))
+}
+
+export type VideoOverlay = {
+  kind: "loading" | "unavailable" | "paused"
+  text: string
+} | null
+
+/**
+ * Voile "Session en pause, image figee" quand ACC est en pause : desactive temporairement, le
+ * flux reste affiche tel quel (la pastille "En pause" signale toujours l'etat). `true` pour le
+ * remettre.
+ */
+export const SHOW_PAUSED_OVERLAY = false
+
+const unavailable = (reason: string): VideoOverlay => ({
+  kind: "unavailable",
+  text: `Flux indisponible : ${reason}`,
+})
+
+/**
+ * Ce qui recouvre la video d'un poste. Un flux absent ou en erreur l'emporte : on montre
+ * l'etat, jamais une image qui laisserait croire a un flux. La telemetrie n'y joue pas : un
+ * poste "hors ligne" (aucun lot depuis 5 s) dont OBS diffuse montre son flux. Le chargement n'est affiche qu'a la
+ * premiere connexion (les nouveaux essais gardent l'etat d'erreur, sans clignoter).
+ */
+export function videoOverlay(
+  status: StationStatus,
+  state: VideoState
+): VideoOverlay {
+  if (state.kind === "error") return unavailable(state.reason)
+  if (state.kind === "unconfigured")
+    return unavailable("serveur vidéo non configuré")
+  if (state.kind === "connecting")
+    return { kind: "loading", text: "Connexion au flux…" }
+  if (status === "paused" && SHOW_PAUSED_OVERLAY)
+    return { kind: "paused", text: "Session en pause, image figée" }
+  return null
+}
+
+/** Statut affiche sur la video : il combine la telemetrie et le flux video. */
+export type LiveBadgeStatus = "racing" | "paused" | "ready" | "offline"
+
+/**
+ * Pastille de statut des vues Live :
+ * - telemetrie recue : "En course" (ou "En pause" si ACC est en pause), flux ou pas ;
+ * - pas de telemetrie mais une image du flux (direct ou apercu) : "Pret" ;
+ * - ni telemetrie ni image (flux absent, en erreur ou en connexion) : "Hors ligne".
+ */
+export function liveBadgeStatus(
+  status: StationStatus,
+  state: VideoState
+): LiveBadgeStatus {
+  if (status === "online") return "racing"
+  if (status === "paused") return "paused"
+  return state.kind === "playing" || state.kind === "snapshot"
+    ? "ready"
+    : "offline"
+}

@@ -8,12 +8,15 @@ export function PageHeader({
   breadcrumb,
   eyebrow,
   title,
+  badges,
   description,
   actions,
 }: {
   breadcrumb?: ReactNode
   eyebrow?: string
   title: string
+  /** Pilules a droite du titre (ex. "Phase 2"). */
+  badges?: ReactNode
   description?: ReactNode
   actions?: ReactNode
 }) {
@@ -25,7 +28,14 @@ export function PageHeader({
             {breadcrumb}
           </nav>
         ) : null}
-        <h1 className="text-page-title">{title}</h1>
+        {badges ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-page-title">{title}</h1>
+            {badges}
+          </div>
+        ) : (
+          <h1 className="text-page-title">{title}</h1>
+        )}
         {description ? (
           <p className="text-sm text-muted-foreground">{description}</p>
         ) : null}

@@ -34,5 +34,6 @@ rtspAddress: :8554
 paths:
   # Un flux par poste : live/sim-1, live/sim-2, etc.
   # Demo sur reseau local : pas d'authentification (voir decision 0019).
-  "~^live/[a-z0-9-]+$":
+  # Majuscules acceptees ; MediaMTX distingue la casse (live/Sim-1 != live/sim-1).
+  "~^live/[A-Za-z0-9-]+$":
     source: publisher

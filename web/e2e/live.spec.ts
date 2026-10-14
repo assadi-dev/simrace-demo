@@ -117,6 +117,16 @@ test("l'ecran Direct affiche la vitesse recue par le flux", async ({
   await expect(gear).toContainText("5")
   // reglages non envoyes par ce faux agent : affiches n.d., jamais inventes
   await expect(page.getByText("n.d. · n.d.")).toBeVisible()
+
+  // bouton vers la video du poste (vue en grand de la page Live)
+  await page.getByRole("link", { name: "Live vidéo" }).click()
+  await expect(page).toHaveURL(new RegExp(`/live/${stationId}$`))
+  await expect(
+    page.getByRole("heading", {
+      name: `Bruno Lefèvre · ${stationId}`,
+      level: 1,
+    })
+  ).toBeVisible()
 })
 
 test("l'ecran Direct deduit les tours et suit un drapeau jaune", async ({
