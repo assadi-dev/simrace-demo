@@ -2,6 +2,8 @@ import { useEffect, useState, type RefObject } from "react"
 
 import {
   hlsUrl,
+  isMixedContent,
+  PROTOCOL_LABEL,
   toMediaStreamName,
   whepUrl,
   type Protocol,
@@ -20,7 +22,7 @@ import { config } from "@/lib/config"
  */
 
 export type VideoState =
-  /** Pas d'hote MediaMTX configure (VITE_MEDIA_HOST) : aucune video. */
+  /** Aucune adresse MediaMTX configuree (VITE_MEDIA_HOST ou VITE_MEDIA_*_URL) : aucune video. */
   | { kind: "unconfigured" }
   | { kind: "connecting" }
   | { kind: "playing" }
@@ -246,12 +248,20 @@ export function useStationVideo(
     snapshotRef?: RefObject<HTMLCanvasElement | null>
   }
 ): VideoState {
-  const host = config.mediaHost
+  const configured = config.media.webrtc !== null || config.media.hls !== null
+  const base = config.media[protocol]
   const streamName = toMediaStreamName(stationId)
-  const unsupported = protocol === "hls" && host !== null && !canPlayHls()
+  const url =
+    base && streamName
+      ? protocol === "webrtc"
+        ? whepUrl(base, streamName)
+        : hlsUrl(base, streamName)
+      : null
+  const mixedContent = url !== null && isMixedContent(location.protocol, url)
+  const unsupported = protocol === "hls" && base !== null && !canPlayHls()
   const key =
-    host && streamName && !unsupported
-      ? `${snapshotRef ? "apercu" : "direct"}:${protocol}:${host}:${streamName}`
+    url && !mixedContent && !unsupported
+      ? `${snapshotRef ? "apercu" : "direct"}:${url}`
       : null
   const [result, setResult] = useState<{
     key: string
@@ -260,20 +270,24 @@ export function useStationVideo(
 
   useEffect(() => {
     const video = videoRef.current
-    if (!key || !host || !streamName || !video) return
+    if (!key || !url || !video) return
     const snapshot = snapshotRef?.current ?? null
     const report: Report = (state) => setResult({ key, state })
     return protocol === "webrtc"
-      ? playWhep(video, whepUrl(host, streamName), report, snapshot)
-      : playHls(video, hlsUrl(host, streamName), report, snapshot)
-  }, [key, host, protocol, streamName, videoRef, snapshotRef])
+      ? playWhep(video, url, report, snapshot)
+      : playHls(video, url, report, snapshot)
+  }, [key, url, protocol, videoRef, snapshotRef])
 
-  if (!host) return { kind: "unconfigured" }
+  if (!configured) return { kind: "unconfigured" }
+  if (!base)
+    return { kind: "error", reason: `${PROTOCOL_LABEL[protocol]} non configuré` }
   if (!streamName)
     return {
       kind: "error",
       reason: "identifiant de poste invalide pour la vidéo",
     }
+  if (mixedContent)
+    return { kind: "error", reason: "adresse http bloquée par la page https" }
   if (unsupported)
     return { kind: "error", reason: "HLS non lu par ce navigateur" }
   return result?.key === key ? result.state : { kind: "connecting" }

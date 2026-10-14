@@ -127,8 +127,9 @@ direct), nuqs (état dans l'URL), Vitest et Playwright. uPlot pour les courbes.
 6. Live : **fait** (maquettes 5, 6, 7), branché sur `GET /stations` et le flux `/stream`.
    Mosaïque de 1 à 4 colonnes (sm, lg, xl), deux rangées toujours visibles dans la fenêtre dès
    sm. Chaque tuile montre la première image du flux WebRTC (vidéo seule, connexion fermée
-   ensuite) ; la vue en grand et le plein écran lisent le direct avec le son. Sans
-   `VITE_MEDIA_HOST`, ou si le flux est absent ou en erreur, la carte le dit (« Flux
+   ensuite) ; la vue en grand et le plein écran lisent le direct avec le son. En https, les
+   adresses vidéo viennent de `VITE_MEDIA_WEBRTC_URL` et `VITE_MEDIA_HLS_URL` (décision 0020). Sans
+   adresse MediaMTX, ou si le flux est absent ou en erreur, la carte le dit (« Flux
    indisponible : … »), sans image de remplacement. Latence et delta : n.d.
 7. Phase 2 selon l'avancement : chaîne des lots, validité du tour, coordonnées de piste.
 

@@ -7,6 +7,10 @@ interface ImportMetaEnv {
   readonly VITE_MAX_STATIONS?: string
   /** Hote MediaMTX (decision 0019), sans schema ni port. */
   readonly VITE_MEDIA_HOST?: string
+  /** URL complete du WebRTC de MediaMTX (decision 0020), remplace http://<hote>:8889. */
+  readonly VITE_MEDIA_WEBRTC_URL?: string
+  /** URL complete du HLS de MediaMTX (decision 0020), remplace http://<hote>:8888. */
+  readonly VITE_MEDIA_HLS_URL?: string
 }
 
 interface ImportMeta {

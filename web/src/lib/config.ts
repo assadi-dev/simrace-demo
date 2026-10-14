@@ -6,6 +6,14 @@ import { z } from "zod"
  */
 const emptyAsUndefined = (value: unknown) => (value === "" ? undefined : value)
 
+/** Ports MediaMTX de la decision 0019, utilises quand seul l'hote est donne. */
+const WEBRTC_PORT = 8889
+const HLS_PORT = 8888
+
+const optionalUrl = z.preprocess(emptyAsUndefined, z.url().optional())
+
+const withoutTrailingSlash = (url: string) => url.replace(/\/+$/, "")
+
 const envSchema = z.object({
   /** URL du serveur FastAPI. */
   VITE_API_URL: z.preprocess(
@@ -19,7 +27,8 @@ const envSchema = z.object({
   ),
   /**
    * Hote du serveur MediaMTX (decision 0019), sans schema ni port : `10.192.2.241`. Les ports
-   * WebRTC et HLS sont ceux de la decision. Absent ou vide = pas de video, affiches seulement.
+   * WebRTC et HLS sont ceux de la decision, en http. Absent ou vide (et sans les URL ci-dessous)
+   * = pas de video, affiches seulement.
    */
   VITE_MEDIA_HOST: z.preprocess(
     emptyAsUndefined,
@@ -28,14 +37,29 @@ const envSchema = z.object({
       .regex(/^[A-Za-z0-9.-]+$/, "hote seul, sans http:// ni port")
       .optional()
   ),
+  /**
+   * URL complete du WebRTC (WHEP) de MediaMTX, decision 0020 : `https://video.exemple.fr`.
+   * Remplace `http://<VITE_MEDIA_HOST>:8889`, pour un MediaMTX derriere un proxy https.
+   */
+  VITE_MEDIA_WEBRTC_URL: optionalUrl,
+  /** URL complete du HLS de MediaMTX (decision 0020). Remplace `http://<VITE_MEDIA_HOST>:8888`. */
+  VITE_MEDIA_HLS_URL: optionalUrl,
 })
 
 export function parseConfig(env: Record<string, unknown>) {
   const parsed = envSchema.parse(env)
+  const host = parsed.VITE_MEDIA_HOST
+  const webrtc =
+    parsed.VITE_MEDIA_WEBRTC_URL ?? (host && `http://${host}:${WEBRTC_PORT}`)
+  const hls = parsed.VITE_MEDIA_HLS_URL ?? (host && `http://${host}:${HLS_PORT}`)
   return {
-    apiUrl: parsed.VITE_API_URL.replace(/\/+$/, ""),
+    apiUrl: withoutTrailingSlash(parsed.VITE_API_URL),
     maxStations: parsed.VITE_MAX_STATIONS,
-    mediaHost: parsed.VITE_MEDIA_HOST ?? null,
+    /** Adresse de base de chaque protocole video, null si non configure. */
+    media: {
+      webrtc: webrtc ? withoutTrailingSlash(webrtc) : null,
+      hls: hls ? withoutTrailingSlash(hls) : null,
+    },
   }
 }
 
