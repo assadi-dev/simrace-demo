@@ -15,7 +15,20 @@
       "Bash(curl -sSfo pit.png \"https://cdn.openart.ai/openart-ai/production/2026-10/create-image/Cq1sxyNDKhlpNopeN6i4/image_1791822996997_c169395d_1791822997279_fd03f1ee.png\")",
       "Bash(file *.png)",
       "Bash(npx vite *)",
-      "Bash(npm test *)"
+      "Bash(npm test *)",
+      "Bash(git restore *)",
+      "Bash(lsof -nP -iTCP -sTCP:LISTEN)",
+      "Bash(curl -s -m 3 http://localhost:8000/stations)",
+      "Bash(curl -s -m 3 -o /dev/null -w '%{http_code}\\\\n' http://localhost:5173/)",
+      "Bash(curl -s -m 8 -w '\\\\nHTTP %{http_code}\\\\n' https://simracedemo-server-mailwh-06a232-212-227-194-86.sslip.io/stations)",
+      "ClaudeInChromeDomain(localhost:5173)",
+      "ClaudeInChromeDomain(127.0.0.1:5173)",
+      "Bash(curl -s -m 5 http://127.0.0.1:5173/)",
+      "Bash(ps -o pid,lstart,command -p 10085)",
+      "Bash(node ./.shot-tmp.mjs http://localhost:5173/ /private/tmp/claude-501/-Users-assadi-Projects-Python-simrace-demo/d4273366-2b21-450f-b38a-8c348499fafe/scratchpad/home.png)",
+      "Bash(uv run *)",
+      "Bash(uv run python -c ' *)",
+      "Bash(SIMRACE_DATA_DIR=/private/tmp/claude-501/-Users-assadi-Projects-Python-simrace-demo/d4273366-2b21-450f-b38a-8c348499fafe/scratchpad/data uv run python -c ' *)"
     ]
   }
 }

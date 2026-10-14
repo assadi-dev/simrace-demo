@@ -13,6 +13,8 @@ def test_defaults():
     assert settings.record_pieces is True
     assert settings.reference_strategy == "best_time"
     assert settings.data_dir == Path("data")
+    assert "http://localhost:5173" in settings.cors_origins
+    assert "https://simracedemo-web-z1qw2y-2e55d8-212-227-194-86.sslip.io" in settings.cors_origins
 
 
 def test_reads_environment_variables():

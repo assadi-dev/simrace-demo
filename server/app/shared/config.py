@@ -9,7 +9,11 @@ from pydantic import BaseModel, Field
 class Settings(BaseModel):
     """Configuration du serveur, lue dans les variables d'environnement SIMRACE_*."""
 
-    cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    cors_origins: list[str] = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://simracedemo-web-z1qw2y-2e55d8-212-227-194-86.sslip.io",  # front de prod
+    ]
     data_dir: Path = Path("data")
     online_window_s: float = Field(default=5.0, gt=0, le=3600)
     record_tracks: bool = True

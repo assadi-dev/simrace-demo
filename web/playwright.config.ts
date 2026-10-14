@@ -39,7 +39,7 @@ export default defineConfig({
       url: WEB_URL,
       // une variable du processus l'emporte sur .env.local ; sans MediaMTX, la page Live
       // montre ses affiches (pas de dependance au reseau video)
-      env: { VITE_API_URL: API_URL, VITE_MAX_STATIONS: "", VITE_MEDIA_HOST: "" },
+      env: { VITE_API_URL: API_URL, VITE_MAX_STATIONS: "", VITE_MEDIA_HOST: "", VITE_MEDIA_WEBRTC_URL: "", VITE_MEDIA_HLS_URL: "" },
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
     },

@@ -2,7 +2,8 @@ import { z } from "zod"
 
 /*
  * Adresses des flux video MediaMTX (decision 0019) : un flux par poste sur `live/<nom>`,
- * lu en WebRTC (WHEP, port 8889, faible latence) ou en HLS (port 8888, repli).
+ * lu en WebRTC (WHEP, port 8889, faible latence) ou en HLS (port 8888, repli). L'adresse de
+ * base de chaque protocole vient de la configuration (decision 0020).
  */
 
 export const PROTOCOLS = ["webrtc", "hls"] as const
@@ -12,9 +13,6 @@ export const PROTOCOL_LABEL: Record<Protocol, string> = {
   webrtc: "WebRTC",
   hls: "HLS",
 }
-
-const WEBRTC_PORT = 8889
-const HLS_PORT = 8888
 
 /**
  * Nom d'un flux MediaMTX (decision 0019) : minuscules, chiffres, tirets simples entre les
@@ -44,10 +42,20 @@ export function toMediaStreamName(stationId: string): string | null {
   return result.success ? result.data : null
 }
 
-/** Point d'entree WHEP : POST de l'offre SDP, reponse 201 avec la reponse SDP. */
-export const whepUrl = (host: string, streamName: string) =>
-  `http://${host}:${WEBRTC_PORT}/live/${streamName}/whep`
+/**
+ * Point d'entree WHEP : POST de l'offre SDP, reponse 201 avec la reponse SDP. `base` vient de la
+ * configuration (`config.media.webrtc`) : `http://<hote>:8889` ou une URL https (decision 0020).
+ */
+export const whepUrl = (base: string, streamName: string) =>
+  `${base}/live/${streamName}/whep`
 
-/** Liste de lecture HLS. */
-export const hlsUrl = (host: string, streamName: string) =>
-  `http://${host}:${HLS_PORT}/live/${streamName}/index.m3u8`
+/** Liste de lecture HLS. `base` : `config.media.hls`. */
+export const hlsUrl = (base: string, streamName: string) =>
+  `${base}/live/${streamName}/index.m3u8`
+
+/**
+ * Une page https ne peut pas lire une adresse http (contenu mixte) : le navigateur bloque la
+ * requete sans message utile. On le dit sur la carte plutot que d'essayer.
+ */
+export const isMixedContent = (pageProtocol: string, url: string) =>
+  pageProtocol === "https:" && url.startsWith("http:")

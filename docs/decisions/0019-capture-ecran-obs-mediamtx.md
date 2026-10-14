@@ -35,7 +35,9 @@ jeu sur le PC de jeu et pouvoir le revoir dans le navigateur, à côté des cour
   (`mediaStreamNameSchema`, `web/src/features/live/media.ts`) : la clé OBS doit donc être en
   minuscules (`sim-station-poste-1`). Un identifiant qui reste invalide (souligné, accent) est
   signalé sur la carte, sans connexion.
-- Front : hôte MediaMTX dans `VITE_MEDIA_HOST` (hôte seul, ports ci-dessus). Page Live : un
+- Front : hôte MediaMTX dans `VITE_MEDIA_HOST` (hôte seul, ports ci-dessus). Derrière un proxy
+  https, les URL complètes `VITE_MEDIA_WEBRTC_URL` et `VITE_MEDIA_HLS_URL` le remplacent
+  (décision 0020). Page Live : un
   lecteur WHEP par poste (`web/src/features/live/use-station-video.ts`), HLS lu nativement par le
   navigateur quand il sait le faire (pas de hls.js).
 - À faire plus tard : authentification avant tout usage hors réseau local.
