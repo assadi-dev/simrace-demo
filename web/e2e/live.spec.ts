@@ -546,6 +546,13 @@ test.describe("telephone (390 px)", () => {
         clientWidth: html.clientWidth,
       }))
     expect(scrollWidth).toBeLessThanOrEqual(clientWidth)
+
+    // carte Vitesse empilee : la jauge passe au-dessus du rapport
+    const gauge = await page
+      .getByRole("img", { name: /Jauge de vitesse/ })
+      .boundingBox()
+    const gear = await page.getByText("Rapport", { exact: true }).boundingBox()
+    expect(gauge!.y).toBeLessThan(gear!.y)
   })
 
   test("la navigation passe par le menu lateral, qui se ferme apres un clic", async ({
