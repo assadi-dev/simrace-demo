@@ -28,7 +28,9 @@
       "Bash(node ./.shot-tmp.mjs http://localhost:5173/ /private/tmp/claude-501/-Users-assadi-Projects-Python-simrace-demo/d4273366-2b21-450f-b38a-8c348499fafe/scratchpad/home.png)",
       "Bash(uv run *)",
       "Bash(uv run python -c ' *)",
-      "Bash(SIMRACE_DATA_DIR=/private/tmp/claude-501/-Users-assadi-Projects-Python-simrace-demo/d4273366-2b21-450f-b38a-8c348499fafe/scratchpad/data uv run python -c ' *)"
+      "Bash(SIMRACE_DATA_DIR=/private/tmp/claude-501/-Users-assadi-Projects-Python-simrace-demo/d4273366-2b21-450f-b38a-8c348499fafe/scratchpad/data uv run python -c ' *)",
+      "Bash(git -C .. log --oneline -3)",
+      "Bash(git -C .. status --short)"
     ]
   }
 }
