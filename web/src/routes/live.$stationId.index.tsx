@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router"
 import { LayoutGridIcon, MaximizeIcon } from "lucide-react"
 
 import { PageHeader } from "@/components/page-header"
+import { TyreTemps } from "@/components/tyre-temps"
 import { PhaseBadge } from "@/components/status-badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -168,6 +169,16 @@ function LiveFocusPage() {
                 Flux /stream
               </span>
             </div>
+            <div className="flex flex-col gap-1.5 px-1 pb-1.5">
+              <div className="flex justify-between text-meta text-muted-foreground">
+                <span>Position sur le tour</span>
+                <span>{values.position}</span>
+              </div>
+              <Progress
+                value={values.positionPercent}
+                aria-label="Position sur le tour"
+              />
+            </div>
             {liveStats(status, live?.latest, { withSpeed: true }).map(
               (stat) => (
                 <div
@@ -188,16 +199,10 @@ function LiveFocusPage() {
                 </div>
               )
             )}
-            <div className="flex flex-col gap-1.5 px-1 pt-1.5">
-              <div className="flex justify-between text-meta text-muted-foreground">
-                <span>Position sur le tour</span>
-                <span>{values.position}</span>
-              </div>
-              <Progress
-                value={values.positionPercent}
-                aria-label="Position sur le tour"
-              />
-            </div>
+            <TyreTemps
+              temps={offline ? undefined : live?.latest.tyre_temp_c}
+              className="rounded-md px-3.5 py-2.5"
+            />
             <span className="px-1 text-meta text-muted-foreground">
               {seenAt ? `Vu ${formatAgo(now - seenAt)}` : "Jamais vu"}
             </span>

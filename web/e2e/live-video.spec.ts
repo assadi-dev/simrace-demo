@@ -256,3 +256,34 @@ test("un poste inconnu le dit, sans inventer de valeurs", async ({ page }) => {
   await page.goto("/live/inconnu-e2e")
   await expect(page.getByText("Poste inconnu", { exact: true })).toBeVisible()
 })
+
+test("la vue en grand montre la position sur le tour puis la temperature des pneus", async ({
+  page,
+  request,
+}) => {
+  const stationId = uniqueId("sim")
+  const agent = new FakeAgent(request, {
+    stationId,
+    track: "monza",
+    driver: "Pilote Pneus",
+  })
+  await agent.sendBatch()
+  await page.goto(`/live/${stationId}`)
+  await expect(page.getByRole("status")).toContainText(
+    "Flux en direct connecté"
+  )
+  await agent.sendBatch({ tyre_temp_c: [81.6, 80.2, 77.5, 76.4] })
+
+  await expect(
+    page.getByRole("listitem", { name: "Avant gauche : 82" })
+  ).toBeVisible()
+  await expect(
+    page.getByRole("listitem", { name: "Arrière droit : 76" })
+  ).toBeVisible()
+  // la position sur le tour passe au-dessus de la vitesse
+  const position = await page
+    .getByText("Position sur le tour", { exact: true })
+    .boundingBox()
+  const speed = await page.getByText("Vitesse", { exact: true }).boundingBox()
+  expect(position!.y).toBeLessThan(speed!.y)
+})
