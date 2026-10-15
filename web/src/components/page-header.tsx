@@ -24,7 +24,10 @@ export function PageHeader({
     <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 px-1">
       <div className="flex flex-col gap-0.5">
         {breadcrumb ? (
-          <nav aria-label="Fil d'Ariane" className="text-caption text-muted-foreground">
+          <nav
+            aria-label="Fil d'Ariane"
+            className="text-caption text-muted-foreground"
+          >
             {breadcrumb}
           </nav>
         ) : null}
@@ -41,7 +44,8 @@ export function PageHeader({
         ) : null}
       </div>
       {eyebrow || actions ? (
-        <div className="flex flex-wrap items-center gap-3">
+        // toute la largeur sur mobile : une action en `max-sm:flex-1` peut remplir sa ligne
+        <div className="flex flex-wrap items-center gap-3 max-sm:w-full">
           {eyebrow ? (
             <p className="text-eyebrow text-primary-text">{eyebrow}</p>
           ) : null}

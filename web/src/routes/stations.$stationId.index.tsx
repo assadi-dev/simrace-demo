@@ -54,8 +54,9 @@ function StationSelect({ stationId }: { stationId: string }) {
   }, [stations.data, stationId])
 
   return (
-    <label className="flex items-center gap-2 text-caption text-muted-foreground">
-      Poste
+    <label className="flex items-center gap-2 text-caption text-muted-foreground max-sm:flex-1">
+      {/* masque sur mobile (gain de place), toujours lu par un lecteur d'ecran */}
+      <span className="sr-only sm:not-sr-only">Poste</span>
       <Select
         value={stationId}
         onValueChange={(id) =>
@@ -66,7 +67,7 @@ function StationSelect({ stationId }: { stationId: string }) {
           })
         }
       >
-        <SelectTrigger className="min-w-32 text-foreground">
+        <SelectTrigger className="min-w-32 text-foreground max-sm:w-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -147,10 +148,12 @@ function DirectPage() {
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
+            {/* sur mobile, les deux boutons se partagent leur ligne */}
             <Button
               variant="secondary"
               aria-pressed={frozen}
               onClick={() => setFrozen((f) => !f)}
+              className="max-sm:flex-1"
             >
               {frozen ? (
                 <PlayIcon aria-hidden="true" />
@@ -160,7 +163,7 @@ function DirectPage() {
               {frozen ? "Reprendre le direct" : "Figer les courbes"}
             </Button>
             {/* video du poste (decision 0019) : vue en grand de la page Live */}
-            <Button asChild variant="secondary">
+            <Button asChild variant="secondary" className="max-sm:flex-1">
               <Link to="/live/$stationId" params={{ stationId }}>
                 <VideoIcon aria-hidden="true" />
                 Live vidéo
