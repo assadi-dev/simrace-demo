@@ -4,7 +4,7 @@ import samplesEvent from "@/contracts/fixtures/samples-event.json"
 import { samplesEventSchema, type Sample } from "@/contracts/telemetry"
 import type { Lap } from "./laps"
 import { EMPTY_HISTORY } from "./history"
-import { directKpis, gaugeStats, gearLabel } from "./values"
+import { directKpis, gearLabel } from "./values"
 
 const base = samplesEventSchema.parse(samplesEvent).samples[0]
 const sample = (overrides: Partial<Sample> = {}): Sample => ({
@@ -74,27 +74,5 @@ describe("directKpis", () => {
       value: "1:47,900",
       help: "Tour 1",
     })
-  })
-})
-
-describe("gaugeStats", () => {
-  it("calcule la vitesse moyenne a partir de la distance et du temps roule", () => {
-    const stats = gaugeStats(sample({ gear: 4 }), {
-      ...EMPTY_HISTORY,
-      trip: { distanceM: 5_000, drivenMs: 120_000 }, // 5 km en 2 min
-    })
-
-    expect(byLabel(stats, "Rapport")?.value).toBe("4")
-    expect(byLabel(stats, "Distance parcourue")?.value).toBe("5,00")
-    expect(byLabel(stats, "Vitesse moyenne")).toMatchObject({
-      value: "150",
-      unit: "km/h",
-    })
-  })
-
-  it("n'invente pas de moyenne avant d'avoir roule", () => {
-    expect(
-      byLabel(gaugeStats(sample(), EMPTY_HISTORY), "Vitesse moyenne")?.value
-    ).toBe("n.d.")
   })
 })

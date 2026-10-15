@@ -1,11 +1,6 @@
 import type { Sample } from "@/contracts/telemetry"
 import type { Lap, StationHistory } from "@/features/direct/history"
-import {
-  formatDecimal,
-  formatLapTime,
-  formatNumber,
-  NOT_AVAILABLE,
-} from "@/lib/format"
+import { formatLapTime, NOT_AVAILABLE } from "@/lib/format"
 
 export type Kpi = { label: string; value: string; help: string }
 
@@ -62,44 +57,6 @@ export function directKpis(sample: Sample, history: StationHistory): Kpi[] {
       label: "Meilleur tour",
       value: formatLapTime(sample.best_lap_ms),
       help: bestLap ? `Tour ${bestLap}` : "Selon ACC",
-    },
-  ]
-}
-
-export type GaugeStat = {
-  label: string
-  value: string
-  unit: string
-  help: string
-}
-
-/** Les trois mini-cartes a gauche de la jauge. Distance et moyenne sont calculees par le front. */
-export function gaugeStats(
-  sample: Sample,
-  history: StationHistory
-): GaugeStat[] {
-  const { distanceM, drivenMs } = history.trip
-  const average =
-    drivenMs > 0 ? distanceM / 1000 / (drivenMs / 3_600_000) : null
-  return [
-    {
-      label: "Rapport",
-      value: gearLabel(sample.gear),
-      unit: "",
-      help: "Marche arrière = R, point mort = N",
-    },
-    {
-      label: "Distance parcourue",
-      value: formatDecimal(distanceM / 1000, 2),
-      unit: "km",
-      help: "Calculée : vitesse × temps entre échantillons, depuis la remise à zéro",
-    },
-    {
-      label: "Vitesse moyenne",
-      value:
-        average == null ? NOT_AVAILABLE : formatNumber(Math.round(average)),
-      unit: average == null ? "" : "km/h",
-      help: "Calculée : distance ÷ temps roulé",
     },
   ]
 }

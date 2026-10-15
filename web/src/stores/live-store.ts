@@ -5,7 +5,6 @@ import { channelsOf, clearAllChannels } from "@/features/direct/channels"
 import {
   advanceHistory,
   EMPTY_HISTORY,
-  resetTrip,
   type StationHistory,
 } from "@/features/direct/history"
 
@@ -15,7 +14,7 @@ export type Connection = "connecting" | "connected" | "reconnecting" | "offline"
 export type LiveStation = {
   session: SessionInfo
   latest: Sample
-  /** Tours, drapeaux et penalites, distance : deduits du flux depuis l'ouverture de la page. */
+  /** Tours, drapeaux et penalites, trace : deduits du flux depuis l'ouverture de la page. */
   history: StationHistory
   /** Horloge du navigateur a la reception du dernier echantillon retenu. */
   receivedAt: number
@@ -29,8 +28,6 @@ type LiveState = {
   setConnection: (connection: Connection) => void
   pushSamples: (event: SamplesEvent, receivedAt?: number) => void
   countInvalidEvent: () => void
-  /** Remet a zero la distance et la vitesse moyenne d'un poste. */
-  resetTrip: (stationId: string) => void
   reset: () => void
 }
 
@@ -78,18 +75,6 @@ export const useLiveStore = create<LiveState>()((set) => ({
 
   countInvalidEvent: () =>
     set((state) => ({ invalidEvents: state.invalidEvents + 1 })),
-
-  resetTrip: (stationId) =>
-    set((state) => {
-      const current = state.stations[stationId]
-      if (!current) return state
-      return {
-        stations: {
-          ...state.stations,
-          [stationId]: { ...current, history: resetTrip(current.history) },
-        },
-      }
-    }),
 
   reset: () => {
     clearAllChannels()

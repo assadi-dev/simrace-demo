@@ -121,7 +121,7 @@ Objectif : confirmer que `probe` affiche des valeurs cohérentes avec le jeu.
   contrôle avec le meilleur temps d'ACC (décision 0018, complément). À vérifier avec `probe` :
   le moment où `is_valid_lap` passe à faux puis revient à vrai, et que `best_lap_ms` ignore les
   tours invalides.
-- Front, écran Direct : tours, drapeaux, distance et vitesse moyenne sont déduits du flux **depuis
+- Front, écran Direct : tours, drapeaux et trace du tour sont déduits du flux **depuis
   l'ouverture de la page** (le flux ne rejoue pas le passé). Un nouveau `run_id` ne vide pas
   l'historique (le flux ne le transmet pas), seul un `completed_laps` qui recule le fait.
 - Front : les tests Playwright lancent le serveur avec `SIMRACE_DATA_DIR` dans le dossier

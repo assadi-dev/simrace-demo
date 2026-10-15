@@ -114,7 +114,7 @@ direct), nuqs (état dans l'URL), Vitest et Playwright. uPlot pour les courbes.
    (tableau TanStack Table) est aussi fait en version minimale, sans la colonne Delta.
 3. Écran Direct : **fait** (maquette 2 et décision 0018) : titre et choix du poste, fenêtre
    10/30/60 s (`?fenetre=`) et « Figer les courbes », 6 KPI, courbes uPlot (vitesse, accélérateur,
-   frein), carte Vitesse (jauge, rapport, distance et vitesse moyenne avec remise à zéro), Position
+   frein), carte Vitesse (jauge, rapport, température des pneus, décision 0021), Position
    sur la piste (vraie carte de `GET /tracks/{circuit}/reference`, trace du tour orange sur la
    piste et bleue atténuée hors piste ou aux stands ; tracé schématique sans carte), Tours (valides
    selon ACC seulement), Pénalités et drapeaux. Logique pure dans `src/features/direct/`, testée par

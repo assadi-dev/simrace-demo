@@ -89,7 +89,6 @@ function StationSelect({ stationId }: { stationId: string }) {
 function DirectPage() {
   const { stationId } = Route.useParams()
   const live = useLiveStore((state) => state.stations[stationId])
-  const resetTrip = useLiveStore((state) => state.resetTrip)
   const [windowS, setWindowS] = useQueryState("fenetre", windowParser)
   const [frozen, setFrozen] = useState(false)
   const stations = useQuery(stationsQueryOptions)
@@ -189,11 +188,7 @@ function DirectPage() {
 
           <div className="flex flex-wrap items-start gap-5">
             <div className="flex min-w-0 flex-[2_1_--spacing(160)] flex-col gap-5">
-              <SpeedCard
-                sample={live.latest}
-                history={live.history}
-                onResetTrip={() => resetTrip(stationId)}
-              />
+              <SpeedCard sample={live.latest} />
               <CurvesCard
                 stationId={stationId}
                 windowS={windowS}

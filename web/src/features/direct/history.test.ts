@@ -6,8 +6,6 @@ import {
   activeEvents,
   advanceHistory,
   EMPTY_HISTORY,
-  EMPTY_TRIP,
-  resetTrip,
   type StationHistory,
 } from "./history"
 
@@ -71,31 +69,6 @@ describe("tours", () => {
     )
 
     expect(after.laps).toEqual([])
-    expect(after.trip).toEqual(EMPTY_HISTORY.trip)
-  })
-})
-
-describe("distance parcourue", () => {
-  it("integre la vitesse entre deux echantillons (trapeze)", () => {
-    // 180 km/h = 50 m/s, puis 216 km/h = 60 m/s, pendant 1 s : 55 m
-    const history = replay([
-      sample(0, { speed_kmh: 180 }),
-      sample(1000, { speed_kmh: 216 }),
-    ])
-
-    expect(history.trip.distanceM).toBeCloseTo(55)
-    expect(history.trip.drivenMs).toBe(1000)
-  })
-
-  it("ignore un trou (lots perdus) et la pause", () => {
-    const history = replay([
-      sample(0, { speed_kmh: 180 }),
-      sample(5_000, { speed_kmh: 180 }), // 5 s sans echantillon : trou
-      sample(5_017, { speed_kmh: 180, status: 3 }), // pause
-      sample(5_034, { speed_kmh: 180, status: 3 }),
-    ])
-
-    expect(history.trip).toEqual({ distanceM: 0, drivenMs: 0 })
   })
 
   it("rend le meme objet quand rien ne change (pas de rendu inutile)", () => {
@@ -192,18 +165,5 @@ describe("trace roulee", () => {
 
   it("reste vide sans coordonnees", () => {
     expect(replay([sample(0), sample(17)]).trail).toEqual([])
-  })
-})
-
-describe("resetTrip", () => {
-  it("remet la distance a zero sans toucher aux tours", () => {
-    const history = replay([
-      sample(0, { completed_laps: 0 }),
-      sample(500, { completed_laps: 1, last_lap_ms: 100_000 }),
-    ])
-
-    const reset = resetTrip(history)
-    expect(reset.trip).toBe(EMPTY_TRIP)
-    expect(reset.laps).toBe(history.laps)
   })
 })

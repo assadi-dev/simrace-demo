@@ -30,7 +30,7 @@ d'ACC, les courbes uPlot et une remise à zéro de la distance et de la vitesse 
   (`?fenetre=`), bouton « Figer les courbes ». La pause n'ajoute rien, un trou de plus de 1 s coupe
   la ligne.
 - **Distance et vitesse moyenne** : bouton de remise à zéro, propre au navigateur (rien n'est
-  envoyé au serveur).
+  envoyé au serveur). Remplacées par la température des pneus (décision 0021).
 
 ## Raisons
 

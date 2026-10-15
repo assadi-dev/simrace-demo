@@ -239,7 +239,7 @@ test("les courbes se dessinent, la fenetre vit dans l'URL et se fige", async ({
   await expect(speed).toHaveAttribute("data-points", frozenPoints ?? "")
 })
 
-test("la distance et la vitesse moyenne se remettent a zero", async ({
+test("le direct montre la temperature des quatre pneus", async ({
   page,
   request,
 }) => {
@@ -247,24 +247,20 @@ test("la distance et la vitesse moyenne se remettent a zero", async ({
   const agent = new FakeAgent(request, {
     stationId,
     track: "monza",
-    driver: "Pilote Zero",
+    driver: "Pilote Pneus",
   })
   await page.goto(`/stations/${stationId}`)
   await expect(page.getByRole("status")).toContainText(
     "Flux en direct connecté"
   )
-  await agent.sendBatch({ speed_kmh: 180 }, 30)
+  await agent.sendBatch({ tyre_temp_c: [81.6, 80.2, 77.5, 76.4] })
 
-  const average = page
-    .getByRole("term")
-    .filter({ hasText: "Vitesse moyenne" })
-    .locator("..")
-  await expect(average).toContainText("180")
-  await page.getByRole("button", { name: /Remettre à zéro/ }).click()
-  await expect(average).toContainText("n.d.")
   await expect(
-    page.getByRole("button", { name: /Remettre à zéro/ })
-  ).toBeDisabled()
+    page.getByRole("listitem", { name: "Avant gauche : 82" })
+  ).toBeVisible()
+  await expect(
+    page.getByRole("listitem", { name: "Arrière droit : 76" })
+  ).toBeVisible()
 })
 
 /** Un tour complet sur un ovale de 300 x 150 m, comme l'enverrait l'agent (x, z en metres). */

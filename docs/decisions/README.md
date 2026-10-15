@@ -28,3 +28,4 @@ Format d'un fichier : Statut, Date, Contexte, Décision, Raisons, Conséquences.
 | [0018](0018-ecran-direct-carte-courbes-tours-valides.md) | Écran Direct : carte réelle, trace hors piste, courbes et tours valides | Acceptée |
 | [0019](0019-capture-ecran-obs-mediamtx.md) | Capture d'écran du jeu : OBS vers MediaMTX (Docker) | Acceptée |
 | [0020](0020-adresses-mediamtx-en-https.md) | Adresses MediaMTX complètes pour un front en https | Acceptée |
+| [0021](0021-temperature-des-pneus-a-la-place-de-la-distance.md) | Température des pneus à la place de la distance et de la vitesse moyenne | Acceptée |
