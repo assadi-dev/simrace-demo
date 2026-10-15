@@ -27,8 +27,8 @@ const navClass = cn(
 
 /**
  * En-tete (maquettes) : marque, onglets en pilules (l'actif en `ink`), etat du flux SSE et
- * fraicheur de la liste des postes. Direct et Integrite visent le poste ouvert, sinon le
- * premier poste de la liste (en ligne d'abord).
+ * fraicheur de la liste des postes. Direct vise le poste ouvert, sinon le premier poste de la
+ * liste (en ligne d'abord).
  */
 export function AppHeader() {
   const connection = useLiveStore((state) => state.connection)
@@ -58,35 +58,23 @@ export function AppHeader() {
           Postes
         </Link>
         {stationId ? (
-          <>
-            <Link
-              to="/stations/$stationId"
-              params={{ stationId }}
-              activeOptions={{ exact: true }}
-              className={navClass}
-            >
-              Direct
-            </Link>
-            <Link
-              to="/stations/$stationId/integrite"
-              params={{ stationId }}
-              className={navClass}
-            >
-              Intégrité
-            </Link>
-          </>
+          <Link
+            to="/stations/$stationId"
+            params={{ stationId }}
+            activeOptions={{ exact: true }}
+            className={navClass}
+          >
+            Direct
+          </Link>
         ) : (
           // aucun poste connu : rien a ouvrir
-          ["Direct", "Intégrité"].map((label) => (
-            <span
-              key={label}
-              aria-disabled="true"
-              title="Aucun poste déclaré"
-              className={cn(navClass, "pointer-events-none opacity-50")}
-            >
-              {label}
-            </span>
-          ))
+          <span
+            aria-disabled="true"
+            title="Aucun poste déclaré"
+            className={cn(navClass, "pointer-events-none opacity-50")}
+          >
+            Direct
+          </span>
         )}
         <Link to="/leaderboard" className={navClass}>
           Leaderboard

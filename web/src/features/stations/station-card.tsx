@@ -113,14 +113,6 @@ export function StationCard({
             Ouvrir le direct
           </Link>
         </Button>
-        <Button asChild variant="secondary">
-          <Link
-            to="/stations/$stationId/integrite"
-            params={{ stationId: station.station_id }}
-          >
-            Voir l'intégrité
-          </Link>
-        </Button>
       </div>
     </Card>
   )

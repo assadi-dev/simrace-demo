@@ -1,6 +1,6 @@
 # web : interface SimRace
 
-Front de la démo : postes, leaderboard, direct d'un poste, intégrité des données. Il lit le serveur
+Front de la démo : postes, leaderboard, direct d'un poste (avec les compteurs d'intégrité sur les cartes). Il lit le serveur
 FastAPI (`../server`) : `GET /stations` toutes les 2 s et le flux SSE `GET /stream`.
 
 Pile et raisons : [décision 0017](../docs/decisions/0017-pile-du-front.md). Plan des écrans :

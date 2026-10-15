@@ -95,7 +95,6 @@ tampons --requestAnimationFrame (20 images/s)--> uPlot (vitesse, gaz et frein)
 |---|---|---|---|
 | `/` | **Postes** : grille de cartes, KPI globaux | Opérateur du centre | `/stations` + dernier échantillon du flux |
 | `/stations/:id` | **Direct** : KPI, courbes, position sur la piste, tours | Pilote, opérateur | flux `samples` filtré sur le poste |
-| `/stations/:id/integrite` | **Intégrité** : compteurs, raisons de rejet, runs | Opérateur, démo recruteur | `/stations` (+ phase 2 : lots) |
 | `/leaderboard` | **Leaderboard** : pilotes par circuit (`?circuit=`), position, temps en direct | Pilotes, centre | `/stations` + dernier échantillon du flux |
 | `/live`, `/live/:id`, `/live/:id/plein-ecran` | **Live** (maquettes 5, 6, 7) : mosaïque vidéo, vue en grand, plein écran | Opérateur, spectateurs | Vidéo MediaMTX (décision 0019) ; `/stations` + dernier échantillon du flux |
 
@@ -120,7 +119,8 @@ direct), nuqs (état dans l'URL), Vitest et Playwright. uPlot pour les courbes.
    piste et bleue atténuée hors piste ou aux stands ; tracé schématique sans carte), Tours (valides
    selon ACC seulement), Pénalités et drapeaux. Logique pure dans `src/features/direct/`, testée par
    Vitest. Reste : remise à zéro sur nouveau `run_id` (le flux ne le transmet pas).
-4. Écran Intégrité (compteurs et raisons).
+4. Écran Intégrité : **retiré pour la démo** (c'était un squelette vide). Les compteurs
+   d'intégrité restent sur les cartes de l'écran Postes.
 5. Playwright : **socle fait** (`web/e2e/`, 13 scénarios, vrai serveur, de vrais lots, données
    du serveur de test dans un dossier temporaire). Une courbe qui se dessine et une carte réelle
    enregistrée par un faux tour sont vérifiées. Reste : un doublon injecté incrémente le compteur.

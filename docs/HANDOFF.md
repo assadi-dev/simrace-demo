@@ -22,7 +22,7 @@ le PC Windows qui a Assetto Corsa Competizione.
 | `agent/` enregistrement et rejeu | fait | test aller-retour + essai de bout en bout |
 | `agent/` envoi par lots avec reprise (`sender.py`) | fait | essai de bout en bout, serveur coupé non testé |
 | PostgreSQL / SQLAlchemy / Alembic | à faire | `docker-compose.yml` fournit la base |
-| `web/` squelette React | fait : Vite, shadcn/ui (thème Flame & Sand), TanStack Router, Table et Query, Zod, Zustand, nuqs (décision 0017). Écran **Postes** conforme à la maquette (KPI, cartes avec valeurs en direct, position, intégrité ; tri en ligne d'abord), **Leaderboard** (tableau TanStack Table, `?circuit=` dans l'URL) en version minimale ; **Direct** fait (KPI, courbes uPlot, jauge, vraie carte avec trace hors piste, tours valides, drapeaux et pénalités, décision 0018), **Intégrité** en squelette | 93 tests Vitest, 13 scénarios Playwright contre un vrai serveur, captures d'écran desktop et mobile. **Vérifié avec des lots de test envoyés au serveur, pas avec le flux d'un vrai ACC** |
+| `web/` squelette React | fait : Vite, shadcn/ui (thème Flame & Sand), TanStack Router, Table et Query, Zod, Zustand, nuqs (décision 0017). Écran **Postes** conforme à la maquette (KPI, cartes avec valeurs en direct, position, intégrité ; tri en ligne d'abord), **Leaderboard** (tableau TanStack Table, `?circuit=` dans l'URL) en version minimale ; **Direct** fait (KPI, courbes uPlot, jauge, vraie carte avec trace hors piste, tours valides, drapeaux et pénalités, décision 0018), **Intégrité** retiré (squelette vide, compteurs sur les cartes Postes) | 93 tests Vitest, 13 scénarios Playwright contre un vrai serveur, captures d'écran desktop et mobile. **Vérifié avec des lots de test envoyés au serveur, pas avec le flux d'un vrai ACC** |
 | Playwright (front) | fait : `web/e2e/` lance `uvicorn` et Vite, envoie de vrais lots comme l'agent | `npm run test:e2e` depuis `web/` |
 | CI GitHub Actions | à faire | |
 
@@ -82,8 +82,8 @@ Objectif : confirmer que `probe` affiche des valeurs cohérentes avec le jeu.
      tort comme manquant).
 4. Front `web/` : Postes et Direct faits (voir l'état ci-dessus). À vérifier avec un vrai ACC : le
    seuil hors piste de 12 m et l'orientation de la carte sur d'autres circuits (décision 0018).
-   Reste l'écran **Intégrité** (compteurs et raisons de rejet de `/stations`). Voir
-   [docs/FRONT.md](FRONT.md).
+   L'écran **Intégrité** (squelette vide) a été retiré pour la démo : les compteurs d'intégrité
+   restent visibles sur les cartes de l'écran Postes. Voir [docs/FRONT.md](FRONT.md).
 5. Tests : pytest d'intégration avec PostgreSQL, GitHub Actions (serveur, agent, `web/` : build,
    Vitest, Playwright avec `npx playwright install chromium`).
 6. Durcissement : clé d'API par poste sur `/ingest/batches`, configuration par variables

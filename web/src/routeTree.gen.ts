@@ -15,7 +15,6 @@ import { Route as LiveIndexRouteImport } from './routes/live.index'
 import { Route as LiveStationIdIndexRouteImport } from './routes/live.$stationId.index'
 import { Route as LiveStationIdPleinEcranRouteImport } from './routes/live.$stationId.plein-ecran'
 import { Route as StationsStationIdIndexRouteImport } from './routes/stations.$stationId.index'
-import { Route as StationsStationIdIntegriteRouteImport } from './routes/stations.$stationId.integrite'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -47,19 +46,12 @@ const StationsStationIdIndexRoute = StationsStationIdIndexRouteImport.update({
   path: '/stations/$stationId/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StationsStationIdIntegriteRoute =
-  StationsStationIdIntegriteRouteImport.update({
-    id: '/stations/$stationId/integrite',
-    path: '/stations/$stationId/integrite',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/leaderboard': typeof LeaderboardRoute
   '/live/': typeof LiveIndexRoute
   '/live/$stationId/plein-ecran': typeof LiveStationIdPleinEcranRoute
-  '/stations/$stationId/integrite': typeof StationsStationIdIntegriteRoute
   '/live/$stationId/': typeof LiveStationIdIndexRoute
   '/stations/$stationId/': typeof StationsStationIdIndexRoute
 }
@@ -68,7 +60,6 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof LeaderboardRoute
   '/live': typeof LiveIndexRoute
   '/live/$stationId/plein-ecran': typeof LiveStationIdPleinEcranRoute
-  '/stations/$stationId/integrite': typeof StationsStationIdIntegriteRoute
   '/live/$stationId': typeof LiveStationIdIndexRoute
   '/stations/$stationId': typeof StationsStationIdIndexRoute
 }
@@ -78,7 +69,6 @@ export interface FileRoutesById {
   '/leaderboard': typeof LeaderboardRoute
   '/live/': typeof LiveIndexRoute
   '/live/$stationId/plein-ecran': typeof LiveStationIdPleinEcranRoute
-  '/stations/$stationId/integrite': typeof StationsStationIdIntegriteRoute
   '/live/$stationId/': typeof LiveStationIdIndexRoute
   '/stations/$stationId/': typeof StationsStationIdIndexRoute
 }
@@ -89,7 +79,6 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/live/'
     | '/live/$stationId/plein-ecran'
-    | '/stations/$stationId/integrite'
     | '/live/$stationId/'
     | '/stations/$stationId/'
   fileRoutesByTo: FileRoutesByTo
@@ -98,7 +87,6 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/live'
     | '/live/$stationId/plein-ecran'
-    | '/stations/$stationId/integrite'
     | '/live/$stationId'
     | '/stations/$stationId'
   id:
@@ -107,7 +95,6 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/live/'
     | '/live/$stationId/plein-ecran'
-    | '/stations/$stationId/integrite'
     | '/live/$stationId/'
     | '/stations/$stationId/'
   fileRoutesById: FileRoutesById
@@ -117,7 +104,6 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute
   LiveIndexRoute: typeof LiveIndexRoute
   LiveStationIdPleinEcranRoute: typeof LiveStationIdPleinEcranRoute
-  StationsStationIdIntegriteRoute: typeof StationsStationIdIntegriteRoute
   LiveStationIdIndexRoute: typeof LiveStationIdIndexRoute
   StationsStationIdIndexRoute: typeof StationsStationIdIndexRoute
 }
@@ -166,13 +152,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StationsStationIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/stations/$stationId/integrite': {
-      id: '/stations/$stationId/integrite'
-      path: '/stations/$stationId/integrite'
-      fullPath: '/stations/$stationId/integrite'
-      preLoaderRoute: typeof StationsStationIdIntegriteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -181,7 +160,6 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   LiveIndexRoute: LiveIndexRoute,
   LiveStationIdPleinEcranRoute: LiveStationIdPleinEcranRoute,
-  StationsStationIdIntegriteRoute: StationsStationIdIntegriteRoute,
   LiveStationIdIndexRoute: LiveStationIdIndexRoute,
   StationsStationIdIndexRoute: StationsStationIdIndexRoute,
 }
