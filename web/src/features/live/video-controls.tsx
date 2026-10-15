@@ -16,6 +16,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useLivePrefs } from "@/features/live/prefs-store"
+import {
+  canFullscreenPage,
+  enterVideoFullscreen,
+  requestPageFullscreen,
+} from "@/lib/fullscreen"
 import { cn } from "@/lib/utils"
 
 /** Pilule sombre des commandes (comme celles de YouTube), posee sur la video. */
@@ -201,6 +206,13 @@ export function VideoControls({
             search
             aria-label="Plein écran"
             className={iconButton}
+            onClick={(event) => {
+              // demande faite pendant le clic : sinon le navigateur la refuse (mobile surtout)
+              if (canFullscreenPage()) return requestPageFullscreen()
+              // iPhone : pas de plein ecran de page, la video passe dans le lecteur d'iOS
+              const video = videoRef.current
+              if (video && enterVideoFullscreen(video)) event.preventDefault()
+            }}
           >
             <MaximizeIcon aria-hidden="true" className="size-5" />
           </Link>

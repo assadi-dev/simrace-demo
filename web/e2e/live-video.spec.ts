@@ -110,10 +110,55 @@ test("la vue en grand puis le plein ecran, Echap revient a la vue en grand", asy
   const dialog = page.getByRole("dialog", { name: `Plein écran ${stationId}` })
   await expect(dialog).toBeVisible()
   await expect(dialog.getByText("km/h")).toBeVisible()
+  // vrai plein ecran du navigateur, demande pendant le clic
+  const isFullscreen = () =>
+    page
+      .locator("html")
+      .evaluate((html) => html.ownerDocument.fullscreenElement !== null)
+  await expect.poll(isFullscreen).toBe(true)
 
   await page.keyboard.press("Escape")
   await expect(page).toHaveURL(new RegExp(`/live/${stationId}$`))
   await expect(dialog).toBeHidden()
+  await expect.poll(isFullscreen).toBe(false)
+})
+
+test.describe("plein ecran sur telephone", () => {
+  for (const [width, height, orientation, telemetry] of [
+    [390, 844, "portrait", false],
+    [844, 390, "paysage", true],
+  ] as const) {
+    test(`${orientation} : colonne des postes masquee, telemetrie ${telemetry ? "visible" : "masquee"}`, async ({
+      page,
+      request,
+    }) => {
+      await page.setViewportSize({ width, height })
+      const stationId = uniqueId("sim")
+      await new FakeAgent(request, {
+        stationId,
+        track: "monza",
+        driver: "Pilote Mobile",
+      }).sendBatch()
+      await page.goto(`/live/${stationId}/plein-ecran`)
+
+      const dialog = page.getByRole("dialog", {
+        name: `Plein écran ${stationId}`,
+      })
+      // les commandes restent toujours ; en portrait, la telemetrie laisse la place a la video
+      await expect(
+        dialog.getByRole("button", { name: "Épingler l'affichage" })
+      ).toBeVisible()
+      await expect(
+        dialog.getByRole("link", { name: "Quitter le plein écran" })
+      ).toBeVisible()
+      if (telemetry) await expect(dialog.getByText("km/h")).toBeVisible()
+      else await expect(dialog.getByText("km/h")).toBeHidden()
+      // elle cacherait la video sur un si petit ecran
+      await expect(
+        dialog.getByRole("navigation", { name: "Postes" })
+      ).toBeHidden()
+    })
+  }
 })
 
 test("le plein ecran masque ses surimpressions sans activite, sauf epinglees", async ({

@@ -23,6 +23,12 @@ import { stationStatus, type StationStatus } from "@/features/stations/status"
 import { liveValues } from "@/features/stations/summary"
 import { useIdle } from "@/hooks/use-idle"
 import { NOT_AVAILABLE } from "@/lib/format"
+import {
+  exitPageFullscreen,
+  FULLSCREEN_EVENTS,
+  fullscreenElement,
+  requestPageFullscreen,
+} from "@/lib/fullscreen"
 import { cn } from "@/lib/utils"
 
 export const Route = createFileRoute("/live/$stationId/plein-ecran")({
@@ -55,32 +61,28 @@ function LiveFullscreenPage() {
         params: { stationId },
         search: true,
       })
-    // le clic qui a ouvert la page autorise le plein ecran ; sinon la couche fixe suffit
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen?.().catch(() => {})
-    }
+    // le bouton Plein ecran le demande pendant le clic ; ici, seconde chance (lien ouvert
+    // directement), souvent refusee faute de geste : la couche fixe suffit alors
+    if (!fullscreenElement()) requestPageFullscreen()
     // en plein ecran, Echap est pris par le navigateur : on suit sa sortie
     const onFullscreenChange = () => {
-      if (!document.fullscreenElement) exit()
+      if (!fullscreenElement()) exit()
     }
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") exit()
     }
-    document.addEventListener("fullscreenchange", onFullscreenChange)
+    for (const name of FULLSCREEN_EVENTS)
+      document.addEventListener(name, onFullscreenChange)
     window.addEventListener("keydown", onKeyDown)
     return () => {
-      document.removeEventListener("fullscreenchange", onFullscreenChange)
+      for (const name of FULLSCREEN_EVENTS)
+        document.removeEventListener(name, onFullscreenChange)
       window.removeEventListener("keydown", onKeyDown)
     }
   }, [navigate, stationId])
 
   // quitter la page (Quitter, retour arriere) quitte aussi le plein ecran
-  useEffect(
-    () => () => {
-      if (document.fullscreenElement) void document.exitFullscreen()
-    },
-    []
-  )
+  useEffect(() => () => exitPageFullscreen(), [])
 
   const entry = feed.find((e) => e.station.station_id === stationId)
   const status = entry
@@ -162,7 +164,7 @@ function FullscreenOverlays({
       <div
         data-slot="fullscreen-overlays"
         data-hidden={hidden || undefined}
-        className="pointer-events-none absolute inset-0 flex flex-col gap-5 p-6 transition-opacity duration-300 data-hidden:opacity-0"
+        className="pointer-events-none absolute inset-0 flex flex-col gap-3 p-3 transition-opacity duration-300 data-hidden:opacity-0 sm:gap-5 sm:p-6"
       >
         {/* Haut : identite */}
         <div
@@ -189,13 +191,15 @@ function FullscreenOverlays({
           </span>
         </div>
 
-        {/* Droite : changer de poste (208 px), jusqu'au haut du bandeau */}
+        {/* Droite : changer de poste (208 px), jusqu'au haut du bandeau. Masquee sur un
+            telephone (portrait trop etroit, paysage trop bas) : elle cacherait la video. */}
         <div className="flex min-h-0 grow justify-end">
           <nav
             {...hoverProps}
             aria-label="Postes"
             className={cn(
               "pointer-events-auto flex max-h-full w-52 flex-col gap-2 self-start overflow-y-auto rounded-xl p-2.5",
+              "max-sm:hidden [@media(max-height:32rem)]:hidden",
               glass
             )}
           >
@@ -213,10 +217,11 @@ function FullscreenOverlays({
           </nav>
         </div>
 
-        {/* Bas : commandes et telemetrie, sur toute la largeur */}
+        {/* Bas : commandes et telemetrie, sur toute la largeur. Sur un telephone en portrait,
+            les commandes seules (lecture et son a gauche, epingle et sortie a droite). */}
         <div
           {...hoverProps}
-          className="pointer-events-auto flex items-center gap-5 rounded-2xl border border-white/12 bg-sand-950/80 px-5.5 py-4.5"
+          className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-white/12 bg-sand-950/80 p-3 sm:gap-5 sm:px-5.5 sm:py-4.5"
         >
           <div className="flex shrink-0 items-center gap-2">
             <PlayButton
@@ -228,10 +233,11 @@ function FullscreenOverlays({
             <VolumeControl playing={playing} className="bg-white/10" />
           </div>
 
-          <div className="flex min-w-0 grow flex-col gap-3.5">
-            <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
+          {/* telemetrie : masquee sur un telephone en portrait, la video passe d'abord */}
+          <div className="flex min-w-0 grow flex-col gap-3.5 max-sm:hidden">
+            <div className="flex flex-wrap items-end gap-x-5 gap-y-3 sm:gap-x-8">
               <div className="flex items-baseline gap-2 whitespace-nowrap">
-                <span className="text-display">
+                <span className="text-metric sm:text-display">
                   {roundedSpeed(status, sample)}
                 </span>
                 <span className="text-nav font-normal text-white/70">km/h</span>
@@ -268,7 +274,7 @@ function FullscreenOverlays({
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2 max-sm:ml-auto">
             <ControlTooltip label="Épingler l'affichage">
               <button
                 type="button"
