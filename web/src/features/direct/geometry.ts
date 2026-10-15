@@ -3,7 +3,7 @@
  */
 
 /** Vitesse en bout de jauge (km/h). Au-dela, la jauge reste pleine ; la valeur affichee est exacte. */
-export const SPEED_GAUGE_MAX_KMH = 320
+export const SPEED_GAUGE_MAX_KMH = 280
 
 /** Jauge : demi-cercle 0 a SPEED_GAUGE_MAX_KMH en 24 segments (design.md 3 et 8, maquette 2). */
 export const GAUGE = {
