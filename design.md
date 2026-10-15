@@ -218,7 +218,7 @@ Base Tailwind v4 : `--spacing: 4px`.
 
 | Composant | Base shadcn | Spécificités SimRace |
 |---|---|---|
-| `AppHeader` | — | Verre `card`, `rounded-2xl`, `px-6 py-4`. Marque + nav en pills + indicateur de flux |
+| `AppHeader` | — | Verre `card`, `rounded-2xl`, `px-6 py-4`. Marque + nav en pills + indicateur de flux. Sous 768px (`md`) : `px-4 py-3`, pastille de flux seule (libellé `sr-only`), bouton hamburger `secondary` 44px qui ouvre la nav dans un `Sheet` à gauche (fond `popover`, liens en colonne avec icône Lucide, état du flux en pied), fermé après chaque clic |
 | Lien de nav | `Button` variant `ghost` / `ink` | Actif = `ink` + texte blanc 600 ; inactif = transparent 500 ; `rounded-full h-11 px-4.5` |
 | `Card` | `Card` | Verre `card` + `border-card-border`, `rounded-xl`, `p-6`, `gap-3` ; pas d'ombre |
 | `KpiCard` | `Card` | Libellé `label` muted, valeur `metric`, aide `meta` muted ; `p-5` |

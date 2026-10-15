@@ -32,16 +32,19 @@ export function StatusBadge({
   status,
   label,
   className,
+  labelClassName,
 }: {
   status: StationStatus
   /** Remplace le libelle par defaut (ex. "Flux en direct connecte"). */
   label?: string
   className?: string
+  /** Ex. `sr-only` : pastille seule a l'ecran, libelle toujours lu par un lecteur d'ecran. */
+  labelClassName?: string
 }) {
   return (
     <Badge variant={STATUS[status].variant} className={className}>
       <StatusDot status={status} />
-      {label ?? STATUS_LABEL[status]}
+      <span className={labelClassName}>{label ?? STATUS_LABEL[status]}</span>
     </Badge>
   )
 }

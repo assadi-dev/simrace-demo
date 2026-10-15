@@ -547,4 +547,51 @@ test.describe("telephone (390 px)", () => {
       }))
     expect(scrollWidth).toBeLessThanOrEqual(clientWidth)
   })
+
+  test("la navigation passe par le menu lateral, qui se ferme apres un clic", async ({
+    page,
+    request,
+  }) => {
+    await new FakeAgent(request, {
+      stationId: uniqueId("sim"),
+      track: "monza",
+      driver: "Pilote Menu",
+    }).sendBatch()
+    await page.goto("/")
+    // le libelle du flux est masque a l'ecran mais reste lu (pastille seule)
+    await expect(page.getByRole("status")).toContainText(
+      "Flux en direct connecté"
+    )
+    // les onglets de l'en-tete sont caches : un seul lien Leaderboard, celui du menu
+    await expect(page.getByRole("link", { name: "Leaderboard" })).toHaveCount(0)
+
+    await page.getByRole("button", { name: "Ouvrir le menu" }).click()
+    const menu = page.getByRole("dialog", { name: "SimRace" })
+    await expect(menu).toBeVisible()
+    await expect(menu.getByRole("link", { name: "Postes" })).toHaveAttribute(
+      "data-status",
+      "active"
+    )
+
+    await menu.getByRole("link", { name: "Leaderboard" }).click()
+    await expect(page).toHaveURL(/\/leaderboard/)
+    await expect(menu).toBeHidden()
+    await expect(
+      page.getByRole("heading", { name: "Leaderboard", level: 1 })
+    ).toBeVisible()
+  })
+})
+
+test("sur grand ecran, les onglets restent dans l'en-tete, sans menu", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await expect(
+    page
+      .getByRole("navigation", { name: "Navigation principale" })
+      .getByRole("link", { name: "Leaderboard" })
+  ).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: "Ouvrir le menu" })
+  ).toBeHidden()
 })

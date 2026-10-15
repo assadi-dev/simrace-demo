@@ -7,7 +7,10 @@ import type { StationHistory } from "@/features/direct/history"
 import { SpeedGauge } from "@/features/direct/speed-gauge"
 import { gaugeStats } from "@/features/direct/values"
 
-/** Vitesse (maquette 2) : rapport, distance et moyenne a gauche, jauge et regime a droite. */
+/**
+ * Vitesse (maquette 2) : rapport, distance et moyenne a gauche, jauge et regime a droite.
+ * Sur un ecran etroit, la jauge passe au-dessus des stats.
+ */
 export function SpeedCard({
   sample,
   history,
@@ -26,7 +29,8 @@ export function SpeedCard({
           Source : flux /stream, dernier échantillon
         </span>
       </div>
-      <div className="flex flex-wrap items-stretch gap-5">
+      {/* wrap-reverse : cote a cote, rien ne change ; empile (mobile), la jauge passe au-dessus */}
+      <div className="flex flex-wrap-reverse items-stretch gap-5">
         <div className="flex min-w-0 flex-[1_1_--spacing(55)] flex-col gap-2">
           <dl className="flex flex-1 flex-col justify-between gap-2">
             {gaugeStats(sample, history).map((stat) => (
