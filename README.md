@@ -68,7 +68,7 @@ C'est le parti pris du projet : aucune donnée ne disparaît en silence.
 | Projet | Outil | Nombre | Commande |
 |---|---|---|---|
 | `server/` | pytest | 218 | `uv run pytest` |
-| `agent/` | pytest | 48 | `uv run pytest` |
+| `agent/` | pytest | 55 | `uv run pytest` |
 | `web/` | Vitest (contrats, store, fonctions pures) | 123 | `npm test` |
 | `web/` | Playwright (vrai serveur, vrais lots, desktop et téléphone) | 30 | `npm run test:e2e` |
 
@@ -95,7 +95,12 @@ uv run simrace-agent probe                                      # vérifie la le
 uv run simrace-agent record --out ../recordings/session.jsonl   # roule dans ACC, Ctrl+C pour finir
 uv run simrace-agent run --server http://<ip-serveur>:8000      # temps réel depuis ACC
 uv run simrace-agent run --source replay --file ../recordings/session.jsonl --station-id sim-1
+uv run simrace-agent gui     # fenêtre : envoyer au serveur, enregistrer un replay, tout arrêter
 ```
+
+Sur le PC de jeu, `agent\build_exe.ps1` construit `agent\dist\simrace-agent.exe` : la même fenêtre,
+sans installer Python ni uv. Les champs saisis (serveur, poste, dossier des replays) sont gardés
+dans `%LOCALAPPDATA%\simrace-agent\settings.json`.
 
 Sous Windows PowerShell : `.\dependencies\docker-compose.yml`, pas de `&&` selon la version (une
 commande par ligne), et `New-Item -ItemType Directory -Force recordings` au lieu de `mkdir -p`.
@@ -134,6 +139,14 @@ raisons, conséquences). Les principaux :
   complets et un échantillon sur six.
 - **Rejeu** (0006) : `record` et `--source replay` permettent de tester et de faire la démo sans
   le jeu.
+- **File d'envoi de l'agent en mémoire, volontairement** : 500 lots, soit environ 100 s de serveur
+  injoignable à un lot toutes les 200 ms. Au-delà, les plus anciens lots sont perdus et comptés
+  (`dropped`), et le serveur voit le trou (`gaps`) : la perte est visible, jamais silencieuse.
+  Évolution prévue : une boîte d'envoi SQLite sur le PC de jeu (`sqlite3` est dans Python, aucune
+  dépendance en plus). Chaque lot est écrit avant l'envoi et supprimé à l'accusé : aucune perte,
+  même si le serveur reste coupé longtemps ou si le PC redémarre. Elle passe après PostgreSQL
+  côté serveur : tant que le serveur garde le dernier `seq` en mémoire, rejouer des lots après
+  un redémarrage n'apporte presque rien.
 
 ## Développement avec agents IA
 

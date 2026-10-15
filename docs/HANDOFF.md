@@ -107,9 +107,16 @@ Objectif : confirmer que `probe` affiche des valeurs cohérentes avec le jeu.
    Vitest, Playwright avec `npx playwright install chromium`).
 6. Durcissement : clé d'API par poste sur `/ingest/batches`, configuration par variables
    d'environnement, reprise `Last-Event-ID` côté SSE (les `id` sont déjà émis, pas de tampon).
-7. Optionnel : `docker-compose` complet (serveur + base + front), puis un adaptateur pour un
+7. Boîte d'envoi durable côté agent, **après** l'étape 3 : remplacer la file en mémoire de
+   `BatchSender` (500 lots, environ 100 s de coupure) par une table SQLite locale (`sqlite3` de
+   la bibliothèque standard, pas de dépendance sur le PC de jeu). Le lot est écrit avant l'envoi
+   et supprimé à l'accusé du serveur ; au démarrage, l'agent renvoie ce qui reste. Écrire d'abord
+   la décision 0021. Avant PostgreSQL, ça n'apporte presque rien : le serveur oublie le dernier
+   `seq` en redémarrant. Pour la démo, la file en mémoire suffit : la perte est comptée
+   (`dropped` côté agent, `gaps` côté serveur), jamais silencieuse.
+8. Optionnel : `docker-compose` complet (serveur + base + front), puis un adaptateur pour un
    deuxième jeu (voir la décision 0001 pour les contraintes).
-8. Vidéo des postes : la lecture est faite (OBS, MediaMTX, page Live). Reste : la valider avec
+9. Vidéo des postes : la lecture est faite (OBS, MediaMTX, page Live). Reste : la valider avec
    un vrai flux OBS pendant une session ACC, puis l'autorisation de publication et de lecture
    par FastAPI (liens à durée limitée, voir `0019-apercu-video-en-direct-des-postes.md`).
 
@@ -133,7 +140,8 @@ Objectif : confirmer que `probe` affiche des valeurs cohérentes avec le jeu.
   peut être enregistré.
 - Le hub SSE jette les événements les plus anciens d'un abonné trop lent (file de 1000).
 - L'agent perd les plus anciens lots si la file dépasse 500 lots (serveur injoignable trop
-  longtemps) ; le compteur `dropped` est affiché à l'arrêt.
+  longtemps) ; le compteur `dropped` est affiché à l'arrêt. La file ne survit pas à un
+  redémarrage de l'agent. Correctif prévu : boîte d'envoi SQLite (prochaines étapes, point 7).
 - `fastapi.testclient` affiche un avertissement de dépréciation (httpx / starlette) sans gravité.
 - Aucune authentification sur l'API pour l'instant, ni sur MediaMTX (n'importe qui sur le réseau
   peut publier ou lire un flux).
