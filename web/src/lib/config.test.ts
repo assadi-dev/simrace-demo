@@ -64,6 +64,19 @@ describe("parseConfig", () => {
     })
   })
 
+  it("prend les deux URL completes quand elles sont donnees, l'hote ne sert plus (prod)", () => {
+    expect(
+      parseConfig({
+        VITE_MEDIA_HOST: "212.227.194.86",
+        VITE_MEDIA_WEBRTC_URL: "https://webrtc.exemple.fr",
+        VITE_MEDIA_HLS_URL: "https://hls.exemple.fr/",
+      }).media
+    ).toEqual({
+      webrtc: "https://webrtc.exemple.fr",
+      hls: "https://hls.exemple.fr",
+    })
+  })
+
   it("accepte une URL WebRTC seule, sans hote ni HLS", () => {
     expect(
       parseConfig({ VITE_MEDIA_WEBRTC_URL: "https://video.exemple.fr" }).media
