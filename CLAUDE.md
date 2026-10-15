@@ -161,7 +161,8 @@ Le tour de sortie des stands d'une vraie session est enregistré en morceau (478
 
 AC EVO (décision 0022, `layout_evo.py`) : offsets mesurés le 2026-10-16 sur des pages brutes
 enregistrées (EVO 0.9.1, un tour, une entrée aux stands). Pas de secteur ni de code de pénalité
-dans EVO. Jamais vus : meilleur tour valide, drapeaux, cartographie moteur.
+dans EVO. Vérifié en direct avec `probe --source acevo` : physique, passage de ligne, dernier et
+meilleur tour. Jamais vus : drapeaux, cartographie moteur.
 
 Le front (`web/`) n'a été vérifié qu'avec des lots de test envoyés au serveur (tests Playwright,
 faux agent), pas avec le flux d'un vrai ACC.

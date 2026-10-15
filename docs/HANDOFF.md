@@ -11,7 +11,8 @@ L'agent lit aussi Assetto Corsa EVO : `SIMRACE_SOURCE=acevo` dans `agent/.env` o
 `--source acevo` sur `probe`, `run` et `record`. Décodage dans `layout_evo.py`, offsets mesurés
 sur EVO 0.9.1 (un tour et une entrée aux stands à Monza). EVO ne donne ni secteur ni code de
 pénalité. Voir la [décision 0022](decisions/0022-assetto-corsa-evo-deuxieme-source.md).
-Pas encore lancé : `probe --source acevo` en direct (vérifié à partir des pages brutes enregistrées).
+`probe --source acevo` vérifié en direct : physique en roulage, passage de ligne, dernier et
+meilleur tour. Pas encore vus : drapeaux, cartographie moteur.
 
 ## Changements depuis le 2026-10-11
 

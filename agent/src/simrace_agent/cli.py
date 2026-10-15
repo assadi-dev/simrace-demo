@@ -61,7 +61,11 @@ def _probe(source: Source) -> None:
                 f"tour valide {sample.is_valid_lap}  tours de carburant {sample.fuel_estimated_laps}  "
                 f"drapeaux {sample.track_flags}"
             )
-            print(f"   air {sample.air_temp_c} C  piste {sample.road_temp_c} C")
+            print(
+                f"   air {sample.air_temp_c} C  piste {sample.road_temp_c} C  "
+                f"dernier tour {sample.last_lap_ms / 1000:.3f}s  meilleur {sample.best_lap_ms / 1000:.3f}s  "
+                f"stands {sample.in_pit}"
+            )
 
 
 def _build_source(args: argparse.Namespace) -> Source:

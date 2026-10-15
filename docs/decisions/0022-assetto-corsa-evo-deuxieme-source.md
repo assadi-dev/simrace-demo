@@ -43,7 +43,7 @@ Parabolica) et une entrée aux stands avec ravitaillement.
 | `track_pos` | `npos` | 1244 | oui (retombe à 0 sur la ligne) |
 | `completed_laps` | `total_lap_count` | 2384 | oui (le tour de sortie ne compte pas, comme ACC) |
 | `last_lap_ms` | `last_laptime_ms` | 2396 | oui (150114) |
-| `best_lap_ms` | `best_laptime_ms` | 2400 | à 0, seul tour compté invalide |
+| `best_lap_ms` | `best_laptime_ms` | 2400 | oui en direct (136710, soit 2:16,710) ; 0 tant qu'aucun tour valide |
 | `in_pit` | `is_in_pit_lane` ou `is_in_pit_box` | 3120, 3119 | oui |
 | `is_valid_lap` | `is_valid_lap` | 3121 | oui |
 | `x`, `z` | `car_coordinates` de la voiture `player_car_id` dans `car_ids` | 3124, 24, 3940 | oui |
@@ -85,5 +85,9 @@ Parabolica) et une entrée aux stands avec ravitaillement.
   par `Slug`. La configuration (`GP`, offset 169 de la page statique) n'est pas envoyée.
 - La structure d'EVO peut encore changer d'une version à l'autre (journal de Kunos). Après une mise
   à jour du jeu, relancer `uv run simrace-agent probe --source acevo` et comparer avec le jeu.
-- Restent à voir sur un vrai jeu : un meilleur tour valide, un drapeau, une cartographie moteur
-  réglable.
+- Quand la session est finie (phase `Ended`, offset 2476), EVO laisse le chrono du tour à 0 alors
+  que la voiture roule encore. L'agent envoie ce que donne le jeu.
+- En pause (statut 3), EVO remet la page physique à zéro, comme ACC.
+- Vérifié en direct avec `probe --source acevo` le 2026-10-16 : physique en roulage, passage de
+  ligne, dernier et meilleur tour.
+- Restent à voir sur un vrai jeu : un drapeau, une cartographie moteur réglable.
