@@ -45,6 +45,7 @@ _LAST_LAP_OFFSET = 2396  # last_laptime_ms
 _BEST_LAP_OFFSET = 2400  # best_laptime_ms (0 tant qu'aucun tour valide)
 _FLAG_OFFSET = 2404  # flag (ACEVO_FLAG_TYPE), drapeau montre au pilote
 _GLOBAL_FLAG_OFFSET = 2408  # global_flag (ACEVO_FLAG_TYPE), drapeau de piste
+_SESSION_PHASE_OFFSET = 2476  # session_state.phase_name, char[33] (Waiting_For_Start, Session, Ended)
 _DRIVER_NAME_OFFSET = 3020  # char[33]
 _DRIVER_SURNAME_OFFSET = 3053  # char[33]
 _CAR_MODEL_OFFSET = 3086  # char[33]
@@ -157,4 +158,5 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
         is_valid_lap=bool(graphics[_IS_VALID_LAP_OFFSET]),
         fuel_estimated_laps=_positive(_f32(graphics, _FUEL_EST_LAPS_OFFSET), 1),
         track_flags=_track_flags(graphics),
+        session_phase=_cstr(graphics, _SESSION_PHASE_OFFSET, 33) or None,
     )

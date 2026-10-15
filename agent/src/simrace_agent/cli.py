@@ -64,7 +64,7 @@ def _probe(source: Source) -> None:
             print(
                 f"   air {sample.air_temp_c} C  piste {sample.road_temp_c} C  "
                 f"dernier tour {sample.last_lap_ms / 1000:.3f}s  meilleur {sample.best_lap_ms / 1000:.3f}s  "
-                f"stands {sample.in_pit}"
+                f"stands {sample.in_pit}  session {sample.session_phase}"
             )
 
 

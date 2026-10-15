@@ -6,6 +6,7 @@ import { parseAsNumberLiteral, useQueryState } from "nuqs"
 
 import { KpiCard } from "@/components/kpi-card"
 import { PageHeader } from "@/components/page-header"
+import { SessionPhaseBadge } from "@/components/session-phase-badge"
 import { StatusBadge } from "@/components/status-badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -126,6 +127,8 @@ function DirectPage() {
               <StatusBadge
                 status={stationStatus(station?.online ?? true, live)}
               />
+              {/* phase de la session (AC EVO) : n.d. avec ACC, qui ne la donne pas */}
+              <SessionPhaseBadge phase={live?.latest.session_phase} />
             </span>
           ) : undefined
         }

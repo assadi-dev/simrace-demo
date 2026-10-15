@@ -5,6 +5,7 @@ import {
   describeTrackFlag,
 } from "@/features/direct/codes"
 import type { ActiveEvent, StationHistory } from "@/features/direct/history"
+import { isSessionEnded } from "@/features/stations/session-phase"
 
 export type Validity = "valid" | "invalid" | "unknown"
 
@@ -67,7 +68,8 @@ export function buildLapRows(
 
   const current: LapRow = {
     id: "current",
-    label: `${sample.completed_laps + 1} (en cours)`,
+    // AC EVO dit quand la session est finie (session_phase) ; sans la valeur (ACC), "en cours"
+    label: `${sample.completed_laps + 1} (${isSessionEnded(sample.session_phase) ? "terminée" : "en cours"})`,
     timeMs: sample.lap_time_ms || null,
     gap: null,
     validity: validity(sample.is_valid_lap),

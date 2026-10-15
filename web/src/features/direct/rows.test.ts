@@ -53,6 +53,20 @@ describe("buildLapRows", () => {
     })
   })
 
+  it("session terminee (AC EVO) : le dernier tour est marque termine, pas en cours", () => {
+    const ended = buildLapRows(
+      sample({ completed_laps: 2, session_phase: "Ended" }),
+      EMPTY_HISTORY
+    )
+    const running = buildLapRows(
+      sample({ completed_laps: 2, session_phase: "Session" }),
+      EMPTY_HISTORY
+    )
+
+    expect(ended.rows[0].label).toBe("3 (terminée)")
+    expect(running.rows[0].label).toBe("3 (en cours)")
+  })
+
   it("n'affiche ni un tour en controle ni un tour plus rapide que le meilleur d'ACC", () => {
     const { rows, hidden } = buildLapRows(sample(), {
       ...EMPTY_HISTORY,

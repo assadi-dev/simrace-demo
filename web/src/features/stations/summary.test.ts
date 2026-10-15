@@ -108,6 +108,13 @@ describe("liveValues", () => {
     expect(values.bestLap).toBe("2:11,765")
     expect(strip(values.position)).toBe("48 %")
     expect(values.positionPercent).toBe(48)
+    expect(values.sessionPhase).toBe("n.d.") // ACC ne donne pas de phase
+  })
+
+  it("affiche la phase de session d AC EVO", () => {
+    const values = liveValues("online", sample({ session_phase: "Ended" }))
+
+    expect(values.sessionPhase).toBe("Terminée")
   })
 
   it("hors ligne : ne garde que le dernier et le meilleur tour, le reste n'est plus en direct", () => {

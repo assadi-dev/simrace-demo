@@ -113,3 +113,6 @@ class Sample(BaseModel):
     # meteo (decision 0016)
     air_temp_c: float | None = Field(default=None, ge=-50, le=100, allow_inf_nan=False)
     road_temp_c: float | None = Field(default=None, ge=-50, le=150, allow_inf_nan=False)
+    # phase de la session ecrite par le jeu (AC EVO: Waiting_For_Start, Session, Ended, decision
+    # 0022); None pour ACC. Texte libre borne (char[33] d'EVO), affiche tel quel s'il est inconnu
+    session_phase: str | None = Field(default=None, max_length=33)

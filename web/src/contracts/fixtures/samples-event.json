@@ -48,7 +48,8 @@
       "fuel_estimated_laps": null,
       "track_flags": null,
       "air_temp_c": null,
-      "road_temp_c": null
+      "road_temp_c": null,
+      "session_phase": null
     },
     {
       "t_ms": 1791739733161,
@@ -91,7 +92,8 @@
       "fuel_estimated_laps": null,
       "track_flags": null,
       "air_temp_c": null,
-      "road_temp_c": null
+      "road_temp_c": null,
+      "session_phase": null
     }
   ]
 }

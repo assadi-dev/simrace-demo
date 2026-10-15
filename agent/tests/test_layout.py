@@ -249,3 +249,7 @@ def test_sample_carries_the_weather():
 def test_zero_temperature_means_no_data():
     sample = layout.decode_sample(make_physics(), make_graphics(), t_ms=0)
     assert (sample.air_temp_c, sample.road_temp_c) == (None, None)
+
+
+def test_acc_has_no_session_phase():
+    assert layout.decode_sample(make_physics(), make_graphics(), t_ms=0).session_phase is None

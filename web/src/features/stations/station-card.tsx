@@ -35,6 +35,7 @@ export function StationCard({
     [values.lapLabel, values.lapTime],
     ["Dernier tour", values.lastLap],
     ["Meilleur tour ACC", values.bestLap],
+    ["Session", values.sessionPhase],
   ]
   const counters = [
     ["Lots", station.batches],

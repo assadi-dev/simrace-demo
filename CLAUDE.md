@@ -117,8 +117,8 @@ PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` 
   `server/app/shared/contract.py` doivent rester alignés champ par champ. Il n'y a volontairement
   pas de package partagé (voir décision 0009). Si tu changes l'un, change l'autre et les tests des
   deux. `x` et `z` (position monde, décision 0011) et les mesures de pneus et de freins (4 valeurs par
-  mesure, décision 0013), le carburant, les aides TC et ABS (décision 0014) et les forces G (décision 0015) et les drapeaux et pénalités (décision 0016) sont optionnels et
-  existent des deux côtés.
+  mesure, décision 0013), le carburant, les aides TC et ABS (décision 0014) et les forces G (décision 0015) et les drapeaux et pénalités (décision 0016) et la phase de session `session_phase` (AC EVO,
+  décision 0022) sont optionnels et existent des deux côtés.
 - **Front** (`web/`) : le contrat existe en Zod dans `web/src/contracts/`, troisième copie après
   l'agent et le serveur. Si `server/app/shared/contract.py` change, regénère les fixtures
   (`src/contracts/fixtures/`, capturées sur un vrai serveur) et mets le schéma Zod à jour : le test

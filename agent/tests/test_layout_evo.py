@@ -20,7 +20,8 @@ def make_physics(gear=3, speed=181.5, pads=(0.029, 0.029, 0.0285, 0.0285)):
 
 def make_graphics(status=2, laps=1, current=399, last=150_114, best=0, npos=0.37, pit_lane=0,
                   pit_box=0, valid=1, cars=((OTHER, 1.0, 1.0, 1.0), (PLAYER, -341.8, 40.2, 326.1)),
-                  active=None, player=PLAYER, flag=0, global_flag=0, map_max=0, map_level=0):
+                  active=None, player=PLAYER, flag=0, global_flag=0, map_max=0, map_level=0,
+                  phase="Session"):
     buf = bytearray(layout_evo.GRAPHICS_SIZE)
     struct.pack_into("<ii", buf, 0, 11, status)
     struct.pack_into("<QQ", buf, 24, *player)
@@ -32,6 +33,7 @@ def make_graphics(status=2, laps=1, current=399, last=150_114, best=0, npos=0.37
     struct.pack_into("<b", buf, 2140, map_max)
     struct.pack_into("<iiiii", buf, 2384, laps, 1, 1, last, best)
     struct.pack_into("<ii", buf, 2404, flag, global_flag)
+    buf[2476:2509] = cstr(phase, 33)
     buf[3020:3053] = cstr("Assadi", 33)
     buf[3053:3086] = cstr("H", 33)
     buf[3086:3119] = cstr("Porsche 911 GT3 Cup (992)", 33)
@@ -171,3 +173,12 @@ def test_empty_pages_give_empty_session():
 
 def test_acc_decoding_is_unchanged_by_the_shared_physics():
     assert layout.decode_physics(make_physics())["pad_life_mm"] == [0.03, 0.03, 0.03, 0.03]
+
+
+def test_session_phase_is_sent_as_written_by_the_game():
+    assert decode().session_phase == "Session"
+    assert decode(graphics=make_graphics(phase="Ended")).session_phase == "Ended"
+
+
+def test_empty_session_phase_is_none():
+    assert decode(graphics=make_graphics(phase="")).session_phase is None

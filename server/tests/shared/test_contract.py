@@ -110,3 +110,10 @@ def test_weather_is_optional_then_bounded():
     for bad in ({"air_temp_c": 500.0}, {"road_temp_c": -300.0}, {"air_temp_c": float("nan")}):
         with pytest.raises(ValidationError):
             Sample.model_validate(sample(**bad))
+
+
+def test_session_phase_is_optional_and_bounded():
+    assert Sample.model_validate(sample()).session_phase is None
+    assert Sample.model_validate(sample(session_phase="Ended")).session_phase == "Ended"
+    with pytest.raises(ValidationError):
+        Sample.model_validate(sample(session_phase="x" * 34))

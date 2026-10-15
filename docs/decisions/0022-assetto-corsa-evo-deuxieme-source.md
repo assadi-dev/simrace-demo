@@ -91,3 +91,19 @@ Parabolica) et une entrée aux stands avec ravitaillement.
 - Vérifié en direct avec `probe --source acevo` le 2026-10-16 : physique en roulage, passage de
   ligne, dernier et meilleur tour.
 - Restent à voir sur un vrai jeu : un drapeau, une cartographie moteur réglable.
+
+## Complément : phase de la session (2026-10-16)
+
+EVO dit quand la session est finie : `session_state.phase_name` (page graphique, offset 2476,
+`char[33]`). Valeurs vues : `Waiting_For_Start`, `Session`, `Ended`. ACC n'a pas d'équivalent.
+
+- Nouveau champ optionnel `session_phase` dans le contrat : agent (`models.py`), serveur
+  (`contract.py`, 33 caractères au plus), front (Zod). L'agent envoie le texte du jeu tel quel ;
+  `None` avec ACC. La fixture `samples-event.json` est regénérée par un vrai serveur.
+- Front : badge « Session : … » dans l'en-tête de l'écran Direct, en avertissement quand la session
+  est terminée ; ligne « Session » sur la carte d'un poste ; dans la carte Tours, le dernier tour
+  s'affiche « (terminée) » au lieu de « (en cours) » quand la phase vaut `Ended`. Une phase
+  inconnue s'affiche telle que le jeu l'écrit, une phase absente s'affiche `n.d.`.
+- Utile parce qu'EVO arrête le chrono à la fin de la session alors que la voiture roule encore :
+  sans la phase, le front montrait un tour « en cours » bloqué à 0.
+

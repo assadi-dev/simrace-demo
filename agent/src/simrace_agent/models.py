@@ -69,3 +69,6 @@ class Sample:
     # meteo (temperatures); None si ACC ne la donne pas (0 degre = pas de donnee)
     air_temp_c: float | None = None
     road_temp_c: float | None = None
+    # phase de la session telle que le jeu l'ecrit (AC EVO: Waiting_For_Start, Session, Ended);
+    # None si le jeu ne la donne pas (ACC)
+    session_phase: str | None = None

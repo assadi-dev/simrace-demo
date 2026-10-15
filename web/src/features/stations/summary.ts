@@ -1,5 +1,6 @@
 import type { Station } from "@/contracts/stations"
 import type { Sample } from "@/contracts/telemetry"
+import { sessionPhaseLabel } from "@/features/stations/session-phase"
 import type { StationStatus } from "@/features/stations/status"
 import {
   formatLapTime,
@@ -43,6 +44,8 @@ export type LiveValues = {
   position: string
   /** 0 a 100, pour la barre de progression. */
   positionPercent: number
+  /** Phase de la session (AC EVO), n.d. si le jeu ne la donne pas (ACC). */
+  sessionPhase: string
 }
 
 /**
@@ -64,6 +67,7 @@ export function liveValues(
       bestLap: formatLapTime(sample?.best_lap_ms),
       position: NOT_AVAILABLE,
       positionPercent: 0,
+      sessionPhase: NOT_AVAILABLE,
     }
   }
   const percent = Math.round(sample.track_pos * 100)
@@ -76,5 +80,6 @@ export function liveValues(
     bestLap: formatLapTime(sample.best_lap_ms),
     position: `${percent}\u202f%`,
     positionPercent: percent,
+    sessionPhase: sessionPhaseLabel(sample.session_phase),
   }
 }
