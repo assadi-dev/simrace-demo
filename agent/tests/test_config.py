@@ -37,3 +37,16 @@ def test_executable_dir_is_next_to_the_macos_bundle():
 def test_executable_dir_ignores_a_macos_folder_outside_a_bundle():
     exe = Path("/opt/Contents/MacOS/simrace-agent")
     assert config.executable_dir(exe) == Path("/opt/Contents/MacOS")
+
+
+def test_game_source_defaults_to_acc(monkeypatch):
+    monkeypatch.delenv("SIMRACE_SOURCE", raising=False)
+    assert config.game_source() == "acc"
+
+
+def test_game_source_comes_from_the_env_file(tmp_path, monkeypatch):
+    monkeypatch.delenv("SIMRACE_SOURCE", raising=False)
+    env = tmp_path / ".env"
+    env.write_text("SIMRACE_SOURCE=ACEVO\n", encoding="utf-8")
+    config.load_env_file(env)
+    assert config.game_source() == "acevo"

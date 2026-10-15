@@ -5,6 +5,14 @@ le PC Windows qui a Assetto Corsa Competizione. Dépôt : `github.com/assadi-dev
 Le travail récent est sur la branche `feat/live-preview` (57 commits d'avance sur `main`, pas encore
 fusionnée).
 
+## AC EVO (2026-10-16, branche `test/assetto-corsa-evo`)
+
+L'agent lit aussi Assetto Corsa EVO : `SIMRACE_SOURCE=acevo` dans `agent/.env` ou
+`--source acevo` sur `probe`, `run` et `record`. Décodage dans `layout_evo.py`, offsets mesurés
+sur EVO 0.9.1 (un tour et une entrée aux stands à Monza). EVO ne donne ni secteur ni code de
+pénalité. Voir la [décision 0022](decisions/0022-assetto-corsa-evo-deuxieme-source.md).
+Pas encore lancé : `probe --source acevo` en direct (vérifié à partir des pages brutes enregistrées).
+
 ## Changements depuis le 2026-10-11
 
 | Domaine | Changement | Décision |

@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 DEFAULT_SERVER_URL = "http://localhost:8000"
+DEFAULT_SOURCE = "acc"
 
 
 def executable_dir(executable: Path) -> Path:
@@ -33,3 +34,8 @@ def server_url() -> str:
 
 def station_id(fallback: str) -> str:
     return os.environ.get("SIMRACE_STATION_ID", fallback)
+
+
+def game_source() -> str:
+    # jeu lu en direct (acc ou acevo); --source le remplace en ligne de commande
+    return os.environ.get("SIMRACE_SOURCE", DEFAULT_SOURCE).strip().lower()

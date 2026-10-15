@@ -74,16 +74,16 @@ def physics_packet_id(physics: bytes) -> int:
     return struct.unpack_from("<i", physics, 0)[0]
 
 
-def decode_wheels(physics: bytes, offset: int) -> list[float] | None:
+def decode_wheels(physics: bytes, offset: int, scale: float = 1.0) -> list[float] | None:
     """Quatre valeurs (une par roue), ou None si une valeur n'est pas finie ou si tout vaut 0.
 
     Tout a zero veut dire que ACC ne renseigne pas la page (hors session): on n'envoie rien plutot
-    qu'une fausse mesure.
+    qu'une fausse mesure. `scale` convertit l'unite avant l'arrondi (AC EVO: metres vers mm).
     """
     values = struct.unpack_from("<4f", physics, offset)
     if not all(math.isfinite(v) for v in values) or not any(values):
         return None
-    return [round(v, 2) for v in values]
+    return [round(v * scale, 2) for v in values]
 
 
 def _decode_g(physics: bytes) -> tuple[float, float, float] | None:
@@ -142,8 +142,34 @@ def decode_session(static: bytes) -> SessionInfo:
     return SessionInfo(track=track, car=car, driver=driver, fuel_capacity_l=capacity)
 
 
-def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
+def decode_physics(physics: bytes) -> dict:
+    """Champs de la page physique, communs a ACC et AC Evo (meme structure, voir layout_evo)."""
     packet_id, gas, brake, fuel, gear, rpm, steer, speed = _PHYSICS.unpack_from(physics, 0)
+    g = _decode_g(physics)
+    return {
+        "packet_id": packet_id,
+        "speed_kmh": speed,
+        "gas": gas,
+        "brake": brake,
+        "gear": gear - 1,  # ACC: 0 = marche arriere, 1 = point mort, 2 = premiere
+        "rpm": rpm,
+        "steer": steer,
+        "tyre_pressure_psi": decode_wheels(physics, _TYRE_PRESSURE_OFFSET),
+        "tyre_temp_c": decode_wheels(physics, _TYRE_CORE_TEMP_OFFSET),
+        "brake_temp_c": decode_wheels(physics, _BRAKE_TEMP_OFFSET),
+        "pad_life_mm": decode_wheels(physics, _PAD_LIFE_OFFSET),
+        "disc_life_mm": decode_wheels(physics, _DISC_LIFE_OFFSET),
+        "fuel_l": round(fuel, 2) if math.isfinite(fuel) and fuel >= 0 else None,
+        "brake_bias": _positive_float(struct.unpack_from("<f", physics, _BRAKE_BIAS_OFFSET)[0], 3),
+        "air_temp_c": _positive_float(struct.unpack_from("<f", physics, _AIR_TEMP_OFFSET)[0], 1),
+        "road_temp_c": _positive_float(struct.unpack_from("<f", physics, _ROAD_TEMP_OFFSET)[0], 1),
+        "g_lat": g[0] if g else None,
+        "g_vert": g[1] if g else None,
+        "g_long": g[2] if g else None,
+    }
+
+
+def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
     _gfx_id, status = _GRAPHICS_HEAD.unpack_from(graphics, 0)
     (
         completed_laps,
@@ -160,16 +186,9 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
     ) = _GRAPHICS_LAPS.unpack_from(graphics, _LAPS_OFFSET)
     track_pos = struct.unpack_from("<f", graphics, _TRACK_POS_OFFSET)[0]
     position = decode_player_position(graphics)
-    g = _decode_g(physics)
     return Sample(
         t_ms=t_ms,
-        packet_id=packet_id,
-        speed_kmh=speed,
-        gas=gas,
-        brake=brake,
-        gear=gear - 1,  # ACC: 0 = marche arriere, 1 = point mort, 2 = premiere
-        rpm=rpm,
-        steer=steer,
+        **decode_physics(physics),
         status=status,
         completed_laps=completed_laps,
         lap_time_ms=max(current_ms, 0),
@@ -180,12 +199,6 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
         track_pos=track_pos,
         x=position[0] if position else None,
         z=position[1] if position else None,
-        tyre_pressure_psi=decode_wheels(physics, _TYRE_PRESSURE_OFFSET),
-        tyre_temp_c=decode_wheels(physics, _TYRE_CORE_TEMP_OFFSET),
-        brake_temp_c=decode_wheels(physics, _BRAKE_TEMP_OFFSET),
-        pad_life_mm=decode_wheels(physics, _PAD_LIFE_OFFSET),
-        disc_life_mm=decode_wheels(physics, _DISC_LIFE_OFFSET),
-        fuel_l=round(fuel, 2) if math.isfinite(fuel) and fuel >= 0 else None,
         fuel_per_lap_l=_fuel_per_lap(graphics),
         tc_level=struct.unpack_from("<i", graphics, _TC_LEVEL_OFFSET)[0],
         abs_level=struct.unpack_from("<i", graphics, _ABS_LEVEL_OFFSET)[0],
@@ -194,15 +207,9 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
         penalty_time_s=_penalty_time(graphics),
         tc_cut_level=struct.unpack_from("<i", graphics, _TC_CUT_OFFSET)[0],
         engine_map=struct.unpack_from("<i", graphics, _ENGINE_MAP_OFFSET)[0] + 1,
-        brake_bias=_positive_float(struct.unpack_from("<f", physics, _BRAKE_BIAS_OFFSET)[0], 3),
         is_valid_lap=bool(struct.unpack_from("<i", graphics, _IS_VALID_LAP_OFFSET)[0]),
         fuel_estimated_laps=_positive_float(
             struct.unpack_from("<f", graphics, _FUEL_EST_LAPS_OFFSET)[0], 1
         ),
         track_flags=_track_flags(graphics),
-        air_temp_c=_positive_float(struct.unpack_from("<f", physics, _AIR_TEMP_OFFSET)[0], 1),
-        road_temp_c=_positive_float(struct.unpack_from("<f", physics, _ROAD_TEMP_OFFSET)[0], 1),
-        g_lat=g[0] if g else None,
-        g_vert=g[1] if g else None,
-        g_long=g[2] if g else None,
     )

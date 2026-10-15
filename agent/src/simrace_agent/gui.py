@@ -20,7 +20,7 @@ from tkinter import font as tkfont
 from simrace_agent import actions, config, icons, settings, theme
 from simrace_agent.sender import BatchSender
 from simrace_agent.sources import acc
-from simrace_agent.sources.acc import AccSharedMemorySource
+from simrace_agent.sources.acc import live_source
 from simrace_agent.sources.base import SourceError
 from simrace_agent.sources.replay import ReplaySource
 
@@ -336,7 +336,7 @@ class AgentWindow:
         server, station = self._server.get().strip(), self._station.get().strip()
         print(f"[agent] envoi vers {server} (poste {station})")
         self._launch("envoi", lambda stop: actions.stream(
-            AccSharedMemorySource(stop=stop), BatchSender(server, station), 200, stop,
+            live_source(config.game_source(), stop), BatchSender(server, station), 200, stop,
         ))
 
     def _start_record(self) -> None:
@@ -344,7 +344,7 @@ class AgentWindow:
         path = actions.recording_path(folder, datetime.now().astimezone())
         print(f"[agent] enregistrement dans {path}")
         self._launch("enregistrement", lambda stop: actions.record(
-            AccSharedMemorySource(stop=stop), path, stop,
+            live_source(config.game_source(), stop), path, stop,
         ))
 
     def _style_combobox(self, root: tk.Tk) -> None:

@@ -1,6 +1,6 @@
 # 0001 ACC sur PC est la seule source de la démo
 
-Statut : Acceptée. Date : 2026-10-09.
+Statut : Remplacée en partie par la [0022](0022-assetto-corsa-evo-deuxieme-source.md) (AC EVO devient une deuxième source). Date : 2026-10-09.
 
 ## Contexte
 

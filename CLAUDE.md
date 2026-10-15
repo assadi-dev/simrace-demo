@@ -78,6 +78,8 @@ cd server && uv run uvicorn app.main:app --reload
 
 # agent : sonde de lecture ACC (Windows, ACC lancé en session)
 cd agent && uv run simrace-agent probe
+# AC EVO a la place d'ACC (decision 0022) : SIMRACE_SOURCE=acevo dans agent/.env, ou --source
+uv run simrace-agent probe --source acevo
 
 # agent : envoi au serveur (depuis ACC ou depuis un enregistrement)
 uv run simrace-agent run --server http://localhost:8000
@@ -156,6 +158,10 @@ sur un tour réel : pas de saut, distance cohérente avec la vitesse. À noter :
 avancer `completed_laps` au passage de ligne du tour de sortie des stands (décision 0011).
 
 Le tour de sortie des stands d'une vraie session est enregistré en morceau (4783 m, 603 points).
+
+AC EVO (décision 0022, `layout_evo.py`) : offsets mesurés le 2026-10-16 sur des pages brutes
+enregistrées (EVO 0.9.1, un tour, une entrée aux stands). Pas de secteur ni de code de pénalité
+dans EVO. Jamais vus : meilleur tour valide, drapeaux, cartographie moteur.
 
 Le front (`web/`) n'a été vérifié qu'avec des lots de test envoyés au serveur (tests Playwright,
 faux agent), pas avec le flux d'un vrai ACC.
