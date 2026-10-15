@@ -14,12 +14,14 @@ import tkinter as tk
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
+from tkinter import filedialog, ttk
 from tkinter import font as tkfont
 
-from simrace_agent import actions, config, settings, theme
+from simrace_agent import actions, config, icons, settings, theme
 from simrace_agent.sender import BatchSender
 from simrace_agent.sources.acc import AccSharedMemorySource
 from simrace_agent.sources.base import SourceError
+from simrace_agent.sources.replay import ReplaySource
 
 
 def app_dir() -> Path:
@@ -62,15 +64,18 @@ class PillButton(tk.Canvas):
 
     def __init__(
         self, parent: tk.Widget, text: str, command: Callable[[], None], font: tuple,
-        *, ink: bool = False,
+        *, ink: bool = False, icon: str | None = None,
     ) -> None:
         height = theme.px(44)
-        width = tkfont.Font(font=font).measure(text) + 2 * theme.px(18)
+        self._icon_size = theme.px(18)  # icones Lucide 16-22 px (design.md 1.7)
+        icon_width = self._icon_size + theme.px(8) if icon else 0
+        width = tkfont.Font(font=font).measure(text) + icon_width + 2 * theme.px(18)
         super().__init__(
             parent, width=width + 4, height=height + 4, bg=parent["bg"],
             highlightthickness=0, takefocus=True, cursor="hand2",
         )
         self._text, self._command, self._font, self._ink = text, command, font, ink
+        self._icon = icon
         self._size = (width, height)
         self._enabled = True
         self._hover = False
@@ -122,7 +127,14 @@ class PillButton(tk.Canvas):
         if self.focus_get() is self:
             self._pill(0, 0, width + 3, height + 3, theme.RING, theme.RING)  # anneau de focus
         self._pill(2, 2, width + 1, height + 1, fill, outline)
-        self.create_text(width / 2 + 2, height / 2 + 2, text=self._text, fill=text, font=self._font)
+        left = theme.px(18) + 2
+        if self._icon:
+            size = self._icon_size
+            icons.draw(self, self._icon, left, (height - size) / 2 + 2, size, text)
+            left += size + theme.px(8)
+        self.create_text(
+            left, height / 2 + 2, text=self._text, anchor="w", fill=text, font=self._font
+        )
 
 
 class StatusBadge(tk.Canvas):
@@ -156,7 +168,7 @@ class AgentWindow:
     def __init__(self, root: tk.Tk) -> None:
         self._root = root
         self._lines: queue.Queue[str] = queue.Queue()
-        self._stop = threading.Event()
+        self._stops: dict[str, threading.Event] = {}
         self._workers: dict[str, threading.Thread] = {}
         sys.stdout = sys.stderr = _QueueWriter(self._lines)
         fonts = self._fonts = _Fonts(root)
@@ -164,7 +176,7 @@ class AgentWindow:
 
         root.title("SimRace agent")
         root.configure(bg=theme.AMBIENT_MID, padx=gap, pady=gap)
-        root.minsize(640, 460)
+        root.minsize(640, 640)
         root.protocol("WM_DELETE_WINDOW", self._quit)
 
         header = self._card(root)
@@ -182,6 +194,7 @@ class AgentWindow:
             "server": config.server_url(),
             "station": config.station_id(socket.gethostname()),
             "folder": str(app_dir() / "recordings"),
+            "replay": "",
         })
         form = self._card(root)
         form.pack(fill="x", pady=(gap, 0))
@@ -195,14 +208,50 @@ class AgentWindow:
         buttons.pack(fill="x", pady=(gap, 0))
         # un seul bouton sombre par zone (design.md 1.4): l'envoi est l'action principale
         self._send_btn = PillButton(
-            buttons, "Envoyer au serveur", self._start_send, fonts.button, ink=True
+            buttons, "Envoyer au serveur", self._start_send, fonts.button, ink=True, icon="send"
         )
         self._record_btn = PillButton(
-            buttons, "Enregistrer un replay", self._start_record, fonts.button
+            buttons, "Enregistrer une session", self._start_record, fonts.button, icon="record"
         )
-        self._stop_btn = PillButton(buttons, "Tout arrêter", self._stop_all, fonts.button)
+        self._stop_btn = PillButton(
+            buttons, "Tout arrêter", self._stop_all, fonts.button, icon="stop"
+        )
         for button in (self._send_btn, self._record_btn, self._stop_btn):
             button.pack(side="left", padx=(0, theme.px(12)))
+
+        replay = self._card(root)
+        replay.pack(fill="x", pady=(gap, 0))
+        self._eyebrow(replay, "REJOUER UNE SESSION").grid(
+            row=0, column=0, columnspan=3, sticky="w", pady=(0, theme.px(8))
+        )
+        # sessions du dossier des replays, relues a chaque ouverture de la liste
+        self._replays: list[tuple[Path, str]] = []
+        self._replay = tk.StringVar()
+        self._style_combobox(root)
+        self._replay_list = ttk.Combobox(
+            replay, textvariable=self._replay, state="readonly", font=fonts.body,
+            style="Simrace.TCombobox", postcommand=self._reload_replays,
+        )
+        self._replay_list.grid(row=1, column=0, columnspan=3, sticky="ew", ipady=theme.px(6))
+        # dernier fichier choisi (Parcourir ou session precedente), meme hors du dossier
+        self._browsed = Path(values["replay"]) if values["replay"] else None
+        row = tk.Frame(replay, bg=theme.CARD)
+        row.grid(row=2, column=0, columnspan=3, sticky="w", pady=(theme.px(12), 0))
+        self._replay_btn = PillButton(
+            row, "Lancer la session", self._start_replay, fonts.button, ink=True, icon="play"
+        )
+        self._replay_stop_btn = PillButton(
+            row, "Arrêter la session", self._stop_replay, fonts.button, icon="stop"
+        )
+        for button in (
+            PillButton(row, "Parcourir", self._browse_replay, fonts.button, icon="folder"),
+            PillButton(row, "Actualiser", self._reload_replays, fonts.button, icon="refresh"),
+            self._replay_btn,
+            self._replay_stop_btn,
+        ):
+            button.pack(side="left", padx=(0, theme.px(12)))
+        replay.columnconfigure(0, weight=1)
+        self._reload_replays()
 
         journal = self._card(root)
         journal.pack(fill="both", expand=True, pady=(gap, 0))
@@ -248,7 +297,7 @@ class AgentWindow:
     def _save_settings(self) -> None:
         values = {
             "server": self._server.get(), "station": self._station.get(),
-            "folder": self._folder.get(),
+            "folder": self._folder.get(), "replay": str(self._selected_replay() or ""),
         }
         try:
             settings.save(settings.settings_path(), values)
@@ -258,16 +307,19 @@ class AgentWindow:
     def _running(self) -> list[str]:
         return [name for name, thread in self._workers.items() if thread.is_alive()]
 
-    def _launch(self, name: str, target: Callable[[], None]) -> None:
+    def _stopping(self) -> list[str]:
+        return [name for name in self._running() if self._stops[name].is_set()]
+
+    def _launch(self, name: str, target: Callable[[threading.Event], None]) -> None:
+        # un signal d'arret par action: le replay s'arrete sans couper l'envoi ou l'enregistrement
         if name in self._running():
             return
         self._save_settings()
-        if not self._running():
-            self._stop.clear()
+        stop = self._stops[name] = threading.Event()
 
         def run() -> None:
             try:
-                target()
+                target(stop)
             except SourceError as exc:
                 print(f"[agent] erreur: {exc}")
             except Exception as exc:  # noqa: BLE001 (affiche l'erreur au lieu de fermer l'exe)
@@ -280,22 +332,96 @@ class AgentWindow:
     def _start_send(self) -> None:
         server, station = self._server.get().strip(), self._station.get().strip()
         print(f"[agent] envoi vers {server} (poste {station})")
-        self._launch("envoi", lambda: actions.stream(
-            AccSharedMemorySource(stop=self._stop), BatchSender(server, station), 200, self._stop,
+        self._launch("envoi", lambda stop: actions.stream(
+            AccSharedMemorySource(stop=stop), BatchSender(server, station), 200, stop,
         ))
 
     def _start_record(self) -> None:
         folder = Path(self._folder.get().strip())
         path = actions.recording_path(folder, datetime.now().astimezone())
         print(f"[agent] enregistrement dans {path}")
-        self._launch("replay", lambda: actions.record(
-            AccSharedMemorySource(stop=self._stop), path, self._stop,
+        self._launch("enregistrement", lambda stop: actions.record(
+            AccSharedMemorySource(stop=stop), path, stop,
         ))
+
+    def _style_combobox(self, root: tk.Tk) -> None:
+        # meme rendu que les champs: fond `card-strong`, contour `border-strong`, focus `ring`
+        style = ttk.Style(root)
+        style.theme_use("clam")  # le theme Windows ignore les couleurs des champs
+        style.configure(
+            "Simrace.TCombobox", fieldbackground=theme.CARD_STRONG, background=theme.CARD_STRONG,
+            foreground=theme.FOREGROUND, bordercolor=theme.BORDER_STRONG,
+            lightcolor=theme.CARD_STRONG, darkcolor=theme.CARD_STRONG,
+            arrowcolor=theme.FOREGROUND, padding=theme.px(8),
+        )
+        style.map(
+            "Simrace.TCombobox", fieldbackground=[("readonly", theme.CARD_STRONG)],
+            selectbackground=[("readonly", theme.CARD_STRONG)],
+            selectforeground=[("readonly", theme.FOREGROUND)],
+            bordercolor=[("focus", theme.RING)],
+        )
+        root.option_add("*TCombobox*Listbox.font", self._fonts.body)
+        root.option_add("*TCombobox*Listbox.background", theme.CARD_STRONG)
+        root.option_add("*TCombobox*Listbox.foreground", theme.FOREGROUND)
+        root.option_add("*TCombobox*Listbox.selectBackground", theme.PRIMARY_SOFT)
+        root.option_add("*TCombobox*Listbox.selectForeground", theme.FOREGROUND)
+
+    def _selected_replay(self) -> Path | None:
+        label = self._replay.get()
+        return next((path for path, text in self._replays if text == label), None)
+
+    def _reload_replays(self) -> None:
+        current = self._selected_replay() or self._browsed
+        self._replays = actions.list_replays(Path(self._folder.get().strip()), self._browsed)
+        labels = [text for _, text in self._replays]
+        self._replay_list.configure(values=labels)
+        keep = next((text for path, text in self._replays if path == current), None)
+        if keep:
+            self._replay.set(keep)
+        elif labels:
+            self._replay.set(labels[0])  # le plus recent par defaut
+        else:
+            self._replay.set("Aucune session dans le dossier des replays")
+
+    def _browse_replay(self) -> None:
+        folder = Path(self._folder.get().strip())
+        chosen = filedialog.askopenfilename(
+            parent=self._root, title="Choisir une session",
+            initialdir=folder if folder.is_dir() else app_dir(),
+            filetypes=[("Sessions simrace", " ".join(f"*{s}" for s in actions.REPLAY_SUFFIXES))],
+        )
+        if not chosen:
+            return
+        path = Path(chosen)
+        if actions.replay_info(path) is None:
+            print(f"[agent] {path.name} n'est pas une session simrace (JSON lines attendu)")
+            return
+        self._browsed = path
+        self._replay.set("")  # la selection suit le fichier choisi
+        self._reload_replays()
+
+    def _start_replay(self) -> None:
+        path = self._selected_replay()
+        if path is None:
+            print("[agent] aucune session a rejouer: enregistre-en une ou change de dossier")
+            return
+        server, station = self._server.get().strip(), self._station.get().strip()
+        print(f"[agent] rejeu de {path.name} vers {server} (poste {station})")
+        # le fichier est lu dans le thread: un fichier invalide s'affiche dans le journal
+        self._launch("rejeu", lambda stop: actions.stream(
+            ReplaySource(path, stop=stop), BatchSender(server, station), 200, stop,
+        ))
+
+    def _stop_replay(self) -> None:
+        if "rejeu" in self._running():
+            print("[agent] arret de la session demande")
+            self._stops["rejeu"].set()
 
     def _stop_all(self) -> None:
         if self._running():
             print("[agent] arret demande")
-        self._stop.set()
+        for stop in self._stops.values():
+            stop.set()
 
     def _refresh(self) -> None:
         # appele toutes les 200 ms dans le thread de tkinter (seul autorise a toucher la fenetre)
@@ -304,23 +430,28 @@ class AgentWindow:
             self._log.insert("end", self._lines.get() + "\n")
             self._log.see("end")
             self._log.configure(state="disabled")
-        running = self._running()
-        stopping = self._stop.is_set() and bool(running)
+        running, stopping = self._running(), self._stopping()
+        active = [name for name in running if name not in stopping]
         if stopping:
             self._badge.show("Arrêt en cours", theme.WARNING, "square")
         elif running:
-            labels = {"envoi": "Envoi", "replay": "Enregistrement"}
+            labels = {"envoi": "Envoi", "enregistrement": "Enregistrement", "rejeu": "Rejeu"}
             self._badge.show(" + ".join(labels[n] for n in running), theme.SUCCESS, "round")
         else:
             self._badge.show("Arrêté", theme.DANGER, "ring")
-        self._send_btn.set_enabled("envoi" not in running and not stopping)
-        self._record_btn.set_enabled("replay" not in running and not stopping)
-        self._stop_btn.set_enabled(bool(running) and not stopping)
+        # ACC et rejeu envoient pour le meme poste: un seul des deux a la fois
+        sending = "envoi" in running or "rejeu" in running
+        self._send_btn.set_enabled(not sending)
+        self._replay_btn.set_enabled(not sending)
+        self._replay_stop_btn.set_enabled("rejeu" in active)
+        self._record_btn.set_enabled("enregistrement" not in running)
+        self._stop_btn.set_enabled(bool(active))
         self._next_refresh = self._root.after(200, self._refresh)
 
     def _quit(self) -> None:
         self._save_settings()
-        self._stop.set()
+        for stop in self._stops.values():
+            stop.set()
         for thread in self._workers.values():
             thread.join(timeout=4)
         self._root.after_cancel(self._next_refresh)  # sinon tkinter appelle une fenetre detruite

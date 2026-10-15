@@ -4,6 +4,7 @@ Le `stop` est verifie a chaque echantillon: l'action se termine proprement (dern
 fichier ferme) au lieu d'etre tuee.
 """
 
+import json
 import threading
 import time
 from datetime import datetime
@@ -43,6 +44,46 @@ def record(source: Source, path: Path, stop: threading.Event) -> int:
             break
     print(f"[agent] replay enregistre: {path} ({count} echantillons)")
     return count
+
+
+REPLAY_SUFFIXES = (".jsonl", ".json")  # seuls fichiers proposes et acceptes pour un rejeu
+
+
+def list_replays(folder: Path, extra: Path | None = None) -> list[tuple[Path, str]]:
+    """Replays du dossier, du plus recent au plus ancien, avec un libelle pour la liste.
+
+    `extra` est un fichier choisi ailleurs (bouton Parcourir), ajoute s'il est valide.
+    Un fichier qui n'est pas un enregistrement simrace est ignore.
+    """
+    paths = sorted(folder.glob("*.json*")) if folder.is_dir() else []
+    if extra is not None and extra not in paths:
+        paths.append(extra)
+    found = []
+    for path in paths:
+        info = replay_info(path)
+        if info is not None:
+            found.append((info[0], path, info[1]))
+    found.sort(key=lambda item: item[0], reverse=True)
+    return [(path, label) for _, path, label in found]
+
+
+def replay_info(path: Path) -> tuple[datetime, str] | None:
+    """Date et libelle d'un replay, None si ce n'est pas un enregistrement simrace.
+
+    Seule la premiere ligne est lue (circuit, voiture): un gros fichier ne ralentit pas la liste.
+    """
+    if path.suffix.lower() not in REPLAY_SUFFIXES:
+        return None
+    try:
+        with path.open(encoding="utf-8") as fh:
+            session = json.loads(fh.readline() or "{}").get("session")
+        modified = datetime.fromtimestamp(path.stat().st_mtime).astimezone()
+    except (OSError, ValueError, AttributeError):
+        return None
+    if not isinstance(session, dict):
+        return None
+    track, car = session.get("track") or "n.d.", session.get("car") or "n.d."
+    return modified, f"{modified:%d/%m %H:%M}  {track}  {car}  ({path.name})"
 
 
 def recording_path(folder: Path, now: datetime) -> Path:

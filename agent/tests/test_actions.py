@@ -7,6 +7,7 @@ from test_replay import FakeSource, make_sample
 
 from simrace_agent import actions, theme
 from simrace_agent.models import SessionInfo
+from simrace_agent.sources.replay import Recorder
 
 
 class EndlessSource(FakeSource):
@@ -70,3 +71,52 @@ def test_theme_scale_and_font_fallback():
     assert theme.px(44) == 33  # bouton h-11 a l'echelle 0,75 du front
     assert theme.pick_family({"Segoe UI", "Arial"}, theme.FONT_FAMILIES) == "Segoe UI"
     assert theme.pick_family({"Inter", "Segoe UI"}, theme.FONT_FAMILIES) == "Inter"
+
+
+def test_list_replays_newest_first_and_skips_foreign_files(tmp_path):
+    import os
+
+    old, new = tmp_path / "old.jsonl", tmp_path / "new.jsonl"
+    for path, track in ((old, "spa"), (new, "monza")):
+        list(Recorder(Named(track), path).samples())
+    os.utime(old, (1_000_000, 1_000_000))
+    (tmp_path / "notes.jsonl").write_text('{"autre": 1}\n', encoding="utf-8")
+    (tmp_path / "vide.jsonl").write_text("", encoding="utf-8")
+    (tmp_path / "abime.jsonl").write_text("{pas du json\n", encoding="utf-8")
+
+    replays = actions.list_replays(tmp_path)
+    assert [path for path, _ in replays] == [new, old]
+    assert "monza" in replays[0][1] and "new.jsonl" in replays[0][1]
+
+
+def test_list_replays_of_missing_folder_is_empty(tmp_path):
+    assert actions.list_replays(tmp_path / "absent") == []
+
+
+class Named(FakeSource):
+    def __init__(self, track: str) -> None:
+        self._track = track
+
+    def session(self) -> SessionInfo:
+        return SessionInfo(track=self._track, car="gt3", driver="A B")
+
+
+def test_browsed_file_outside_folder_joins_the_list(tmp_path):
+    folder, elsewhere = tmp_path / "rec", tmp_path / "ailleurs"
+    folder.mkdir()
+    elsewhere.mkdir()
+    inside, outside = folder / "a.jsonl", elsewhere / "b.json"
+    list(Recorder(Named("spa"), inside).samples())
+    list(Recorder(Named("monza"), outside).samples())
+
+    assert {path for path, _ in actions.list_replays(folder, outside)} == {inside, outside}
+    assert len(actions.list_replays(folder, inside)) == 1  # pas de doublon
+
+
+def test_only_json_files_are_accepted(tmp_path):
+    good, other = tmp_path / "s.jsonl", tmp_path / "s.txt"
+    list(Recorder(Named("spa"), good).samples())
+    other.write_bytes(good.read_bytes())  # meme contenu, mauvaise extension
+    assert actions.replay_info(good) is not None
+    assert actions.replay_info(other) is None
+    assert [path for path, _ in actions.list_replays(tmp_path)] == [good]

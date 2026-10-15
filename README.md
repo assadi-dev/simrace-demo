@@ -68,7 +68,7 @@ C'est le parti pris du projet : aucune donnée ne disparaît en silence.
 | Projet | Outil | Nombre | Commande |
 |---|---|---|---|
 | `server/` | pytest | 218 | `uv run pytest` |
-| `agent/` | pytest | 55 | `uv run pytest` |
+| `agent/` | pytest | 66 | `uv run pytest` |
 | `web/` | Vitest (contrats, store, fonctions pures) | 123 | `npm test` |
 | `web/` | Playwright (vrai serveur, vrais lots, desktop et téléphone) | 30 | `npm run test:e2e` |
 
@@ -95,7 +95,7 @@ uv run simrace-agent probe                                      # vérifie la le
 uv run simrace-agent record --out ../recordings/session.jsonl   # roule dans ACC, Ctrl+C pour finir
 uv run simrace-agent run --server http://<ip-serveur>:8000      # temps réel depuis ACC
 uv run simrace-agent run --source replay --file ../recordings/session.jsonl --station-id sim-1
-uv run simrace-agent gui     # fenêtre : envoyer au serveur, enregistrer un replay, tout arrêter
+uv run simrace-agent gui     # fenêtre : envoyer, enregistrer, rejouer une session, tout arrêter
 ```
 
 Sur le PC de jeu, `agent\build_exe.ps1` construit `agent\dist\simrace-agent.exe` : la même fenêtre,

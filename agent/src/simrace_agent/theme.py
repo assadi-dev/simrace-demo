@@ -16,6 +16,7 @@ BORDER_STRONG = "#cac4b8"  # encre 14 % sur ambient-mid
 FOREGROUND = "#1f1c18"  # sand-950
 MUTED_FOREGROUND = "#66615a"  # sand-700
 PRIMARY_TEXT = "#9e4a00"  # flame-700
+PRIMARY_SOFT = "#fde8d0"  # flame-100, ligne choisie d'une liste
 RING = "#ea903a"  # flame-400
 INK = "#2d2c2a"  # sand-900, bouton principal
 INK_HOVER = "#3d3a36"  # sand-800
