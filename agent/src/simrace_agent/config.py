@@ -4,6 +4,17 @@ from pathlib import Path
 DEFAULT_SERVER_URL = "http://localhost:8000"
 
 
+def executable_dir(executable: Path) -> Path:
+    # dossier ou l'exe est pose; sous macOS l'executable est dans X.app/Contents/MacOS/:
+    # on remonte a cote du .app pour ne jamais ecrire dans le bundle
+    folder = executable.parent
+    if folder.name == "MacOS" and folder.parent.name == "Contents":
+        bundle = folder.parent.parent
+        if bundle.suffix == ".app":
+            return bundle.parent
+    return folder
+
+
 def load_env_file(path: Path) -> None:
     # lit KEY=VALUE ligne par ligne, sans ecraser une variable deja definie dans l'environnement
     if not path.is_file():

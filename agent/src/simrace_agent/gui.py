@@ -19,15 +19,16 @@ from tkinter import font as tkfont
 
 from simrace_agent import actions, config, icons, settings, theme
 from simrace_agent.sender import BatchSender
+from simrace_agent.sources import acc
 from simrace_agent.sources.acc import AccSharedMemorySource
 from simrace_agent.sources.base import SourceError
 from simrace_agent.sources.replay import ReplaySource
 
 
 def app_dir() -> Path:
-    # dossier de l'exe une fois construit, dossier courant en developpement
+    # dossier de l'exe (ou du .app sous macOS) une fois construit, dossier courant en developpement
     if getattr(sys, "frozen", False):
-        return Path(sys.executable).parent
+        return config.executable_dir(Path(sys.executable))
     return Path.cwd()
 
 
@@ -205,7 +206,9 @@ class AgentWindow:
         form.columnconfigure(1, weight=1)
 
         buttons = tk.Frame(root, bg=theme.AMBIENT_MID)
-        buttons.pack(fill="x", pady=(gap, 0))
+        # envoi et enregistrement lisent ACC: masques hors Windows, le rejeu a son bouton d'arret
+        if acc.AVAILABLE:
+            buttons.pack(fill="x", pady=(gap, 0))
         # un seul bouton sombre par zone (design.md 1.4): l'envoi est l'action principale
         self._send_btn = PillButton(
             buttons, "Envoyer au serveur", self._start_send, fonts.button, ink=True, icon="send"

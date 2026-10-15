@@ -102,6 +102,11 @@ Sur le PC de jeu, `agent\build_exe.ps1` construit `agent\dist\simrace-agent.exe`
 sans installer Python ni uv. Les champs saisis (serveur, poste, dossier des replays) sont gardés
 dans `%LOCALAPPDATA%\simrace-agent\settings.json`.
 
+Sur un Mac, `agent/build_app.sh` construit `agent/dist/simrace-agent.app`, la même fenêtre (PyInstaller
+ne construit que pour le système sur lequel il tourne). ACC n'existe pas sous macOS : les boutons
+d'envoi et d'enregistrement sont masqués, seul le rejeu d'une session reste. Les réglages vont dans `~/.simrace-agent/settings.json`, les
+replays et le `.env` à côté du `.app`.
+
 Sous Windows PowerShell : `.\dependencies\docker-compose.yml`, pas de `&&` selon la version (une
 commande par ligne), et `New-Item -ItemType Directory -Force recordings` au lieu de `mkdir -p`.
 

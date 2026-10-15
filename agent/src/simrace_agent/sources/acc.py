@@ -12,10 +12,13 @@ from simrace_agent.sources.base import SourceError
 
 _FILE_MAP_READ = 0x0004
 
+# ACC n'existe que sous Windows: ailleurs (macOS), la fenetre ne propose que le rejeu
+AVAILABLE = sys.platform == "win32"
+
 
 def _read_page(name: str, size: int) -> bytes:
     """Copie le debut d'une page nommee. N'en cree jamais: erreur si le jeu n'a pas demarre."""
-    if sys.platform != "win32":
+    if not AVAILABLE:
         raise SourceError("La memoire partagee d'ACC n'est lisible que sous Windows")
     from ctypes import wintypes
 

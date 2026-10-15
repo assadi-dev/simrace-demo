@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from simrace_agent import config
 
 
@@ -20,3 +22,18 @@ def test_real_environment_wins_over_env_file(tmp_path, monkeypatch):
 def test_default_when_nothing_set(monkeypatch):
     monkeypatch.delenv("SIMRACE_SERVER_URL", raising=False)
     assert config.server_url() == config.DEFAULT_SERVER_URL
+
+
+def test_executable_dir_is_the_exe_folder_on_windows():
+    exe = Path("C:/simrace/simrace-agent.exe")
+    assert config.executable_dir(exe) == Path("C:/simrace")
+
+
+def test_executable_dir_is_next_to_the_macos_bundle():
+    exe = Path("/Users/pilote/Apps/simrace-agent.app/Contents/MacOS/simrace-agent")
+    assert config.executable_dir(exe) == Path("/Users/pilote/Apps")
+
+
+def test_executable_dir_ignores_a_macos_folder_outside_a_bundle():
+    exe = Path("/opt/Contents/MacOS/simrace-agent")
+    assert config.executable_dir(exe) == Path("/opt/Contents/MacOS")
