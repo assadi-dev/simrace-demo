@@ -83,6 +83,10 @@ cd agent && uv run simrace-agent probe
 uv run simrace-agent run --server http://localhost:8000
 uv run simrace-agent run --source replay --file ../recordings/session.jsonl --station-id sim-1
 uv run simrace-agent record --out ../recordings/session.jsonl
+
+# agent : fenetre (envoyer au serveur, enregistrer un replay, tout arreter), theme de design.md
+uv run simrace-agent gui    # champs gardes dans %LOCALAPPDATA%\simrace-agent\settings.json
+.\build_exe.ps1      # construit agent\dist\simrace-agent.exe (PyInstaller via uvx, ignore par git)
 ```
 
 ```

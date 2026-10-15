@@ -1,9 +1,10 @@
 import argparse
 import socket
+import threading
 import time
 from pathlib import Path
 
-from simrace_agent import config
+from simrace_agent import actions, config
 from simrace_agent.codes import describe_flag, describe_penalty
 from simrace_agent.models import Sample
 from simrace_agent.sender import BatchSender
@@ -64,24 +65,6 @@ def _probe() -> None:
             print(f"   air {sample.air_temp_c} C  piste {sample.road_temp_c} C")
 
 
-def _stream(source: Source, sender: BatchSender, batch_ms: int) -> None:
-    sender.start()
-    batch: list[dict] = []
-    deadline = time.monotonic() + batch_ms / 1000
-    try:
-        for sample in source.samples():
-            batch.append(sample.to_dict())
-            if time.monotonic() >= deadline:
-                sender.submit(source.session(), batch)
-                batch, deadline = [], time.monotonic() + batch_ms / 1000
-        sender.submit(source.session(), batch)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        sender.close()
-    print(f"[agent] termine (perdus: {sender.dropped}, refuses: {sender.refused})")
-
-
 def _build_source(args: argparse.Namespace) -> Source:
     if args.source == "replay":
         if not args.file:
@@ -108,15 +91,24 @@ def main(argv: list[str] | None = None) -> None:
     record = sub.add_parser("record", help="enregistre une session ACC dans un fichier")
     record.add_argument("--out", required=True)
 
+    sub.add_parser("gui", help="fenetre: envoyer, enregistrer un replay, tout arreter")
+
     args = parser.parse_args(argv)
     try:
         if args.command == "probe":
             _probe()
+        elif args.command == "gui":
+            from simrace_agent import gui  # tkinter charge seulement pour la fenetre
+
+            gui.main()
         elif args.command == "record":
             for _ in Recorder(AccSharedMemorySource(), Path(args.out)).samples():
                 pass
         else:
-            _stream(_build_source(args), BatchSender(args.server, args.station_id), args.batch_ms)
+            actions.stream(
+                _build_source(args), BatchSender(args.server, args.station_id), args.batch_ms,
+                threading.Event(),
+            )
     except SourceError as exc:
         raise SystemExit(f"Erreur: {exc}") from exc
     except KeyboardInterrupt:

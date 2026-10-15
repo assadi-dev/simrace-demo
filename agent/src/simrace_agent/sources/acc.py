@@ -2,6 +2,7 @@
 
 import ctypes
 import sys
+import threading
 import time
 from collections.abc import Iterator
 
@@ -44,15 +45,16 @@ def _read_page(name: str, size: int) -> bytes:
 
 
 class AccSharedMemorySource:
-    def __init__(self, poll_hz: int = 120) -> None:
+    def __init__(self, poll_hz: int = 120, stop: threading.Event | None = None) -> None:
         self._period = 1.0 / poll_hz
+        self._stop = stop or threading.Event()  # pose par l'interface pour arreter la lecture
 
     def session(self) -> SessionInfo:
         return layout.decode_session(_read_page(layout.STATIC_NAME, layout.STATIC_SIZE))
 
     def samples(self) -> Iterator[Sample]:
         last_id = -1
-        while True:
+        while not self._stop.is_set():
             try:
                 physics = _read_page(layout.PHYSICS_NAME, layout.PHYSICS_SIZE)
                 graphics = _read_page(layout.GRAPHICS_NAME, layout.GRAPHICS_SIZE)
@@ -60,7 +62,7 @@ class AccSharedMemorySource:
                 if sys.platform != "win32":
                     raise
                 print(f"[agent] en attente d'ACC: {exc}")
-                time.sleep(2)
+                self._stop.wait(2)
                 continue
             packet_id = layout.physics_packet_id(physics)
             if packet_id != last_id:

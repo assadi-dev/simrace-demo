@@ -9,6 +9,11 @@ recordings/
 server/data/
 node_modules/
 dist/
+
+# executable de l'agent (PyInstaller, agent/build_exe.ps1)
+agent/build/
+agent/*.spec
+*.exe
 .claude/settings.json
 
 # donnees Postgres locales (dependencies/)
