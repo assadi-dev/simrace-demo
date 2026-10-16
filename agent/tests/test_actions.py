@@ -67,6 +67,17 @@ def test_recording_path_is_timestamped():
     assert path == Path("rec") / "session-20261015-090507.jsonl"
 
 
+def test_recording_path_contains_game():
+    now = datetime(2026, 10, 15, 9, 5, 7, tzinfo=UTC)
+    assert actions.recording_path(Path("rec"), now, "acevo") == (
+        Path("rec") / "session-acevo-20261015-090507.jsonl"
+    )
+    # un nom venu du jeu ne devient jamais un chemin
+    assert actions.recording_path(Path("rec"), now, "../x") == (
+        Path("rec") / "session-x-20261015-090507.jsonl"
+    )
+
+
 def test_theme_scale_and_font_fallback():
     assert theme.px(44) == 33  # bouton h-11 a l'echelle 0,75 du front
     assert theme.pick_family({"Segoe UI", "Arial"}, theme.FONT_FAMILIES) == "Segoe UI"

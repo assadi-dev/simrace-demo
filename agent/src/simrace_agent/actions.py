@@ -102,6 +102,10 @@ def replay_info(path: Path) -> tuple[datetime, str] | None:
     return modified, f"{modified:%d/%m %H:%M}  {track}  {car}  ({path.name})"
 
 
-def recording_path(folder: Path, now: datetime) -> Path:
-    # un fichier par enregistrement, jamais ecrase
-    return folder / f"session-{now:%Y%m%d-%H%M%S}.jsonl"
+def recording_path(folder: Path, now: datetime, game: str | None = None) -> Path:
+    # un fichier par enregistrement, jamais ecrase; le jeu (`acc`, `acevo`) est dans le nom
+    stamp = f"{now:%Y%m%d-%H%M%S}"
+    if not game:
+        return folder / f"session-{stamp}.jsonl"
+    safe = "".join(c for c in game.lower() if c.isalnum() or c in "-_").strip("-_") or "jeu"
+    return folder / f"session-{safe}-{stamp}.jsonl"

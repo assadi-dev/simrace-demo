@@ -366,12 +366,17 @@ class AgentWindow:
 
     def _start_record(self) -> None:
         folder = Path(self._folder.get().strip())
-        path = actions.recording_path(folder, datetime.now().astimezone())
         source = self._source_key()
-        print(f"[agent] enregistrement dans {path} (jeu {source})")
-        self._launch("enregistrement", lambda stop: actions.record(
-            live_source(source, stop), path, stop,
-        ))
+
+        def record(stop: threading.Event) -> None:
+            # le jeu lu (meme en `auto`) vient de la session: il donne son nom au fichier
+            live = live_source(source, stop)
+            game = live.session().game
+            path = actions.recording_path(folder, datetime.now().astimezone(), game)
+            print(f"[agent] enregistrement dans {path} (jeu {game or source})")
+            actions.record(live, path, stop)
+
+        self._launch("enregistrement", record)
 
     def _style_combobox(self, root: tk.Tk) -> None:
         # meme rendu que les champs: fond `card-strong`, contour `border-strong`, focus `ring`
