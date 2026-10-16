@@ -191,15 +191,22 @@ def test_session_names_the_game_and_its_version():
     assert layout_evo.decode_session(make_static(version=""), make_graphics()).game_version is None
 
 
-def test_race_position_and_opponents():
-    graphics = bytearray(make_graphics(active=10))
-    struct.pack_into("<i", graphics, 2388, 7)  # vu en course contre 9 IA
+def test_race_position_counts_from_zero():
+    graphics = bytearray(make_graphics(active=2))
+    struct.pack_into("<i", graphics, 2388, 1)  # vu en course a 2: 1 en deuxieme, 0 en tete
     sample = decode(graphics=bytes(graphics))
-    assert (sample.race_position, sample.opponents) == (7, 9)
+    assert (sample.race_position, sample.opponents) == (2, 1)
+    struct.pack_into("<i", graphics, 2388, 0)
+    assert decode(graphics=bytes(graphics)).race_position == 1
 
 
-def test_practice_alone_has_no_position_and_zero_opponents():
+def test_practice_alone_is_first_with_zero_opponents():
     graphics = bytearray(make_graphics(cars=((PLAYER, -341.8, 40.2, 326.1),)))
-    struct.pack_into("<i", graphics, 2388, 0)  # EVO ecrit 0 en essais seul en piste
+    struct.pack_into("<i", graphics, 2388, 0)
     sample = decode(graphics=bytes(graphics))
-    assert (sample.race_position, sample.opponents) == (None, 0)
+    assert (sample.race_position, sample.opponents) == (1, 0)
+
+
+def test_no_active_car_has_no_position():
+    sample = decode(graphics=make_graphics(cars=(), active=0))
+    assert (sample.race_position, sample.opponents) == (None, None)
