@@ -16,7 +16,8 @@ meilleur tour, drapeaux vert et orange en course. Pas encore vus : drapeaux bleu
 cartographie moteur.
 
 Place en course et adversaires (`race_position`, `opponents`, 0 si seul en piste) : KPI de l'écran
-Direct et lignes de la carte d'un poste. Mesurés sur la course EVO enregistrée ; ACC (offsets
+Direct et lignes de la carte d'un poste. EVO vérifié en direct (place comptée à partir de 0 par le jeu, l'agent
+ajoute 1) ; ACC (offsets
 136, 252) vérifié sur un vrai jeu : P7 en course sur 7 voitures, comme le jeu. Voir la [décision 0023](decisions/0023-place-en-course-et-adversaires.md).
 
 ## Changements depuis le 2026-10-11

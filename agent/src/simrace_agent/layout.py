@@ -117,8 +117,8 @@ def _fuel_per_lap(graphics: bytes) -> float | None:
 def race_standing(position: int, active_cars: int) -> tuple[int | None, int | None]:
     """Place du joueur et nombre d'adversaires (decision 0023), ou None si le jeu ne les donne pas.
 
-    Position 0 = pas de classement (AC EVO en essais seul en piste). Le joueur compte parmi les
-    voitures actives: adversaires = voitures - 1, 0 si seul en piste, None hors session (0 voiture).
+    `position` compte a partir de 1 (AC EVO: +1 avant l'appel); hors de 1..60, pas de place.
+    Le joueur compte parmi les voitures actives: adversaires = voitures - 1, 0 si seul en piste, None hors session (0 voiture).
     """
     race_position = position if 1 <= position <= _MAX_CARS else None
     opponents = active_cars - 1 if 1 <= active_cars <= _MAX_CARS else None
