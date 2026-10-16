@@ -13,6 +13,9 @@ const FLAGS: Record<number, string> = {
   4: "Drapeau blanc",
   5: "Drapeau à damier",
   6: "Drapeau de pénalité",
+  // codes ACC qui servent aussi a traduire le vert et l'orange d'AC EVO (decision 0022)
+  7: "Drapeau vert",
+  8: "Drapeau orange (problème mécanique)",
 }
 
 const PENALTIES: Record<number, string> = {
