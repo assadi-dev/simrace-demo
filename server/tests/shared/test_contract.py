@@ -119,6 +119,17 @@ def test_session_phase_is_optional_and_bounded():
         Sample.model_validate(sample(session_phase="x" * 34))
 
 
+
+def test_race_position_and_opponents_are_optional_and_bounded():
+    assert Sample.model_validate(sample()).race_position is None
+    assert Sample.model_validate(sample()).opponents is None
+    valid = Sample.model_validate(sample(race_position=7, opponents=9))
+    assert (valid.race_position, valid.opponents) == (7, 9)
+    assert Sample.model_validate(sample(opponents=0)).opponents == 0  # seul en piste
+    for bad in ({"race_position": 0}, {"race_position": 61}, {"opponents": -1}, {"opponents": 60}):
+        with pytest.raises(ValidationError):
+            Sample.model_validate(sample(**bad))
+
 def test_session_names_the_game_and_its_version():
     base = {"track": "Monza", "car": "porsche", "driver": "pilote"}
     old_agent = SessionInfo.model_validate(base)

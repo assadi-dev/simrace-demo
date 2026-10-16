@@ -1,6 +1,7 @@
 import type { Station } from "@/contracts/stations"
 import type { Sample } from "@/contracts/telemetry"
 import { sessionPhaseLabel } from "@/features/stations/session-phase"
+import { opponentsLabel, racePositionLabel } from "@/features/stations/standing"
 import type { StationStatus } from "@/features/stations/status"
 import {
   formatLapTime,
@@ -46,6 +47,10 @@ export type LiveValues = {
   positionPercent: number
   /** Phase de la session (AC EVO), n.d. si le jeu ne la donne pas (ACC). */
   sessionPhase: string
+  /** Place au classement (P7), n.d. sans classement. */
+  racePosition: string
+  /** Adversaires en piste, 0 si seul. */
+  opponents: string
 }
 
 /**
@@ -68,6 +73,8 @@ export function liveValues(
       position: NOT_AVAILABLE,
       positionPercent: 0,
       sessionPhase: NOT_AVAILABLE,
+      racePosition: NOT_AVAILABLE,
+      opponents: NOT_AVAILABLE,
     }
   }
   const percent = Math.round(sample.track_pos * 100)
@@ -81,5 +88,7 @@ export function liveValues(
     position: `${percent}\u202f%`,
     positionPercent: percent,
     sessionPhase: sessionPhaseLabel(sample.session_phase),
+    racePosition: racePositionLabel(sample),
+    opponents: opponentsLabel(sample),
   }
 }

@@ -38,7 +38,8 @@ def _probe(source: Source) -> None:
                 f"{sample.speed_kmh:6.1f} km/h  gaz {sample.gas:.2f}  frein {sample.brake:.2f}  "
                 f"rapport {sample.gear:2d}  tr/min {sample.rpm:5d}  tour {sample.completed_laps} "
                 f"{sample.lap_time_ms / 1000:7.3f}s  pos {sample.track_pos:.3f}  "
-                f"statut {sample.status}  {_format_xz(sample)}"
+                f"statut {sample.status}  {_format_xz(sample)}  "
+                f"place {sample.race_position or 'n.d.'} adversaires {sample.opponents}"
             )
             print(
                 "   " + _format_wheels("pneus", sample.tyre_pressure_psi, "psi")

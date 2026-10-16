@@ -95,6 +95,9 @@ export const sampleSchema = z.object({
   road_temp_c: z.number().min(-50).max(150).nullish(),
   // phase de la session ecrite par le jeu, AC EVO seulement (decision 0022)
   session_phase: z.string().max(33).nullish(),
+  // place au classement et adversaires en piste, 0 = seul (decision 0023)
+  race_position: z.int().min(1).max(60).nullish(),
+  opponents: z.int().min(0).max(59).nullish(),
 })
 export type Sample = z.infer<typeof sampleSchema>
 
