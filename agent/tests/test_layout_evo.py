@@ -189,3 +189,17 @@ def test_session_names_the_game_and_its_version():
     info = layout_evo.decode_session(make_static(), make_graphics())
     assert (info.game, info.game_version) == ("acevo", "0.9.1")
     assert layout_evo.decode_session(make_static(version=""), make_graphics()).game_version is None
+
+
+def test_race_position_and_opponents():
+    graphics = bytearray(make_graphics(active=10))
+    struct.pack_into("<i", graphics, 2388, 7)  # vu en course contre 9 IA
+    sample = decode(graphics=bytes(graphics))
+    assert (sample.race_position, sample.opponents) == (7, 9)
+
+
+def test_practice_alone_has_no_position_and_zero_opponents():
+    graphics = bytearray(make_graphics(cars=((PLAYER, -341.8, 40.2, 326.1),)))
+    struct.pack_into("<i", graphics, 2388, 0)  # EVO ecrit 0 en essais seul en piste
+    sample = decode(graphics=bytes(graphics))
+    assert (sample.race_position, sample.opponents) == (None, 0)

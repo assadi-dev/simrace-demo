@@ -114,6 +114,17 @@ def _fuel_per_lap(graphics: bytes) -> float | None:
     return round(value, 2) if math.isfinite(value) and value > 0 else None
 
 
+def race_standing(position: int, active_cars: int) -> tuple[int | None, int | None]:
+    """Place du joueur et nombre d'adversaires (decision 0023), ou None si le jeu ne les donne pas.
+
+    Position 0 = pas de classement (AC EVO en essais seul en piste). Le joueur compte parmi les
+    voitures actives: adversaires = voitures - 1, 0 si seul en piste, None hors session (0 voiture).
+    """
+    race_position = position if 1 <= position <= _MAX_CARS else None
+    opponents = active_cars - 1 if 1 <= active_cars <= _MAX_CARS else None
+    return race_position, opponents
+
+
 def decode_player_position(graphics: bytes) -> tuple[float, float] | None:
     """Position monde (x, z) en metres de la voiture du joueur, ou None si indisponible.
 
@@ -179,7 +190,7 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
     _gfx_id, status = _GRAPHICS_HEAD.unpack_from(graphics, 0)
     (
         completed_laps,
-        _position,
+        race_position,
         current_ms,
         last_ms,
         best_ms,
@@ -192,6 +203,8 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
     ) = _GRAPHICS_LAPS.unpack_from(graphics, _LAPS_OFFSET)
     track_pos = struct.unpack_from("<f", graphics, _TRACK_POS_OFFSET)[0]
     position = decode_player_position(graphics)
+    active_cars = struct.unpack_from("<i", graphics, _ACTIVE_CARS_OFFSET)[0]
+    race_position, opponents = race_standing(race_position, active_cars)
     return Sample(
         t_ms=t_ms,
         **decode_physics(physics),
@@ -218,4 +231,6 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
             struct.unpack_from("<f", graphics, _FUEL_EST_LAPS_OFFSET)[0], 1
         ),
         track_flags=_track_flags(graphics),
+        race_position=race_position,  # position (offset 136), jamais lue sur un vrai ACC
+        opponents=opponents,
     )

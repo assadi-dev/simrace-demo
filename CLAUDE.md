@@ -121,7 +121,7 @@ PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` 
   pas de package partagé (voir décision 0009). Si tu changes l'un, change l'autre et les tests des
   deux. `x` et `z` (position monde, décision 0011) et les mesures de pneus et de freins (4 valeurs par
   mesure, décision 0013), le carburant, les aides TC et ABS (décision 0014) et les forces G (décision 0015) et les drapeaux et pénalités (décision 0016) et la phase de session `session_phase` (AC EVO,
-  décision 0022) sont optionnels et existent des deux côtés, comme `game` et `game_version` dans
+  décision 0022) et la place en course `race_position` et les adversaires `opponents` (décision 0023) sont optionnels et existent des deux côtés, comme `game` et `game_version` dans
   `SessionInfo` (décision 0022).
 - **Front** (`web/`) : le contrat existe en Zod dans `web/src/contracts/`, troisième copie après
   l'agent et le serveur. Si `server/app/shared/contract.py` change, regénère les fixtures
@@ -172,6 +172,7 @@ Jamais vus : drapeaux bleu, jaune et damier, cartographie moteur.
 Le front (`web/`) n'a été vérifié qu'avec des lots de test envoyés au serveur (tests Playwright,
 faux agent), pas avec le flux d'un vrai ACC.
 
-**Jamais vu sur un vrai jeu** : la répartition de freinage `brake_bias` (lit 0,75, SimHub affiche 54,0, décision 0016), les valeurs des drapeaux et des pénalités (offsets 1220, 1224, 1228, décision 0016), la valeur des pneus et des freins en roulant (offsets 88, 152, 348, 740, 756 de la page physique, décision 0013 : lus à l'arrêt, plausibles), le champ `sector` d'ACC (déclencheur « secteur » des morceaux), un
+**Jamais vu sur un vrai jeu** : la répartition de freinage `brake_bias` (lit 0,75, SimHub affiche 54,0, décision 0016), les valeurs des drapeaux et des pénalités (offsets 1220, 1224, 1228, décision 0016), la valeur des pneus et des freins en roulant (offsets 88, 152, 348, 740, 756 de la page physique, décision 0013 : lus à l'arrêt, plausibles), le champ `sector` d'ACC (déclencheur « secteur » des morceaux), la place en course d'ACC
+(offsets 136 et 252, décision 0023 ; vérifiée sur EVO), un
 passage aux stands, le temps du dernier et du meilleur tour. Le serveur, le rejeu et l'envoi par lots sont testés de bout en bout avec
 des enregistrements rejoués. Voir le détail dans [docs/HANDOFF.md](docs/HANDOFF.md).

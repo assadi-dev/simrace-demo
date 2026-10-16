@@ -37,6 +37,8 @@ export function StationCard({
     ["Dernier tour", values.lastLap],
     ["Meilleur tour ACC", values.bestLap],
     ["Session", values.sessionPhase],
+    ["Position", values.racePosition],
+    ["Adversaires", values.opponents],
   ]
   const counters = [
     ["Lots", station.batches],

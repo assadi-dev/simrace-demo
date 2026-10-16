@@ -42,6 +42,7 @@ _ABS_LEVEL_OFFSET = 1874  # electronics.abs_level (int8)
 _ENGINE_MAP_OFFSET = 1884  # electronics.engine_map_level (int8), jamais vu different de 0
 _ENGINE_MAP_MAX_OFFSET = 2140  # electronics_max_limit.engine_map_level: 0 = pas de cartographie
 _COMPLETED_LAPS_OFFSET = 2384  # total_lap_count
+_RACE_POSITION_OFFSET = 2388  # position au classement, 0 en essais seul en piste (decision 0023)
 _LAST_LAP_OFFSET = 2396  # last_laptime_ms
 _BEST_LAP_OFFSET = 2400  # best_laptime_ms (0 tant qu'aucun tour valide)
 _FLAG_OFFSET = 2404  # flag (ACEVO_FLAG_TYPE), drapeau montre au pilote
@@ -138,6 +139,9 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
     fields["disc_life_mm"] = layout.decode_wheels(physics, _DISC_LIFE_OFFSET, scale=1000)
     position = decode_player_position(graphics)
     in_pit = graphics[_IN_PIT_LANE_OFFSET] or graphics[_IN_PIT_BOX_OFFSET]
+    race_position, opponents = layout.race_standing(
+        _i32(graphics, _RACE_POSITION_OFFSET), graphics[_ACTIVE_CARS_OFFSET]
+    )
     return Sample(
         t_ms=t_ms,
         **fields,
@@ -163,4 +167,6 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
         fuel_estimated_laps=_positive(_f32(graphics, _FUEL_EST_LAPS_OFFSET), 1),
         track_flags=_track_flags(graphics),
         session_phase=_cstr(graphics, _SESSION_PHASE_OFFSET, 33) or None,
+        race_position=race_position,
+        opponents=opponents,
     )

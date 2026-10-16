@@ -76,3 +76,7 @@ class Sample:
     # phase de la session telle que le jeu l'ecrit (AC EVO: Waiting_For_Start, Session, Ended);
     # None si le jeu ne la donne pas (ACC)
     session_phase: str | None = None
+    # place au classement (1 = premier) et nombre d'adversaires en piste (0 = seul), decision 0023;
+    # None si le jeu ne les donne pas (hors session, essais sans classement)
+    race_position: int | None = None
+    opponents: int | None = None

@@ -51,7 +51,9 @@
       "track_flags": null,
       "air_temp_c": null,
       "road_temp_c": null,
-      "session_phase": null
+      "session_phase": null,
+      "race_position": null,
+      "opponents": null
     },
     {
       "t_ms": 1791739733161,
@@ -95,7 +97,9 @@
       "track_flags": null,
       "air_temp_c": null,
       "road_temp_c": null,
-      "session_phase": null
+      "session_phase": null,
+      "race_position": null,
+      "opponents": null
     }
   ]
 }

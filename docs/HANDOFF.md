@@ -15,6 +15,10 @@ pénalité. Voir la [décision 0022](decisions/0022-assetto-corsa-evo-deuxieme-s
 meilleur tour, drapeaux vert et orange en course. Pas encore vus : drapeaux bleu, jaune et damier,
 cartographie moteur.
 
+Place en course et adversaires (`race_position`, `opponents`, 0 si seul en piste) : KPI de l'écran
+Direct et lignes de la carte d'un poste. Mesurés sur la course EVO enregistrée ; offsets d'ACC
+(136, 252) **jamais lus en vrai**. Voir la [décision 0023](decisions/0023-place-en-course-et-adversaires.md).
+
 ## Changements depuis le 2026-10-11
 
 | Domaine | Changement | Décision |

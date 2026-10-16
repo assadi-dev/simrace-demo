@@ -1,5 +1,10 @@
 import type { Sample } from "@/contracts/telemetry"
 import type { Lap, StationHistory } from "@/features/direct/history"
+import {
+  opponentsLabel,
+  racePositionHelp,
+  racePositionLabel,
+} from "@/features/stations/standing"
 import { formatLapTime, NOT_AVAILABLE } from "@/lib/format"
 
 export type Kpi = { label: string; value: string; help: string }
@@ -17,13 +22,28 @@ const NOT_SENT = "Non transmis par l'agent"
 const lapWithTime = (laps: readonly Lap[], timeMs: number) =>
   laps.findLast((lap) => lap.timeMs === timeMs)?.number
 
-/** Les six KPI de la maquette 2, tires du dernier echantillon. */
+/** Les KPI de la maquette 2 et la place en course (0023), tires du dernier echantillon. */
 export function directKpis(sample: Sample, history: StationHistory): Kpi[] {
   const tc = [sample.tc_level, sample.tc_cut_level]
   const bestLap = sample.best_lap_ms
     ? lapWithTime(history.laps, sample.best_lap_ms)
     : undefined
   return [
+    {
+      label: "Position",
+      value: racePositionLabel(sample),
+      help: racePositionHelp(sample),
+    },
+    {
+      label: "Adversaires",
+      value: opponentsLabel(sample),
+      help:
+        sample.opponents == null
+          ? "Non donné par le jeu"
+          : sample.opponents === 0
+            ? "Seul en piste"
+            : "Voitures en piste, hors joueur",
+    },
     {
       label: "TC · TC Cut",
       value: tc.map(setting).join(" · "),

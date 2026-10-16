@@ -117,6 +117,19 @@ describe("liveValues", () => {
     expect(values.sessionPhase).toBe("Terminée")
   })
 
+  it("affiche la place et les adversaires, hors ligne n.d.", () => {
+    const racing = sample({ race_position: 3, opponents: 9 })
+
+    expect(liveValues("online", racing)).toMatchObject({
+      racePosition: "P3",
+      opponents: "9",
+    })
+    expect(liveValues("offline", racing)).toMatchObject({
+      racePosition: "n.d.",
+      opponents: "n.d.",
+    })
+  })
+
   it("hors ligne : ne garde que le dernier et le meilleur tour, le reste n'est plus en direct", () => {
     const values = liveValues(
       "offline",

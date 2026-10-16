@@ -1,7 +1,8 @@
 """Contrat de donnees avec l'agent.
 
 A garder aligne champ par champ avec agent/src/simrace_agent/models.py (decision 0009).
-`x`, `z` (0011), pneus et freins (0013), carburant et aides (0014), forces G (0015), drapeaux (0016) sont optionnels.
+`x`, `z` (0011), pneus et freins (0013), carburant et aides (0014), forces G (0015), drapeaux (0016),
+phase de session (0022), place et adversaires (0023) sont optionnels.
 """
 
 import math
@@ -120,3 +121,7 @@ class Sample(BaseModel):
     # phase de la session ecrite par le jeu (AC EVO: Waiting_For_Start, Session, Ended, decision
     # 0022); None pour ACC. Texte libre borne (char[33] d'EVO), affiche tel quel s'il est inconnu
     session_phase: str | None = Field(default=None, max_length=33)
+    # place au classement et adversaires en piste (decision 0023): 60 voitures au plus, comme les
+    # tableaux de la memoire partagee; None si le jeu ne les donne pas
+    race_position: int | None = Field(default=None, ge=1, le=60)
+    opponents: int | None = Field(default=None, ge=0, le=59)

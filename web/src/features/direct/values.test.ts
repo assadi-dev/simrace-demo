@@ -56,6 +56,28 @@ describe("directKpis", () => {
     expect(byLabel(kpis, "Map moteur")?.value).toBe("8")
   })
 
+  it("affiche la place en course et les adversaires", () => {
+    const racing = directKpis(
+      sample({ race_position: 7, opponents: 9 }),
+      EMPTY_HISTORY
+    )
+    expect(byLabel(racing, "Position")).toMatchObject({
+      value: "P7",
+      help: "Sur 10 voitures",
+    })
+    expect(byLabel(racing, "Adversaires")?.value).toBe("9")
+
+    const alone = directKpis(
+      sample({ race_position: null, opponents: 0 }),
+      EMPTY_HISTORY
+    )
+    expect(byLabel(alone, "Position")?.value).toBe("n.d.")
+    expect(byLabel(alone, "Adversaires")).toMatchObject({
+      value: "0",
+      help: "Seul en piste",
+    })
+  })
+
   it("retrouve le tour du meilleur temps dans l'historique", () => {
     const kpis = directKpis(
       sample({ completed_laps: 2, last_lap_ms: 108_000, best_lap_ms: 107_900 }),
