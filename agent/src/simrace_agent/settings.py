@@ -1,5 +1,5 @@
-"""Reglages saisis dans la fenetre (serveur, poste, dossier des replays, replay choisi), gardes
-d'un lancement a l'autre.
+"""Reglages saisis dans la fenetre (serveur, poste, jeu, dossier des replays, replay choisi),
+gardes d'un lancement a l'autre.
 
 Un fichier JSON dans %LOCALAPPDATA%\\simrace-agent: il survit a une reconstruction de l'exe et
 se corrige a la main. Priorite: reglages enregistres, puis .env, puis valeurs par defaut.
@@ -9,7 +9,7 @@ import json
 import os
 from pathlib import Path
 
-FIELDS = ("server", "station", "folder", "replay")
+FIELDS = ("server", "station", "source", "folder", "replay")
 
 
 def settings_path() -> Path:

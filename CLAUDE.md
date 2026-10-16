@@ -88,7 +88,7 @@ uv run simrace-agent run --source replay --file ../recordings/session.jsonl --st
 uv run simrace-agent record --out ../recordings/session.jsonl
 
 # agent : fenetre (envoyer, enregistrer, rejouer une session, tout arreter), theme de design.md
-uv run simrace-agent gui    # champs gardes dans %LOCALAPPDATA%\simrace-agent\settings.json
+uv run simrace-agent gui    # champs (serveur, poste, jeu...) gardes dans %LOCALAPPDATA%\simrace-agent\settings.json
 .\build_exe.ps1      # construit agent\dist\simrace-agent.exe (PyInstaller via uvx, ignore par git)
 ./build_app.sh       # macOS : construit agent/dist/simrace-agent.app (meme fenetre, rejeu seulement)
 ```

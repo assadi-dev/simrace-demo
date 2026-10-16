@@ -1,4 +1,4 @@
-"""Fenetre de l'executable: envoyer au serveur, enregistrer un replay, tout arreter.
+"""Fenetre de l'executable: choisir le jeu, envoyer au serveur, enregistrer un replay, tout arreter.
 
 tkinter fait partie de Python: pas de dependance en plus sur le PC de jeu. Chaque action tourne
 dans son propre thread avec un `threading.Event` pour l'arreter proprement. Couleurs, tailles et
@@ -194,6 +194,7 @@ class AgentWindow:
         values = settings.load(settings.settings_path(), {
             "server": config.server_url(),
             "station": config.station_id(socket.gethostname()),
+            "source": config.game_source(),  # SIMRACE_SOURCE du .env, sinon auto
             "folder": str(app_dir() / "recordings"),
             "replay": "",
         })
@@ -202,7 +203,12 @@ class AgentWindow:
         self._eyebrow(form, "RÉGLAGES").grid(row=0, column=0, columnspan=2, sticky="w")
         self._server = self._field(form, 1, "Serveur", values["server"])
         self._station = self._field(form, 2, "Poste", values["station"])
-        self._folder = self._field(form, 3, "Dossier des replays", values["folder"])
+        self._style_combobox(root)
+        self._source = self._choice(
+            form, 3, "Jeu", list(actions.SOURCE_LABELS.values()),
+            actions.SOURCE_LABELS[actions.source_key(values["source"])],
+        )
+        self._folder = self._field(form, 4, "Dossier des replays", values["folder"])
         form.columnconfigure(1, weight=1)
 
         buttons = tk.Frame(root, bg=theme.AMBIENT_MID)
@@ -230,7 +236,6 @@ class AgentWindow:
         # sessions du dossier des replays, relues a chaque ouverture de la liste
         self._replays: list[tuple[Path, str]] = []
         self._replay = tk.StringVar()
-        self._style_combobox(root)
         self._replay_list = ttk.Combobox(
             replay, textvariable=self._replay, state="readonly", font=fonts.body,
             style="Simrace.TCombobox", postcommand=self._reload_replays,
@@ -297,9 +302,28 @@ class AgentWindow:
         ).grid(row=row, column=1, sticky="ew", pady=pad, ipady=theme.px(8), ipadx=theme.px(8))
         return var
 
+    def _choice(
+        self, parent: tk.Frame, row: int, label: str, choices: list[str], value: str
+    ) -> tk.StringVar:
+        # liste fermee (pas de saisie libre), meme rendu que la liste des replays
+        var = tk.StringVar(value=value)
+        pad = theme.px(6)
+        tk.Label(
+            parent, text=label, font=self._fonts.label, fg=theme.MUTED_FOREGROUND, bg=theme.CARD
+        ).grid(row=row, column=0, sticky="w", padx=(0, theme.px(16)), pady=pad)
+        ttk.Combobox(
+            parent, textvariable=var, values=choices, state="readonly", font=self._fonts.body,
+            style="Simrace.TCombobox",
+        ).grid(row=row, column=1, sticky="ew", pady=pad, ipady=theme.px(6))
+        return var
+
+    def _source_key(self) -> str:
+        return actions.source_key(self._source.get())
+
     def _save_settings(self) -> None:
         values = {
             "server": self._server.get(), "station": self._station.get(),
+            "source": self._source_key(),
             "folder": self._folder.get(), "replay": str(self._selected_replay() or ""),
         }
         try:
@@ -334,17 +358,19 @@ class AgentWindow:
 
     def _start_send(self) -> None:
         server, station = self._server.get().strip(), self._station.get().strip()
-        print(f"[agent] envoi vers {server} (poste {station})")
+        source = self._source_key()
+        print(f"[agent] envoi vers {server} (poste {station}, jeu {source})")
         self._launch("envoi", lambda stop: actions.stream(
-            live_source(config.game_source(), stop), BatchSender(server, station), 200, stop,
+            live_source(source, stop), BatchSender(server, station), 200, stop,
         ))
 
     def _start_record(self) -> None:
         folder = Path(self._folder.get().strip())
         path = actions.recording_path(folder, datetime.now().astimezone())
-        print(f"[agent] enregistrement dans {path}")
+        source = self._source_key()
+        print(f"[agent] enregistrement dans {path} (jeu {source})")
         self._launch("enregistrement", lambda stop: actions.record(
-            live_source(config.game_source(), stop), path, stop,
+            live_source(source, stop), path, stop,
         ))
 
     def _style_combobox(self, root: tk.Tk) -> None:

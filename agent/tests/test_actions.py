@@ -120,3 +120,19 @@ def test_only_json_files_are_accepted(tmp_path):
     assert actions.replay_info(good) is not None
     assert actions.replay_info(other) is None
     assert [path for path, _ in actions.list_replays(tmp_path)] == [good]
+
+
+def test_every_live_source_has_a_label_in_the_window():
+    assert list(actions.SOURCE_LABELS) == ["auto", "acc", "acevo"]
+
+
+def test_source_key_from_key_or_label():
+    assert actions.source_key("acevo") == "acevo"
+    assert actions.source_key("Assetto Corsa EVO") == "acevo"
+    assert actions.source_key("Automatique (ACC ou AC EVO)") == "auto"
+
+
+def test_unknown_source_falls_back_to_auto():
+    # reglage abime ou SIMRACE_SOURCE inconnu: la fenetre propose la detection automatique
+    assert actions.source_key("forza") == "auto"
+

@@ -11,8 +11,24 @@ from datetime import datetime
 from pathlib import Path
 
 from simrace_agent.sender import BatchSender
+from simrace_agent.sources.acc import LIVE_SOURCES
 from simrace_agent.sources.base import Source
 from simrace_agent.sources.replay import Recorder
+
+# Choix du jeu dans la fenetre (decision 0022): cle de `--source` -> libelle affiche
+SOURCE_LABELS = {
+    "auto": "Automatique (ACC ou AC EVO)",
+    "acc": "Assetto Corsa Competizione",
+    "acevo": "Assetto Corsa EVO",
+}
+assert set(SOURCE_LABELS) == set(LIVE_SOURCES)
+
+
+def source_key(value: str) -> str:
+    """Cle d'une source depuis sa cle ou son libelle; une valeur inconnue revient a `auto`."""
+    if value in SOURCE_LABELS:
+        return value
+    return next((key for key, label in SOURCE_LABELS.items() if label == value), "auto")
 
 
 def stream(source: Source, sender: BatchSender, batch_ms: int, stop: threading.Event) -> None:

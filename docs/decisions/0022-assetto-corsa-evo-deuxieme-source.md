@@ -123,4 +123,7 @@ EVO dit quand la session est finie : `session_state.phase_name` (page graphique,
   agents et anciens enregistrements : `None`). Front : « AC EVO 0.9.1 » sur la carte d'un poste, dans
   le sous-titre de l'écran Direct et sur la page Live (tuile, vue en grand, plein écran), « Jeu n.d. »
   sans valeur.
+- Fenêtre (`gui`, exe) : champ « Jeu » (Automatique, ACC, AC EVO) dans les réglages, gardé dans
+  `settings.json` comme les autres champs. Valeur de départ : `SIMRACE_SOURCE` du `.env` posé à côté
+  de l'exe, sinon Automatique. Envoyer et Enregistrer lisent le jeu choisi.
 
