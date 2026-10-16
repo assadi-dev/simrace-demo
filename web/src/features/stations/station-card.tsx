@@ -3,8 +3,10 @@ import { Link } from "@tanstack/react-router"
 import { StatusBadge } from "@/components/status-badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { WeatherChips } from "@/components/weather-chips"
 import { Progress } from "@/components/ui/progress"
 import type { Station } from "@/contracts/stations"
+import { gameLabel } from "@/features/stations/game"
 import { stationStatus } from "@/features/stations/status"
 import { liveValues } from "@/features/stations/summary"
 import { formatAgo, formatNumber, NOT_AVAILABLE } from "@/lib/format"
@@ -33,6 +35,10 @@ export function StationCard({
     ["Rapport · tr/min", values.gearRpm],
     [values.lapLabel, values.lapTime],
     ["Dernier tour", values.lastLap],
+    ["Meilleur tour ACC", values.bestLap],
+    ["Session", values.sessionPhase],
+    ["Position", values.racePosition],
+    ["Adversaires", values.opponents],
   ]
   const counters = [
     ["Lots", station.batches],
@@ -58,7 +64,7 @@ export function StationCard({
           {station.session.track} · {station.session.car}
         </span>
         <span className="text-caption text-muted-foreground">
-          {station.session.driver} ·{" "}
+          {station.session.driver} · {gameLabel(station.session)} ·{" "}
           {seenAt ? `vu ${formatAgo(now - seenAt)}` : "jamais vu"}
         </span>
       </div>
@@ -71,6 +77,13 @@ export function StationCard({
           </div>
         ))}
       </dl>
+
+      {/* meteo du dernier echantillon ; hors ligne, n.d. comme les autres valeurs en direct */}
+      <WeatherChips
+        compact
+        air={status === "offline" ? undefined : live?.latest.air_temp_c}
+        road={status === "offline" ? undefined : live?.latest.road_temp_c}
+      />
 
       <div className="flex flex-col gap-1.5">
         <div className="flex justify-between text-meta text-muted-foreground">
@@ -97,16 +110,11 @@ export function StationCard({
 
       <div className="flex flex-wrap gap-2">
         <Button asChild>
-          <Link to="/stations/$stationId" params={{ stationId: station.station_id }}>
-            Ouvrir le direct
-          </Link>
-        </Button>
-        <Button asChild variant="secondary">
           <Link
-            to="/stations/$stationId/integrite"
+            to="/stations/$stationId"
             params={{ stationId: station.station_id }}
           >
-            Voir l'intégrité
+            Ouvrir le direct
           </Link>
         </Button>
       </div>

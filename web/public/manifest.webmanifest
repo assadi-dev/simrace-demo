@@ -1,0 +1,35 @@
+{
+  "name": "SimRace : télémétrie en direct",
+  "short_name": "SimRace",
+  "description": "Centre de simulation : postes, télémétrie en direct, leaderboard et vidéo des pilotes.",
+  "lang": "fr",
+  "dir": "ltr",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#E6DFD2",
+  "theme_color": "#2D2C2A",
+  "categories": ["sports", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

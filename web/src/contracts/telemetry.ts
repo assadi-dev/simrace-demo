@@ -22,6 +22,7 @@ export const TRACK_FLAGS = [
   "chequered",
   "red",
 ] as const
+export type TrackFlag = (typeof TRACK_FLAGS)[number]
 
 /** Quatre mesures : avant gauche, avant droit, arriere gauche, arriere droit. */
 const perWheel = (min: number, max: number) => {
@@ -34,6 +35,12 @@ export const sessionInfoSchema = z.object({
   car: z.string().max(64),
   driver: z.string().max(128),
   fuel_capacity_l: z.number().min(0).max(1000).nullish(),
+  // jeu lu par l'agent et sa version (decision 0022) ; null pour un ancien agent
+  game: z
+    .string()
+    .regex(/^[a-z0-9_-]{1,16}$/)
+    .nullish(),
+  game_version: z.string().max(15).nullish(),
 })
 export type SessionInfo = z.infer<typeof sessionInfoSchema>
 
@@ -86,6 +93,11 @@ export const sampleSchema = z.object({
   // meteo (decision 0016)
   air_temp_c: z.number().min(-50).max(100).nullish(),
   road_temp_c: z.number().min(-50).max(150).nullish(),
+  // phase de la session ecrite par le jeu, AC EVO seulement (decision 0022)
+  session_phase: z.string().max(33).nullish(),
+  // place au classement et adversaires en piste, 0 = seul (decision 0023)
+  race_position: z.int().min(1).max(60).nullish(),
+  opponents: z.int().min(0).max(59).nullish(),
 })
 export type Sample = z.infer<typeof sampleSchema>
 

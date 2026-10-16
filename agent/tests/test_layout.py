@@ -249,3 +249,35 @@ def test_sample_carries_the_weather():
 def test_zero_temperature_means_no_data():
     sample = layout.decode_sample(make_physics(), make_graphics(), t_ms=0)
     assert (sample.air_temp_c, sample.road_temp_c) == (None, None)
+
+
+def test_acc_has_no_session_phase():
+    assert layout.decode_sample(make_physics(), make_graphics(), t_ms=0).session_phase is None
+
+
+def test_session_names_the_game_and_its_version():
+    static = bytearray(layout.STATIC_SIZE)
+    static[30:30 + 30] = wstr("1.10.2", 15)  # acVersion
+    info = layout.decode_session(bytes(static))
+    assert (info.game, info.game_version) == ("acc", "1.10.2")
+
+
+def test_missing_acc_version_is_none():
+    assert layout.decode_session(bytes(layout.STATIC_SIZE)).game_version is None
+
+
+def test_sample_carries_race_position_and_opponents():
+    sample = layout.decode_sample(make_physics(), make_graphics(), t_ms=0)
+    assert (sample.race_position, sample.opponents) == (3, 2)  # 3e sur 3 voitures actives
+
+
+def test_alone_on_track_has_zero_opponents():
+    graphics = make_graphics_with({136: ("<i", 1), 252: ("<i", 1)})
+    sample = layout.decode_sample(make_physics(), graphics, t_ms=0)
+    assert (sample.race_position, sample.opponents) == (1, 0)
+
+
+def test_race_standing_outside_a_session_is_none():
+    assert layout.race_standing(0, 0) == (None, None)
+    assert layout.race_standing(-1, 61) == (None, None)
+    assert layout.race_standing(0, 1) == (None, 0)  # pas de classement, mais seul en piste

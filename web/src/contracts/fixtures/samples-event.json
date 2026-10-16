@@ -4,7 +4,9 @@
     "track": "monza",
     "car": "ferrari_296_gt3",
     "driver": "Alice Martin",
-    "fuel_capacity_l": null
+    "fuel_capacity_l": null,
+    "game": null,
+    "game_version": null
   },
   "samples": [
     {
@@ -48,7 +50,10 @@
       "fuel_estimated_laps": null,
       "track_flags": null,
       "air_temp_c": null,
-      "road_temp_c": null
+      "road_temp_c": null,
+      "session_phase": null,
+      "race_position": null,
+      "opponents": null
     },
     {
       "t_ms": 1791739733161,
@@ -91,7 +96,10 @@
       "fuel_estimated_laps": null,
       "track_flags": null,
       "air_temp_c": null,
-      "road_temp_c": null
+      "road_temp_c": null,
+      "session_phase": null,
+      "race_position": null,
+      "opponents": null
     }
   ]
 }

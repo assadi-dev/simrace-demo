@@ -22,6 +22,28 @@ export const formatNumber = (value: number) => integer.format(value)
 /** Vitesse avec une decimale : `186,9 km/h`. */
 export const formatSpeed = (kmh: number) => `${oneDecimal.format(kmh)}\u00a0km/h`
 
+/** Nombre a decimales fixes : `formatDecimal(1.234, 2)` donne `1,23`. */
+export const formatDecimal = (value: number, digits: number) =>
+  new Intl.NumberFormat("fr-FR", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(value)
+
+/** Temperature avec une decimale (`27,1 °C`), `n.d.` si absente. */
+export const formatTemperature = (celsius: number | null | undefined) =>
+  celsius == null ? NOT_AVAILABLE : `${oneDecimal.format(celsius)}\u00a0°C`
+
+/**
+ * Ecart en secondes au format `+0,512` / `-1,203` / `0,000` (design.md 2.5) :
+ * positif = plus rapide, negatif = plus lent (signe moins U+2212).
+ */
+export function formatDelta(ms: number): string {
+  const abs = formatDecimal(Math.abs(ms) / 1000, 3)
+  if (ms > 0) return `+${abs}`
+  if (ms < 0) return `\u2212${abs}`
+  return abs
+}
+
 /** Duree ecoulee : `il y a 4 s`, `il y a 3 min`, `il y a 2 h`. Une duree negative (horloges decalees) vaut 0. */
 export function formatAgo(elapsedMs: number): string {
   const seconds = Math.max(0, Math.floor(elapsedMs / 1000))

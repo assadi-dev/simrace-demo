@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest"
 
 import {
   formatAgo,
+  formatDecimal,
+  formatDelta,
   formatLapTime,
+  formatTemperature,
   formatNumber,
   formatSpeed,
   NOT_AVAILABLE,
@@ -44,5 +47,21 @@ describe("formats francais", () => {
 
   it("formatAgo ramene a 0 une duree negative (horloges decalees)", () => {
     expect(strip(formatAgo(-5_000))).toBe("il y a 0 s")
+  })
+
+  it("formatTemperature garde une decimale, n.d. si absente", () => {
+    expect(strip(formatTemperature(27.13))).toBe("27,1 °C")
+    expect(formatTemperature(null)).toBe(NOT_AVAILABLE)
+  })
+
+  it("formatDelta : + plus rapide, signe moins U+2212 plus lent, 0,000 egal", () => {
+    expect(formatDelta(512)).toBe("+0,512")
+    expect(formatDelta(-1_203)).toBe("\u22121,203")
+    expect(formatDelta(0)).toBe("0,000")
+  })
+
+  it("formatDecimal fixe le nombre de decimales", () => {
+    expect(formatDecimal(1.234, 2)).toBe("1,23")
+    expect(formatDecimal(2, 2)).toBe("2,00")
   })
 })

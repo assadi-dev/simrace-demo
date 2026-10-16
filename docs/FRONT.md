@@ -95,28 +95,43 @@ tampons --requestAnimationFrame (20 images/s)--> uPlot (vitesse, gaz et frein)
 |---|---|---|---|
 | `/` | **Postes** : grille de cartes, KPI globaux | Opérateur du centre | `/stations` + dernier échantillon du flux |
 | `/stations/:id` | **Direct** : KPI, courbes, position sur la piste, tours | Pilote, opérateur | flux `samples` filtré sur le poste |
-| `/stations/:id/integrite` | **Intégrité** : compteurs, raisons de rejet, runs | Opérateur, démo recruteur | `/stations` (+ phase 2 : lots) |
 | `/leaderboard` | **Leaderboard** : pilotes par circuit (`?circuit=`), position, temps en direct | Pilotes, centre | `/stations` + dernier échantillon du flux |
+| `/live`, `/live/:id`, `/live/:id/plein-ecran` | **Live** (maquettes 5, 6, 7) : mosaïque vidéo, vue en grand, plein écran | Opérateur, spectateurs | Vidéo MediaMTX (décision 0019) ; `/stations` + dernier échantillon du flux |
 
 ## Stack
 
 Voir la décision [0017](decisions/0017-pile-du-front.md) : Vite, React 19, TypeScript strict,
 Tailwind v4 et shadcn/ui, TanStack Router, Table et Query, Zod (contrats), Zustand (état du
-direct), nuqs (état dans l'URL), Vitest et Playwright. uPlot reste prévu pour les courbes, à
-ajouter avec l'écran Direct.
+direct), nuqs (état dans l'URL), Vitest et Playwright. uPlot pour les courbes.
 
 ## Ordre de construction
 
 1. **Fait** : squelette Vite, client de flux et store (dernier échantillon par poste, `t_ms` qui
-   recule ignoré), tests Vitest. Reste : tampons de courbes et déduction des tours.
+   recule ignoré, historique des tours, drapeaux, distance et trace), tampons des courbes hors
+   de l'état React, tests Vitest.
 2. **Fait** : écran Postes conforme à la maquette 1 (KPI, cartes, valeurs en direct, position
    sur le tour, pilules d'intégrité). Écart : grille à colonnes égales au lieu de flex. Le Leaderboard
    (tableau TanStack Table) est aussi fait en version minimale, sans la colonne Delta.
-3. Écran Direct : KPI, puis courbes uPlot, puis tracé schématique, puis tableau des tours.
-4. Écran Intégrité (compteurs et raisons).
-5. Playwright : **socle fait** (`web/e2e/`, 8 scénarios, vrai serveur, de vrais lots). Reste :
-   vérifier qu'une courbe se dessine et qu'un doublon injecté incrémente le compteur.
-6. Phase 2 selon l'avancement : chaîne des lots, validité du tour, coordonnées de piste.
+3. Écran Direct : **fait** (maquette 2 et décision 0018) : titre et choix du poste, fenêtre
+   10/30/60 s (`?fenetre=`) et « Figer les courbes », 6 KPI, courbes uPlot (vitesse, accélérateur,
+   frein), carte Vitesse (jauge, rapport, température des pneus, décision 0021), Position
+   sur la piste (vraie carte de `GET /tracks/{circuit}/reference`, trace du tour orange sur la
+   piste et bleue atténuée hors piste ou aux stands ; tracé schématique sans carte), Tours (valides
+   selon ACC seulement), Pénalités et drapeaux. Logique pure dans `src/features/direct/`, testée par
+   Vitest. Reste : remise à zéro sur nouveau `run_id` (le flux ne le transmet pas).
+4. Écran Intégrité : **retiré pour la démo** (c'était un squelette vide). Les compteurs
+   d'intégrité restent sur les cartes de l'écran Postes.
+5. Playwright : **socle fait** (`web/e2e/`, 13 scénarios, vrai serveur, de vrais lots, données
+   du serveur de test dans un dossier temporaire). Une courbe qui se dessine et une carte réelle
+   enregistrée par un faux tour sont vérifiées. Reste : un doublon injecté incrémente le compteur.
+6. Live : **fait** (maquettes 5, 6, 7), branché sur `GET /stations` et le flux `/stream`.
+   Mosaïque de 1 à 4 colonnes (sm, lg, xl), deux rangées toujours visibles dans la fenêtre dès
+   sm. Chaque tuile montre la première image du flux WebRTC (vidéo seule, connexion fermée
+   ensuite) ; la vue en grand et le plein écran lisent le direct avec le son. En https, les
+   adresses vidéo viennent de `VITE_MEDIA_WEBRTC_URL` et `VITE_MEDIA_HLS_URL` (décision 0020). Sans
+   adresse MediaMTX, ou si le flux est absent ou en erreur, la carte le dit (« Flux
+   indisponible : … »), sans image de remplacement. Latence et delta : n.d.
+7. Phase 2 selon l'avancement : chaîne des lots, validité du tour, coordonnées de piste.
 
 ## Décisions à trancher
 

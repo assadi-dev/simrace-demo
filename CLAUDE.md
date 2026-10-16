@@ -69,22 +69,34 @@ uv run pytest
 ```
 
 ```
+# dependances Docker (PostgreSQL, MediaMTX), depuis la racine
+docker compose -f .\dependencies\docker-compose.yml up -d
+docker compose -f .\dependencies\docker-compose.yml down
+
 # serveur
 cd server && uv run uvicorn app.main:app --reload
 
 # agent : sonde de lecture ACC (Windows, ACC lancé en session)
 cd agent && uv run simrace-agent probe
+# jeu detecte tout seul (SIMRACE_SOURCE=auto par defaut, decision 0022) ; --source acc ou
+# acevo (ou SIMRACE_SOURCE dans agent/.env) force le jeu
+uv run simrace-agent probe --source acevo
 
 # agent : envoi au serveur (depuis ACC ou depuis un enregistrement)
 uv run simrace-agent run --server http://localhost:8000
 uv run simrace-agent run --source replay --file ../recordings/session.jsonl --station-id sim-1
 uv run simrace-agent record --out ../recordings/session.jsonl
+
+# agent : fenetre (envoyer, enregistrer, rejouer une session, tout arreter), theme de design.md
+uv run simrace-agent gui    # champs (serveur, poste, jeu...) gardes dans %LOCALAPPDATA%\simrace-agent\settings.json
+.\build_exe.ps1      # construit agent\dist\simrace-agent.exe (PyInstaller via uvx, ignore par git)
+./build_app.sh       # macOS : construit agent/dist/simrace-agent.app (meme fenetre, rejeu seulement)
 ```
 
 ```
 # front (depuis web/)
 npm install
-npm run dev          # http://localhost:5173 ; .env.local : VITE_API_URL, VITE_MAX_STATIONS (voir .env.example)
+npm run dev          # http://localhost:5173 ; .env.local : VITE_API_URL, VITE_MAX_STATIONS, VITE_MEDIA_HOST, VITE_MEDIA_WEBRTC_URL, VITE_MEDIA_HLS_URL (voir .env.example)
 npm run build        # tsc strict + build
 npm run lint
 npm test             # Vitest : contrats, store, fonctions pures
@@ -94,7 +106,9 @@ npm run test:e2e     # Playwright : uvicorn (port 8100) et Vite (port 5273) déd
 
 VS Code : `.vscode/launch.json` (à la racine) lance chaque projet dans le terminal intégré avec les
 commandes ci-dessus : `server`, `web`, `web: Chrome`, `agent: replay` (attend
-`recordings/session.jsonl`), `agent: ACC (Windows)`, `agent: probe (Windows)`. Deux ensembles :
+`recordings/session.jsonl`), `agent: ACC (Windows)`, `agent: probe (Windows)`,
+`build agent desktop app (macOS)` (`build_app.sh`), `build agent desktop app (win)`
+(`build_exe.ps1`). Deux ensembles :
 `server + web` et `demo: server + web + agent replay`.
 
 PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` avec
@@ -106,8 +120,9 @@ PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` 
   `server/app/shared/contract.py` doivent rester alignés champ par champ. Il n'y a volontairement
   pas de package partagé (voir décision 0009). Si tu changes l'un, change l'autre et les tests des
   deux. `x` et `z` (position monde, décision 0011) et les mesures de pneus et de freins (4 valeurs par
-  mesure, décision 0013), le carburant, les aides TC et ABS (décision 0014) et les forces G (décision 0015) et les drapeaux et pénalités (décision 0016) sont optionnels et
-  existent des deux côtés.
+  mesure, décision 0013), le carburant, les aides TC et ABS (décision 0014) et les forces G (décision 0015) et les drapeaux et pénalités (décision 0016) et la phase de session `session_phase` (AC EVO,
+  décision 0022) et la place en course `race_position` et les adversaires `opponents` (décision 0023) sont optionnels et existent des deux côtés, comme `game` et `game_version` dans
+  `SessionInfo` (décision 0022).
 - **Front** (`web/`) : le contrat existe en Zod dans `web/src/contracts/`, troisième copie après
   l'agent et le serveur. Si `server/app/shared/contract.py` change, regénère les fixtures
   (`src/contracts/fixtures/`, capturées sur un vrai serveur) et mets le schéma Zod à jour : le test
@@ -147,6 +162,12 @@ sur un tour réel : pas de saut, distance cohérente avec la vitesse. À noter :
 avancer `completed_laps` au passage de ligne du tour de sortie des stands (décision 0011).
 
 Le tour de sortie des stands d'une vraie session est enregistré en morceau (4783 m, 603 points).
+
+AC EVO (décision 0022, `layout_evo.py`) : offsets mesurés le 2026-10-16 sur des pages brutes
+enregistrées (EVO 0.9.1, un tour, une entrée aux stands). Pas de secteur ni de code de pénalité
+dans EVO. Vérifié en direct avec `probe --source acevo` : physique, passage de ligne, dernier et
+meilleur tour. Drapeaux vus en course : vert (2) au départ et orange (9) ; `global_flag` reste à 0.
+Jamais vus : drapeaux bleu, jaune et damier, cartographie moteur.
 
 Le front (`web/`) n'a été vérifié qu'avec des lots de test envoyés au serveur (tests Playwright,
 faux agent), pas avec le flux d'un vrai ACC.

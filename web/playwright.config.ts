@@ -1,3 +1,5 @@
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { defineConfig, devices } from "@playwright/test"
 
 import { API_PORT, API_URL, WEB_PORT, WEB_URL } from "./e2e/env.ts"
@@ -24,15 +26,20 @@ export default defineConfig({
       command: `uv run uvicorn app.main:app --port ${API_PORT}`,
       cwd: "../server",
       url: `${API_URL}/health`,
-      env: { SIMRACE_CORS_ORIGINS: WEB_URL },
+      // tours enregistres dans un dossier temporaire : jamais dans server/data (donnees reelles)
+      env: {
+        SIMRACE_CORS_ORIGINS: WEB_URL,
+        SIMRACE_DATA_DIR: join(tmpdir(), "simrace-e2e-data"),
+      },
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
     },
     {
       command: `npm run dev -- --port ${WEB_PORT} --strictPort`,
       url: WEB_URL,
-      // une variable du processus l'emporte sur .env.local
-      env: { VITE_API_URL: API_URL, VITE_MAX_STATIONS: "" },
+      // une variable du processus l'emporte sur .env.local ; sans MediaMTX, la page Live
+      // montre ses affiches (pas de dependance au reseau video)
+      env: { VITE_API_URL: API_URL, VITE_MAX_STATIONS: "", VITE_MEDIA_HOST: "", VITE_MEDIA_WEBRTC_URL: "", VITE_MEDIA_HLS_URL: "" },
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
     },

@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lecteur vidéo WebRTC</title>
+  <!--
+  Page de test de la décision 0019 : lecture en direct d'un flux MediaMTX en WebRTC (WHEP).
+  Client WHEP écrit à la main (RTCPeerConnection + fetch), sans reader.js de MediaMTX, pour
+  montrer la négociation que fera le composant React.
+
+  Paramètres d'URL possibles : ?mtx=http://10.192.2.241:8889&path=live/sim-1&token=...&autoplay=1
+  ou ?url=webrtc://10.192.2.241:8889/live/sim-1&autoplay=1
+  Une adresse webrtc://hote:port/chemin peut aussi etre collee dans le champ MediaMTX.
+-->
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --card: #ffffffb0;
+      --ink: #1f1c18;
+      --muted: #66615a;
+      --line: #1f1c1824;
+      --accent: #e27100;
+      --ok: #0b6e34;
+      --bad: #a91f2f;
+      --track: #2d2c2a;
+      --screen: #111;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--card);
+    }
+
+    h1 {
+      font-size: 16px;
+      margin: 0 8px 0 0;
+    }
+
+    label {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      color: var(--muted);
+    }
+
+    input[type=text],
+    input[type=password],
+    button {
+      font: inherit;
+      min-height: 36px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    input.wide {
+      width: 210px;
+    }
+
+    input.narrow {
+      width: 110px;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    input[type=range] {
+      width: 120px;
+      accent-color: var(--accent);
+    }
+
+    .vol {
+      display: inline-block;
+      min-width: 3.5em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    button:disabled {
+      cursor: default;
+      opacity: .5;
+    }
+
+    button.primary {
+      background: var(--track);
+      color: #fff;
+      border-color: var(--track);
+    }
+
+    button.small {
+      min-height: 28px;
+      padding: 0 8px;
+      font-size: 12px;
+    }
+
+    details.auth {
+      color: var(--muted);
+    }
+
+    details.auth summary {
+      cursor: pointer;
+    }
+
+    details.auth[open] {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    main {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 16px;
+    }
+
+    .screen {
+      flex: 2 1 560px;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .side {
+      flex: 1 1 300px;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .frame {
+      position: relative;
+      background: var(--screen);
+      border-radius: 12px;
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      background: var(--screen);
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 15px;
+      text-align: center;
+      padding: 16px;
+      pointer-events: none;
+    }
+
+    .overlay[hidden] {
+      display: none;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 5px 8px;
+      border-top: 1px solid var(--line);
+      font-variant-numeric: tabular-nums;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 500;
+      width: 52%;
+    }
+
+    tr:first-child th,
+    tr:first-child td {
+      border-top: 0;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .pill.ok {
+      background: #1fbf5e1f;
+      color: var(--ok);
+    }
+
+    .pill.bad {
+      background: #e5484d1a;
+      color: var(--bad);
+    }
+
+    .pill.wait {
+      background: #e2710022;
+      color: var(--accent);
+    }
+
+    .pill.idle {
+      background: var(--line);
+      color: var(--muted);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 6px 0 0;
+    }
+
+    .clock {
+      font: 700 clamp(28px, 6vw, 56px)/1.1 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      letter-spacing: .02em;
+      background: #fff;
+      color: #000;
+      border-radius: 8px;
+      padding: 10px 14px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    pre {
+      margin: 6px 0 0;
+      padding: 8px 10px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    ol.log {
+      margin: 0;
+      padding-left: 0;
+      list-style: none;
+      max-height: 220px;
+      overflow: auto;
+      font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace;
+    }
+
+    ol.log li.err {
+      color: var(--bad);
+    }
+
+    ol.log li .t {
+      color: var(--muted);
+      margin-right: 6px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Lecteur vidéo WebRTC</h1>
+    <label>MediaMTX <input id="mtx" class="wide" type="text" value="http://10.192.2.241:8889"
+        spellcheck="false"></label>
+    <label>Poste (chemin) <input id="path" class="narrow" type="text" value="live/sim-1" spellcheck="false"></label>
+    <details class="auth">
+      <summary>Authentification</summary>
+      <label>Jeton <input id="token" class="narrow" type="password" autocomplete="off"></label>
+      <label>Utilisateur <input id="user" class="narrow" type="text" autocomplete="off"></label>
+      <label>Mot de passe <input id="pass" class="narrow" type="password" autocomplete="off"></label>
+    </details>
+    <button id="play" class="primary" type="button">Lire</button>
+    <button id="stop" type="button" disabled>Arrêter</button>
+    <span id="state" class="pill idle">Arrêté</span>
+  </header>
+
+  <main>
+    <section class="screen">
+      <div class="frame" id="frame">
+        <video id="video" playsinline muted></video>
+        <div id="overlay" class="overlay">Choisissez un poste puis « Lire ».</div>
+      </div>
+      <div class="row">
+        <label><input id="retry" type="checkbox" checked> Reconnexion automatique</label>
+        <label><input id="lowlat" type="checkbox" checked> Tampon minimal</label>
+        <button id="sound" class="small primary" type="button" aria-pressed="false">Activer le son</button>
+        <label>Volume <input id="volume" type="range" min="0" max="100" step="1" value="80" aria-label="Volume"> <span
+            id="volume-value" class="vol">80 %</span></label>
+        <button id="full" class="small" type="button">Plein écran</button>
+        <span id="audio-info" class="hint"></span>
+      </div>
+      <p class="hint">URL WHEP : <code id="whep"></code></p>
+    </section>
+
+    <aside class="side">
+      <div class="card">
+        <h2>Mesures <span class="muted" id="since"></span></h2>
+        <table>
+          <tr>
+            <th>Codec</th>
+            <td id="s-codec">n.d.</td>
+          </tr>
+          <tr>
+            <th>Résolution</th>
+            <td id="s-res">n.d.</td>
+          </tr>
+          <tr>
+            <th>Images par seconde</th>
+            <td id="s-fps">n.d.</td>
+          </tr>
+          <tr>
+            <th>Débit</th>
+            <td id="s-rate">n.d.</td>
+          </tr>
+          <tr>
+            <th>Aller-retour réseau (RTT)</th>
+            <td id="s-rtt">n.d.</td>
+          </tr>
+          <tr>
+            <th>Tampon de gigue</th>
+            <td id="s-jb">n.d.</td>
+          </tr>
+          <tr>
+            <th>Retard estimé (RTT/2 + tampon)</th>
+            <td id="s-delay">n.d.</td>
+          </tr>
+          <tr>
+            <th>Paquets perdus</th>
+            <td id="s-lost">n.d.</td>
+          </tr>
+          <tr>
+            <th>Images perdues / gels</th>
+            <td id="s-drop">n.d.</td>
+          </tr>
+          <tr>
+            <th>Chemin ICE</th>
+            <td id="s-ice">n.d.</td>
+          </tr>
+          <tr>
+            <th>Première image après</th>
+            <td id="s-first">n.d.</td>
+          </tr>
+        </table>
+        <p class="hint">Le retard estimé ne compte ni l'encodage ni le décodage. Pour le retard réel, utilisez l'horloge
+          ci-dessous.</p>
+      </div>
+
+      <div class="card">
+        <h2>Horloge de mesure</h2>
+        <div class="clock" id="clock">00:00:00.000</div>
+        <p class="hint">Faites capturer cette horloge par OBS (capture de fenêtre) et publier sur le même poste.
+          Une capture d'écran montrant les deux horloges donne le retard de bout en bout : horloge ici moins horloge
+          dans la vidéo.</p>
+      </div>
+
+      <div class="card">
+        <h2>Journal <button id="clear" class="small" type="button">Effacer</button></h2>
+        <ol class="log" id="log"></ol>
+      </div>
+
+      <div class="card">
+        <h2>Tester sur macOS</h2>
+        <p class="hint">1. MediaMTX (UDP 8189 indispensable pour le média WebRTC) :</p>
+        <pre>docker run --rm -it -e MTX_RTSPTRANSPORTS=tcp -e MTX_WEBRTCADDITIONALHOSTS=127.0.0.1 -p 8554:8554 -p 8889:8889 -p 8189:8189/udp bluenviron/mediamtx:1</pre>
+        <p class="hint">2a. Source de test (mire 720p60, H.264 sans images B) :</p>
+        <pre>docker run --rm jrottenberg/ffmpeg:7.1-ubuntu -re -f lavfi -i testsrc2=size=1280x720:rate=60 -c:v libx264 -preset ultrafast -tune zerolatency -profile:v baseline -pix_fmt yuv420p -g 60 -f rtsp -rtsp_transport tcp rtsp://host.docker.internal:8554/sim-1</pre>
+        <p class="hint">2b. Ou OBS : Paramètres, Stream, service <b>WHIP</b>, serveur
+          <code>http://localhost:8889/sim-1/whip</code>, puis capture de cette fenêtre pour mesurer le retard.
+        </p>
+        <p class="hint">Lecteur de référence de MediaMTX : <code>http://localhost:8889/sim-1</code></p>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    "use strict";
+
+    const $ = (id) => document.getElementById(id);
+    const video = $("video");
+    const RETRY_MS = 2000;
+    const ICE_GATHERING_TIMEOUT_MS = 2000;
+    // "disconnected" est transitoire (verifications ICE manquees) : on laisse le temps de revenir.
+    const DISCONNECT_GRACE_MS = 5000;
+
+    // Etat de la session en cours. `generation` invalide les rappels d'une session arretee.
+    let pc = null;
+    let sessionUrl = null;
+    let generation = 0;
+    let retryTimer = null;
+    let statsTimer = null;
+    let disconnectTimer = null;
+    let startedAt = 0;
+    let previous = null;
+
+    // ---------- interface ----------
+
+    function setState(kind, text) {
+      const pill = $("state");
+      pill.className = "pill " + kind;
+      pill.textContent = text;
+    }
+
+    function setOverlay(text) {
+      const overlay = $("overlay");
+      overlay.hidden = !text;
+      overlay.textContent = text || "";
+    }
+
+    function log(message, isError = false) {
+      const li = document.createElement("li");
+      if (isError) li.className = "err";
+      const t = document.createElement("span");
+      t.className = "t";
+      t.textContent = new Date().toLocaleTimeString("fr-FR", { hour12: false });
+      li.append(t, message);
+      $("log").prepend(li);
+    }
+
+    // "webrtc://hote:8889/live/sim-1" (ou http://...) colle dans le champ MediaMTX : on separe
+    // l'adresse du serveur et le chemin du flux. Le schema webrtc:// devient http://.
+    function splitPastedUrl() {
+      const raw = $("mtx").value.trim();
+      const m = raw.match(/^(webrtc|https?):\/\/([^/]+)(\/.*)?$/i);
+      if (!m) return;
+      const scheme = m[1].toLowerCase() === "https" ? "https" : "http";
+      const path = (m[3] || "").replace(/\/whep\/?$/, "").replace(/^\/+|\/+$/g, "");
+      $("mtx").value = `${scheme}://${m[2]}`;
+      if (path) $("path").value = path;
+    }
+
+    function whepUrl() {
+      const base = $("mtx").value.trim().replace(/\/+$/, "");
+      // Un chemin MediaMTX peut contenir des "/" : on encode chaque segment separement.
+      const path = $("path").value.trim().split("/").filter(Boolean).map(encodeURIComponent).join("/");
+      return `${base}/${path}/whep`;
+    }
+
+    function authHeaders() {
+      const token = $("token").value.trim();
+      const user = $("user").value;
+      if (token) return { Authorization: `Bearer ${token}` };
+      if (user) return { Authorization: "Basic " + btoa(`${user}:${$("pass").value}`) };
+      return {};
+    }
+
+    function refreshWhepLabel() {
+      $("whep").textContent = whepUrl();
+    }
+
+    // ---------- WHEP ----------
+
+    // MediaMTX annonce ses serveurs STUN/TURN dans l'en-tete Link d'une requete OPTIONS.
+    async function fetchIceServers(url) {
+      try {
+        const res = await fetch(url, { method: "OPTIONS", headers: authHeaders() });
+        const link = res.headers.get("Link");
+        if (!link) return [];
+        const servers = [];
+        const re = /<([^>]+)>;\s*rel="ice-server"(?:;\s*username="([^"]*)";\s*credential="([^"]*)";\s*credential-type="password")?/g;
+        for (const m of link.matchAll(re)) {
+          servers.push(m[2] !== undefined ? { urls: [m[1]], username: m[2], credential: m[3] } : { urls: [m[1]] });
+        }
+        return servers;
+      } catch {
+        return [];
+      }
+    }
+
+    // Sans "trickle ICE" : on attend les candidats locaux avant d'envoyer l'offre, plus simple a lire.
+    function waitIceGathering(peer) {
+      if (peer.iceGatheringState === "complete") return Promise.resolve();
+      return new Promise((resolve) => {
+        const timer = setTimeout(done, ICE_GATHERING_TIMEOUT_MS);
+        function done() {
+          clearTimeout(timer);
+          peer.removeEventListener("icegatheringstatechange", onChange);
+          resolve();
+        }
+        function onChange() {
+          if (peer.iceGatheringState === "complete") done();
+        }
+        peer.addEventListener("icegatheringstatechange", onChange);
+      });
+    }
+
+    // MediaMTX dans Docker n'annonce que ses adresses internes (127.0.0.1, 172.x) si
+    // webrtcAdditionalHosts n'est pas renseigne : le navigateur ne peut alors pas joindre le port UDP.
+    function checkCandidates(sdp, url) {
+      const candidates = [...sdp.matchAll(/^a=candidate:\S+ 1 (\w+) \d+ (\S+) (\d+) typ (\w+)/gm)]
+        .map((m) => ({ protocol: m[1].toLowerCase(), address: m[2], port: m[3], type: m[4] }));
+      log(`candidats annoncés : ${candidates.map((c) => `${c.address}:${c.port}/${c.protocol}`).join(", ") || "aucun"}`);
+      const host = new URL(url).hostname;
+      const isLocal = (a) => a === "localhost" || a.startsWith("127.") || a === "::1";
+      if (isLocal(host)) return;
+      if (!candidates.some((c) => c.address === host || c.type === "relay" || c.type === "srflx")) {
+        log(`MediaMTX n'annonce pas l'adresse ${host} : ajoutez-la à webrtcAdditionalHosts (MTX_WEBRTCADDITIONALHOSTS=${host}) et ouvrez le port UDP 8189`, true);
+      }
+    }
+
+    function explainStatus(status, body) {
+      switch (status) {
+        case 400: return `requête refusée (400) : ${body || "offre SDP invalide ou codec non supporté"}`;
+        case 401: return "authentification demandée ou refusée (401)";
+        case 403: return "lecture interdite pour ce poste (403)";
+        case 404: return "aucun flux publié sur ce poste (404)";
+        default: return `réponse inattendue ${status}${body ? " : " + body : ""}`;
+      }
+    }
+
+    async function start() {
+      stop({ quiet: true });
+      const myGeneration = ++generation;
+      const url = whepUrl();
+      refreshWhepLabel();
+      startedAt = performance.now();
+      previous = null;
+      $("play").disabled = true;
+      $("stop").disabled = false;
+      setState("wait", "Connexion");
+      setOverlay("Connexion à MediaMTX...");
+      log(`POST ${url}`);
+
+      try {
+        const iceServers = await fetchIceServers(url);
+        if (myGeneration !== generation) return;
+        if (iceServers.length) log(`serveurs ICE annoncés : ${iceServers.map((s) => s.urls[0]).join(", ")}`);
+
+        const peer = new RTCPeerConnection({ iceServers });
+        pc = peer;
+        peer.addTransceiver("video", { direction: "recvonly" });
+        peer.addTransceiver("audio", { direction: "recvonly" });
+
+        peer.ontrack = (event) => {
+          if (myGeneration !== generation) return;
+          applyLatencyHint();
+          const stream = event.streams[0];
+          if (stream) {
+            if (video.srcObject !== stream) video.srcObject = stream;
+          } else if (video.srcObject) {
+            video.srcObject.addTrack(event.track);
+          } else {
+            video.srcObject = new MediaStream([event.track]);
+          }
+          log(`piste reçue : ${event.track.kind}`);
+          updateAudioInfo();
+        };
+
+        peer.onconnectionstatechange = () => {
+          if (myGeneration !== generation) return;
+          const s = peer.connectionState;
+          log(`connexion WebRTC : ${s}`);
+          clearTimeout(disconnectTimer);
+          disconnectTimer = null;
+          if (s === "connected") {
+            setState("ok", "En direct");
+            startStats();
+            updateAudioInfo();
+          } else if (s === "disconnected") {
+            // ICE se retablit souvent seul : on n'abandonne que si l'etat dure.
+            setState("wait", "Signal perdu");
+            disconnectTimer = setTimeout(() => {
+              if (myGeneration === generation && peer.connectionState !== "connected") {
+                fail("connexion WebRTC perdue");
+              }
+            }, DISCONNECT_GRACE_MS);
+          } else if (s === "failed") {
+            fail("connexion WebRTC perdue (UDP 8189 bloqué ?)");
+          }
+        };
+
+        const offer = await peer.createOffer();
+        await peer.setLocalDescription(offer);
+        await waitIceGathering(peer);
+        if (myGeneration !== generation) return;
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { ...authHeaders(), "Content-Type": "application/sdp" },
+          body: peer.localDescription.sdp,
+        });
+        if (myGeneration !== generation) return;
+        if (res.status !== 201) {
+          const body = (await res.text().catch(() => "")).trim();
+          throw new Error(explainStatus(res.status, body));
+        }
+
+        const location = res.headers.get("Location");
+        sessionUrl = location ? new URL(location, url).toString() : null;
+        const answer = await res.text();
+        checkCandidates(answer, url);
+        await peer.setRemoteDescription({ type: "answer", sdp: answer });
+        log("réponse SDP reçue, établissement ICE");
+        setOverlay("Négociation WebRTC...");
+      } catch (err) {
+        if (myGeneration !== generation) return;
+        const message = err instanceof TypeError
+          ? "MediaMTX injoignable (adresse, port 8889 ou CORS)"
+          : err.message;
+        fail(message);
+      }
+    }
+
+    function fail(message) {
+      log(message, true);
+      setState("bad", "Erreur");
+      setOverlay(message);
+      closePeer();
+      if ($("retry").checked) {
+        setState("wait", "Nouvel essai");
+        const myGeneration = generation;
+        retryTimer = setTimeout(() => {
+          if (myGeneration === generation) start();
+        }, RETRY_MS);
+      } else {
+        $("play").disabled = false;
+      }
+    }
+
+    function closePeer() {
+      clearInterval(statsTimer);
+      statsTimer = null;
+      clearTimeout(disconnectTimer);
+      disconnectTimer = null;
+      if (sessionUrl) {
+        // Libere la session cote MediaMTX ; sans effet bloquant si elle a deja expire.
+        // keepalive : la requete part meme si la page se ferme (beforeunload).
+        fetch(sessionUrl, { method: "DELETE", headers: authHeaders(), keepalive: true }).catch(() => { });
+        sessionUrl = null;
+      }
+      if (pc) {
+        pc.close();
+        pc = null;
+      }
+    }
+
+    function stop({ quiet = false } = {}) {
+      generation++;
+      clearTimeout(retryTimer);
+      closePeer();
+      video.srcObject = null;
+      updateAudioInfo();
+      $("play").disabled = false;
+      $("stop").disabled = true;
+      if (!quiet) {
+        setState("idle", "Arrêté");
+        setOverlay("Lecture arrêtée.");
+        log("arrêt");
+      }
+    }
+
+    // Demande au navigateur de garder le moins d'images possible en tampon (Chrome, Edge, Firefox recents).
+    function applyLatencyHint() {
+      if (!pc) return;
+      const target = $("lowlat").checked ? 0 : null;
+      for (const receiver of pc.getReceivers()) {
+        if ("jitterBufferTarget" in receiver) receiver.jitterBufferTarget = target;
+        else if ("playoutDelayHint" in receiver) receiver.playoutDelayHint = target === null ? null : 0;
+      }
+    }
+
+    // ---------- mesures ----------
+
+    function fmt(value, digits, unit) {
+      return value === undefined || value === null || Number.isNaN(value) ? "n.d." : `${value.toFixed(digits)} ${unit}`;
+    }
+
+    function startStats() {
+      clearInterval(statsTimer);
+      statsTimer = setInterval(readStats, 1000);
+      readStats();
+    }
+
+    async function readStats() {
+      // Reference locale : closePeer() peut remplacer ou fermer `pc` pendant l'attente.
+      const peer = pc;
+      const myGeneration = generation;
+      if (!peer) return;
+      let report;
+      try {
+        report = await peer.getStats();
+      } catch {
+        return;
+      }
+      if (myGeneration !== generation || peer !== pc) return;
+      let inbound = null;
+      let pair = null;
+      const byId = new Map();
+      report.forEach((s) => {
+        byId.set(s.id, s);
+        if (s.type === "inbound-rtp" && s.kind === "video") inbound = s;
+        if (s.type === "transport" && s.selectedCandidatePairId) pair = s.selectedCandidatePairId;
+      });
+      // Firefox n'expose pas selectedCandidatePairId : on prend la paire nommee et reussie.
+      let candidatePair = pair ? byId.get(pair) : null;
+      if (!candidatePair) {
+        report.forEach((s) => {
+          if (s.type === "candidate-pair" && s.state === "succeeded" && (s.nominated || s.selected)) candidatePair = s;
+        });
+      }
+
+      const now = performance.now();
+      $("since").textContent = `${Math.round((now - startedAt) / 1000)} s`;
+
+      if (inbound) {
+        const codec = byId.get(inbound.codecId);
+        $("s-codec").textContent = codec ? codec.mimeType.replace("video/", "") : "n.d.";
+        $("s-res").textContent = inbound.frameWidth ? `${inbound.frameWidth} x ${inbound.frameHeight}` : "n.d.";
+        $("s-fps").textContent = fmt(inbound.framesPerSecond, 0, "i/s");
+        $("s-lost").textContent = String(inbound.packetsLost ?? "n.d.");
+        $("s-drop").textContent = `${inbound.framesDropped ?? "n.d."} / ${inbound.freezeCount ?? "n.d."}`;
+
+        if (previous) {
+          const seconds = (inbound.timestamp - previous.timestamp) / 1000;
+          const kbps = seconds > 0 ? ((inbound.bytesReceived - previous.bytesReceived) * 8) / seconds / 1000 : NaN;
+          $("s-rate").textContent = kbps >= 1000 ? fmt(kbps / 1000, 1, "Mbit/s") : fmt(kbps, 0, "kbit/s");
+          const emitted = inbound.jitterBufferEmittedCount - previous.jitterBufferEmittedCount;
+          const jbMs = emitted > 0 ? ((inbound.jitterBufferDelay - previous.jitterBufferDelay) / emitted) * 1000 : NaN;
+          $("s-jb").textContent = fmt(jbMs, 0, "ms");
+          const rttMs = candidatePair && candidatePair.currentRoundTripTime !== undefined ? candidatePair.currentRoundTripTime * 1000 : NaN;
+          $("s-delay").textContent = fmt((Number.isNaN(rttMs) ? 0 : rttMs / 2) + jbMs, 0, "ms");
+        }
+        previous = inbound;
+      }
+
+      if (candidatePair) {
+        $("s-rtt").textContent = candidatePair.currentRoundTripTime !== undefined ? fmt(candidatePair.currentRoundTripTime * 1000, 0, "ms") : "n.d.";
+        const remote = byId.get(candidatePair.remoteCandidateId);
+        $("s-ice").textContent = remote ? `${remote.candidateType} ${remote.protocol} ${remote.address ?? remote.ip ?? ""}:${remote.port}` : "n.d.";
+      }
+    }
+
+    function resetStats() {
+      for (const id of ["s-codec", "s-res", "s-fps", "s-rate", "s-rtt", "s-jb", "s-delay", "s-lost", "s-drop", "s-ice", "s-first"]) {
+        $(id).textContent = "n.d.";
+      }
+      $("since").textContent = "";
+    }
+
+    video.addEventListener("loadeddata", () => {
+      const ms = performance.now() - startedAt;
+      $("s-first").textContent = fmt(ms, 0, "ms");
+      log(`première image après ${Math.round(ms)} ms`);
+      setOverlay("");
+    });
+
+    // ---------- horloge ----------
+
+    function tickClock() {
+      const d = new Date();
+      const pad = (n, w = 2) => String(n).padStart(w, "0");
+      $("clock").textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`;
+      requestAnimationFrame(tickClock);
+    }
+
+    // ---------- son ----------
+
+    const VOLUME_KEY = "video-viewer.volume";
+
+    function applyVolume(percent) {
+      video.volume = percent / 100;
+      $("volume").value = String(percent);
+      $("volume-value").textContent = `${percent} %`;
+      try { localStorage.setItem(VOLUME_KEY, String(percent)); } catch { }
+    }
+
+    function setMuted(muted) {
+      // Activer le son avec un volume a 0 ne servirait a rien : on remet un volume audible.
+      if (!muted && Number($("volume").value) === 0) applyVolume(80);
+      video.muted = muted;
+      const button = $("sound");
+      button.textContent = muted ? "Activer le son" : "Couper le son";
+      button.classList.toggle("primary", muted);
+      button.setAttribute("aria-pressed", String(!muted));
+      // Le navigateur peut avoir mis la lecture en pause en reactivant le son : on relance.
+      if (video.srcObject) video.play().catch(() => { });
+    }
+
+    // Une source sans audio (mire ffmpeg, flux video seul) ne donne aucune piste audio :
+    // on le dit plutot que de laisser croire que le son est coupe.
+    function updateAudioInfo() {
+      const stream = video.srcObject;
+      const connected = pc && pc.connectionState === "connected";
+      $("audio-info").textContent = connected && stream && stream.getAudioTracks().length === 0
+        ? "Ce flux ne contient pas d'audio."
+        : "";
+    }
+
+    function restoreVolume() {
+      let saved = null;
+      try { saved = localStorage.getItem(VOLUME_KEY); } catch { }
+      const percent = Number(saved);
+      applyVolume(saved !== null && percent >= 0 && percent <= 100 ? Math.round(percent) : 80);
+    }
+
+    // ---------- branchements ----------
+
+    $("play").addEventListener("click", () => { splitPastedUrl(); resetStats(); start(); });
+    $("stop").addEventListener("click", () => stop());
+    $("clear").addEventListener("click", () => { $("log").textContent = ""; });
+    $("lowlat").addEventListener("change", applyLatencyHint);
+    $("sound").addEventListener("click", () => setMuted(!video.muted));
+    $("volume").addEventListener("input", (e) => {
+      applyVolume(Number(e.target.value));
+      // Bouger le curseur au-dessus de 0 active le son, le ramener a 0 le coupe.
+      setMuted(Number(e.target.value) === 0);
+    });
+    $("full").addEventListener("click", () => $("frame").requestFullscreen?.());
+    $("mtx").addEventListener("change", () => { splitPastedUrl(); refreshWhepLabel(); });
+    for (const id of ["mtx", "path"]) $(id).addEventListener("input", refreshWhepLabel);
+    // Lecture automatique : le navigateur l'autorise seulement en muet.
+    video.autoplay = true;
+    //window.addEventListener("beforeunload", () => stop({ quiet: true }));
+
+    const params = new URLSearchParams(location.search);
+    for (const id of ["mtx", "path", "token"]) {
+      if (params.get(id)) $(id).value = params.get(id);
+    }
+    if (params.get("url")) $("mtx").value = params.get("url");
+    splitPastedUrl();
+    refreshWhepLabel();
+    restoreVolume();
+    tickClock();
+    if (params.get("autoplay") === "1") start();
+  </script>
+</body>
+
+</html>

@@ -12,6 +12,8 @@ FLAGS = {
     4: "blanc",
     5: "damier",
     6: "penalite",
+    7: "vert",  # ACC_GREEN_FLAG: aussi la traduction du vert d'AC EVO (decision 0022)
+    8: "orange",  # ACC_ORANGE_FLAG (probleme mecanique), comme ORANGE_CIRCLE d'AC EVO
 }
 
 PENALTIES = {

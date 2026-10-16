@@ -1,5 +1,5 @@
 import * as React from "react"
-import { cn } from "cn"
+import { cn } from "@/lib/utils"
 
 /*
  * Surface de verre (design.md 1 et 8) : fond `card` + contour `card-border` de 1px, jamais d'ombre.

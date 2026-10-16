@@ -8,7 +8,7 @@ Format d'un fichier : Statut, Date, Contexte, Décision, Raisons, Conséquences.
 
 | N° | Décision | Statut |
 |---|---|---|
-| [0001](0001-acc-sur-pc-comme-seule-source.md) | ACC sur PC est la seule source de la démo | Acceptée |
+| [0001](0001-acc-sur-pc-comme-seule-source.md) | ACC sur PC est la seule source de la démo | Remplacée en partie par la 0022 |
 | [0002](0002-agent-en-python.md) | L'agent Windows est en Python | Acceptée |
 | [0003](0003-agent-vers-serveur-post-par-lots.md) | Agent vers serveur : POST par lots numérotés | Acceptée |
 | [0004](0004-serveur-vers-navigateur-sse.md) | Serveur vers navigateur : SSE | Acceptée |
@@ -25,3 +25,9 @@ Format d'un fichier : Statut, Date, Contexte, Décision, Raisons, Conséquences.
 | [0015](0015-forces-g-acceleration-et-freinage.md) | Forces G (accélération, freinage, virage) | Acceptée |
 | [0016](0016-drapeaux-et-penalites.md) | Drapeaux et pénalités (codes et raisons) | Acceptée, valeurs non vérifiées |
 | [0017](0017-pile-du-front.md) | Pile du front : Vite, React, shadcn/ui, TanStack, Zod, Zustand, nuqs | Acceptée |
+| [0018](0018-ecran-direct-carte-courbes-tours-valides.md) | Écran Direct : carte réelle, trace hors piste, courbes et tours valides | Acceptée |
+| [0019](0019-capture-ecran-obs-mediamtx.md) | Capture d'écran du jeu : OBS vers MediaMTX (Docker) | Acceptée |
+| [0020](0020-adresses-mediamtx-en-https.md) | Adresses MediaMTX complètes pour un front en https | Acceptée |
+| [0021](0021-temperature-des-pneus-a-la-place-de-la-distance.md) | Température des pneus à la place de la distance et de la vitesse moyenne | Acceptée |
+| [0022](0022-assetto-corsa-evo-deuxieme-source.md) | Assetto Corsa EVO, deuxième source de l'agent (`SIMRACE_SOURCE`, `--source acevo`) | Acceptée |
+| [0023](0023-place-en-course-et-adversaires.md) | Place en course et nombre d'adversaires (`race_position`, `opponents`) | Acceptée |

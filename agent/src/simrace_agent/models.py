@@ -7,6 +7,10 @@ class SessionInfo:
     car: str
     driver: str
     fuel_capacity_l: float | None = None  # capacite du reservoir (litres), None si inconnue
+    # jeu lu (acc ou acevo) et sa version ecrite dans la page statique; None si inconnus
+    # (anciens enregistrements)
+    game: str | None = None
+    game_version: str | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -69,3 +73,10 @@ class Sample:
     # meteo (temperatures); None si ACC ne la donne pas (0 degre = pas de donnee)
     air_temp_c: float | None = None
     road_temp_c: float | None = None
+    # phase de la session telle que le jeu l'ecrit (AC EVO: Waiting_For_Start, Session, Ended);
+    # None si le jeu ne la donne pas (ACC)
+    session_phase: str | None = None
+    # place au classement (1 = premier) et nombre d'adversaires en piste (0 = seul), decision 0023;
+    # None si le jeu ne les donne pas (hors session, essais sans classement)
+    race_position: int | None = None
+    opponents: int | None = None

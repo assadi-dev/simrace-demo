@@ -2,6 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "dependencies (Docker)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "docker compose -f ./dependencies/docker-compose.yml up -d",
+      "cwd": "${workspaceFolder}"
+    },
+    {
       "name": "server",
       "type": "node-terminal",
       "request": "launch",
@@ -41,6 +48,20 @@
       "type": "node-terminal",
       "request": "launch",
       "command": "uv run simrace-agent probe",
+      "cwd": "${workspaceFolder}/agent"
+    },
+    {
+      "name": "build agent desktop app (macOS)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "./build_app.sh",
+      "cwd": "${workspaceFolder}/agent"
+    },
+    {
+      "name": "build agent desktop app (win)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "powershell -ExecutionPolicy Bypass -File .\\build_exe.ps1",
       "cwd": "${workspaceFolder}/agent"
     }
   ],

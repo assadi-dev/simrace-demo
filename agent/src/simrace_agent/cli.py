@@ -1,13 +1,14 @@
 import argparse
 import socket
+import threading
 import time
 from pathlib import Path
 
-from simrace_agent import config
+from simrace_agent import actions, config
 from simrace_agent.codes import describe_flag, describe_penalty
 from simrace_agent.models import Sample
 from simrace_agent.sender import BatchSender
-from simrace_agent.sources.acc import AccSharedMemorySource
+from simrace_agent.sources.acc import LIVE_SOURCES, live_source
 from simrace_agent.sources.base import Source, SourceError
 from simrace_agent.sources.replay import Recorder, ReplaySource
 
@@ -24,8 +25,7 @@ def _format_wheels(label: str, values: list[float] | None, unit: str) -> str:
     return f"{label} " + " ".join(f"{v:6.1f}" for v in values) + f" {unit}"
 
 
-def _probe() -> None:
-    source = AccSharedMemorySource()
+def _probe(source: Source) -> None:
     last_print = 0.0
     session_shown = False
     for sample in source.samples():
@@ -38,7 +38,8 @@ def _probe() -> None:
                 f"{sample.speed_kmh:6.1f} km/h  gaz {sample.gas:.2f}  frein {sample.brake:.2f}  "
                 f"rapport {sample.gear:2d}  tr/min {sample.rpm:5d}  tour {sample.completed_laps} "
                 f"{sample.lap_time_ms / 1000:7.3f}s  pos {sample.track_pos:.3f}  "
-                f"statut {sample.status}  {_format_xz(sample)}"
+                f"statut {sample.status}  {_format_xz(sample)}  "
+                f"place {sample.race_position or 'n.d.'} adversaires {sample.opponents}"
             )
             print(
                 "   " + _format_wheels("pneus", sample.tyre_pressure_psi, "psi")
@@ -61,25 +62,11 @@ def _probe() -> None:
                 f"tour valide {sample.is_valid_lap}  tours de carburant {sample.fuel_estimated_laps}  "
                 f"drapeaux {sample.track_flags}"
             )
-            print(f"   air {sample.air_temp_c} C  piste {sample.road_temp_c} C")
-
-
-def _stream(source: Source, sender: BatchSender, batch_ms: int) -> None:
-    sender.start()
-    batch: list[dict] = []
-    deadline = time.monotonic() + batch_ms / 1000
-    try:
-        for sample in source.samples():
-            batch.append(sample.to_dict())
-            if time.monotonic() >= deadline:
-                sender.submit(source.session(), batch)
-                batch, deadline = [], time.monotonic() + batch_ms / 1000
-        sender.submit(source.session(), batch)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        sender.close()
-    print(f"[agent] termine (perdus: {sender.dropped}, refuses: {sender.refused})")
+            print(
+                f"   air {sample.air_temp_c} C  piste {sample.road_temp_c} C  "
+                f"dernier tour {sample.last_lap_ms / 1000:.3f}s  meilleur {sample.best_lap_ms / 1000:.3f}s  "
+                f"stands {sample.in_pit}  session {sample.session_phase}"
+            )
 
 
 def _build_source(args: argparse.Namespace) -> Source:
@@ -87,7 +74,7 @@ def _build_source(args: argparse.Namespace) -> Source:
         if not args.file:
             raise SourceError("--file est obligatoire avec --source replay")
         return ReplaySource(Path(args.file), speed=args.speed)
-    return AccSharedMemorySource()
+    return live_source(args.source)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -95,28 +82,47 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="simrace-agent")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    sub.add_parser("probe", help="affiche en direct les valeurs lues dans ACC")
+    # jeu lu en direct: SIMRACE_SOURCE (.env) par defaut, --source le remplace
+    game = config.game_source()
+    games = list(LIVE_SOURCES)
+    game_help = f"jeu lu en direct (defaut {game}, SIMRACE_SOURCE)"
+
+    probe = sub.add_parser("probe", help="affiche en direct les valeurs lues dans le jeu")
+    probe.add_argument("--source", choices=games, default=game, help=game_help)
 
     run = sub.add_parser("run", help="envoie la telemetrie au serveur")
     run.add_argument("--server", default=config.server_url())
     run.add_argument("--station-id", default=config.station_id(socket.gethostname()))
-    run.add_argument("--source", choices=["acc", "replay"], default="acc")
+    run.add_argument("--source", choices=[*games, "replay"], default=game, help=game_help)
     run.add_argument("--file", help="fichier a rejouer (--source replay)")
     run.add_argument("--speed", type=float, default=1.0, help="vitesse de rejeu")
     run.add_argument("--batch-ms", type=int, default=200)
 
-    record = sub.add_parser("record", help="enregistre une session ACC dans un fichier")
+    record = sub.add_parser("record", help="enregistre une session du jeu dans un fichier")
     record.add_argument("--out", required=True)
+    record.add_argument("--source", choices=games, default=game, help=game_help)
+
+    sub.add_parser("gui", help="fenetre: envoyer, enregistrer un replay, tout arreter")
 
     args = parser.parse_args(argv)
     try:
+        if game not in LIVE_SOURCES and getattr(args, "source", None) == game:
+            # argparse ne verifie pas une valeur par defaut venue de l'environnement
+            raise SourceError(f"SIMRACE_SOURCE={game} inconnu (choix: {', '.join(games)})")
         if args.command == "probe":
-            _probe()
+            _probe(live_source(args.source))
+        elif args.command == "gui":
+            from simrace_agent import gui  # tkinter charge seulement pour la fenetre
+
+            gui.main()
         elif args.command == "record":
-            for _ in Recorder(AccSharedMemorySource(), Path(args.out)).samples():
+            for _ in Recorder(live_source(args.source), Path(args.out)).samples():
                 pass
         else:
-            _stream(_build_source(args), BatchSender(args.server, args.station_id), args.batch_ms)
+            actions.stream(
+                _build_source(args), BatchSender(args.server, args.station_id), args.batch_ms,
+                threading.Event(),
+            )
     except SourceError as exc:
         raise SystemExit(f"Erreur: {exc}") from exc
     except KeyboardInterrupt:

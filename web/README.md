@@ -1,6 +1,6 @@
 # web : interface SimRace
 
-Front de la démo : postes, leaderboard, direct d'un poste, intégrité des données. Il lit le serveur
+Front de la démo : postes, leaderboard, direct d'un poste (avec les compteurs d'intégrité sur les cartes). Il lit le serveur
 FastAPI (`../server`) : `GET /stations` toutes les 2 s et le flux SSE `GET /stream`.
 
 Pile et raisons : [décision 0017](../docs/decisions/0017-pile-du-front.md). Plan des écrans :
@@ -43,7 +43,20 @@ src/
   lib/            client API (validation Zod), formats
   components/     composants de l'application ; ui/ = shadcn/ui adapté au thème
 e2e/              scénarios Playwright (agent.ts joue le rôle de l'agent)
+public/           manifest PWA (manifest.webmanifest), favicon.ico, icons/
 ```
+
+## PWA
+
+L'application s'installe (« Ajouter à l'écran d'accueil », icône d'installation de Chrome) grâce à
+`public/manifest.webmanifest` : affichage `standalone`, couleur `ink` (`#2D2C2A`), fond
+`ambient-mid`. Pas de service worker : les données sont en direct (SSE), une mise en cache hors
+ligne montrerait des valeurs périmées. Le test `e2e/pwa.spec.ts` vérifie les icônes et demande à
+Chrome si l'application est installable.
+
+Icônes : générées avec OpenArt (GPT Image 2, circuit orange `#E27100` sur fond `ink`, 1024 px),
+puis déclinées en 16, 32 et 48 (`favicon.ico`, trait épaissi pour rester lisible), 180 (iOS), 192,
+512 et 512 `maskable` (dessin réduit à la zone sûre de 80 %).
 
 ## Règles
 

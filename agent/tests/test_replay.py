@@ -124,3 +124,22 @@ def test_weather_survives_record_and_replay(tmp_path):
     list(Recorder(WithWeather(), path).samples())
     [replayed] = list(ReplaySource(path, speed=1000).samples())
     assert (replayed.air_temp_c, replayed.road_temp_c) == (27.0, 28.4)
+
+
+def test_replay_stops_during_a_long_pause(tmp_path):
+    import threading
+    import time
+
+    class WithPause(FakeSource):
+        def samples(self):
+            yield make_sample(0)
+            yield replace(make_sample(1), t_ms=make_sample(0).t_ms + 60_000)  # 1 min de pause
+
+    path = tmp_path / "pause.jsonl"
+    list(Recorder(WithPause(), path).samples())
+    stop = threading.Event()
+    threading.Timer(0.2, stop.set).start()
+    started = time.monotonic()
+    replayed = list(ReplaySource(path, stop=stop).samples())
+    assert time.monotonic() - started < 5  # l'arret coupe l'attente au lieu d'attendre 1 min
+    assert [s.packet_id for s in replayed] == [0]

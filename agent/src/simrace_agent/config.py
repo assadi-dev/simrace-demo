@@ -2,6 +2,18 @@ import os
 from pathlib import Path
 
 DEFAULT_SERVER_URL = "http://localhost:8000"
+DEFAULT_SOURCE = "auto"  # detecte ACC ou AC EVO (decision 0022)
+
+
+def executable_dir(executable: Path) -> Path:
+    # dossier ou l'exe est pose; sous macOS l'executable est dans X.app/Contents/MacOS/:
+    # on remonte a cote du .app pour ne jamais ecrire dans le bundle
+    folder = executable.parent
+    if folder.name == "MacOS" and folder.parent.name == "Contents":
+        bundle = folder.parent.parent
+        if bundle.suffix == ".app":
+            return bundle.parent
+    return folder
 
 
 def load_env_file(path: Path) -> None:
@@ -22,3 +34,8 @@ def server_url() -> str:
 
 def station_id(fallback: str) -> str:
     return os.environ.get("SIMRACE_STATION_ID", fallback)
+
+
+def game_source() -> str:
+    # jeu lu en direct (auto, acc ou acevo); --source le remplace en ligne de commande
+    return os.environ.get("SIMRACE_SOURCE", DEFAULT_SOURCE).strip().lower()
