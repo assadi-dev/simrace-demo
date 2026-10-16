@@ -7,6 +7,10 @@ class SessionInfo:
     car: str
     driver: str
     fuel_capacity_l: float | None = None  # capacite du reservoir (litres), None si inconnue
+    # jeu lu (acc ou acevo) et sa version ecrite dans la page statique; None si inconnus
+    # (anciens enregistrements)
+    game: str | None = None
+    game_version: str | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)

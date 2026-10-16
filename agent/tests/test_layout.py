@@ -253,3 +253,14 @@ def test_zero_temperature_means_no_data():
 
 def test_acc_has_no_session_phase():
     assert layout.decode_sample(make_physics(), make_graphics(), t_ms=0).session_phase is None
+
+
+def test_session_names_the_game_and_its_version():
+    static = bytearray(layout.STATIC_SIZE)
+    static[30:30 + 30] = wstr("1.10.2", 15)  # acVersion
+    info = layout.decode_session(bytes(static))
+    assert (info.game, info.game_version) == ("acc", "1.10.2")
+
+
+def test_missing_acc_version_is_none():
+    assert layout.decode_session(bytes(layout.STATIC_SIZE)).game_version is None

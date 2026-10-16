@@ -47,8 +47,9 @@ def make_graphics(status=2, laps=1, current=399, last=150_114, best=0, npos=0.37
     return bytes(buf)
 
 
-def make_static(track="Monza"):
+def make_static(track="Monza", version="0.9.1"):
     buf = bytearray(layout_evo.STATIC_SIZE)
+    buf[15:30] = cstr(version, 15)  # ac_evo_version
     buf[136:169] = cstr(track, 33)
     return bytes(buf)
 
@@ -182,3 +183,9 @@ def test_session_phase_is_sent_as_written_by_the_game():
 
 def test_empty_session_phase_is_none():
     assert decode(graphics=make_graphics(phase="")).session_phase is None
+
+
+def test_session_names_the_game_and_its_version():
+    info = layout_evo.decode_session(make_static(), make_graphics())
+    assert (info.game, info.game_version) == ("acevo", "0.9.1")
+    assert layout_evo.decode_session(make_static(version=""), make_graphics()).game_version is None

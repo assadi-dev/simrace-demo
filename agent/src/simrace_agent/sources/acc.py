@@ -54,14 +54,24 @@ class AccSharedMemorySource:
     def __init__(self, poll_hz: int = 120, stop: threading.Event | None = None) -> None:
         self._period = 1.0 / poll_hz
         self._stop = stop or threading.Event()  # pose par l'interface pour arreter la lecture
+        self.last_error: SourceError | None = None
 
     def _page(self, name: str, size: int) -> bytes:
         return _read_page(name, size, self.game)
 
+    def is_running(self) -> bool:
+        """Vrai si les pages du jeu existent: elles ne vivent que tant que le jeu les tient."""
+        try:
+            self._page(self.layout.PHYSICS_NAME, 4)
+        except SourceError:
+            return False
+        return True
+
     def session(self) -> SessionInfo:
         return layout.decode_session(self._page(layout.STATIC_NAME, layout.STATIC_SIZE))
 
-    def samples(self) -> Iterator[Sample]:
+    def read_until_lost(self) -> Iterator[Sample]:
+        """Lit le jeu jusqu'a ce que ses pages disparaissent (jeu ferme) ou jusqu'a l'arret."""
         pages = self.layout
         last_id = -1
         while not self._stop.is_set():
@@ -69,16 +79,23 @@ class AccSharedMemorySource:
                 physics = self._page(pages.PHYSICS_NAME, pages.PHYSICS_SIZE)
                 graphics = self._page(pages.GRAPHICS_NAME, pages.GRAPHICS_SIZE)
             except SourceError as exc:
-                if sys.platform != "win32":
-                    raise
-                print(f"[agent] en attente de {self.game}: {exc}")
-                self._stop.wait(2)
-                continue
+                self.last_error = exc
+                return
             packet_id = layout.physics_packet_id(physics)
             if packet_id != last_id:
                 last_id = packet_id
                 yield pages.decode_sample(physics, graphics, int(time.time() * 1000))
             time.sleep(self._period)
+
+    def samples(self) -> Iterator[Sample]:
+        while not self._stop.is_set():
+            yield from self.read_until_lost()
+            if self._stop.is_set():
+                return
+            if not AVAILABLE:
+                raise self.last_error or SourceError(f"{self.game} illisible")
+            print(f"[agent] en attente de {self.game}: {self.last_error}")
+            self._stop.wait(2)
 
 
 class AcEvoSharedMemorySource(AccSharedMemorySource):
@@ -95,11 +112,58 @@ class AcEvoSharedMemorySource(AccSharedMemorySource):
         )
 
 
+class AutoSharedMemorySource:
+    """Detecte le jeu lance par le nom de ses pages (decision 0022), puis lit celui-ci.
+
+    EVO est cherche avant ACC. Si le jeu se ferme, la detection recommence: on peut passer d'ACC
+    a EVO sans relancer l'agent. La session dit quel jeu a ete lu (`game`, `game_version`).
+    """
+
+    game = "ACC ou AC EVO"
+
+    def __init__(self, poll_hz: int = 120, stop: threading.Event | None = None) -> None:
+        self._stop = stop or threading.Event()
+        self._candidates = [
+            AcEvoSharedMemorySource(poll_hz, self._stop),
+            AccSharedMemorySource(poll_hz, self._stop),
+        ]
+        self._current: AccSharedMemorySource | None = None
+
+    def detect(self) -> AccSharedMemorySource | None:
+        return next((source for source in self._candidates if source.is_running()), None)
+
+    def session(self) -> SessionInfo:
+        source = self._current or self.detect()
+        if source is None:
+            raise SourceError(f"aucun jeu detecte: {self.game} est-il lance et en session ?")
+        return source.session()
+
+    def samples(self) -> Iterator[Sample]:
+        while not self._stop.is_set():
+            source = self.detect()
+            if source is None:
+                if not AVAILABLE:
+                    raise SourceError("La memoire partagee des jeux n'est lisible que sous Windows")
+                print(f"[agent] en attente d'un jeu ({self.game})")
+                self._stop.wait(2)
+                continue
+            if source is not self._current:
+                print(f"[agent] jeu detecte: {source.game}")
+                self._current = source
+            yield from source.read_until_lost()
+
+
 # Sources de jeu en direct, par nom (`--source` et SIMRACE_SOURCE)
-LIVE_SOURCES = {"acc": AccSharedMemorySource, "acevo": AcEvoSharedMemorySource}
+LIVE_SOURCES = {
+    "auto": AutoSharedMemorySource,
+    "acc": AccSharedMemorySource,
+    "acevo": AcEvoSharedMemorySource,
+}
 
 
-def live_source(name: str, stop: threading.Event | None = None) -> AccSharedMemorySource:
+def live_source(
+    name: str, stop: threading.Event | None = None
+) -> AccSharedMemorySource | AutoSharedMemorySource:
     if name not in LIVE_SOURCES:
         raise SourceError(f"source inconnue: {name} (choix: {', '.join(LIVE_SOURCES)})")
     return LIVE_SOURCES[name](stop=stop)

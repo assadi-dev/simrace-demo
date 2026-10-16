@@ -39,9 +39,9 @@ def test_executable_dir_ignores_a_macos_folder_outside_a_bundle():
     assert config.executable_dir(exe) == Path("/opt/Contents/MacOS")
 
 
-def test_game_source_defaults_to_acc(monkeypatch):
+def test_game_source_defaults_to_auto(monkeypatch):
     monkeypatch.delenv("SIMRACE_SOURCE", raising=False)
-    assert config.game_source() == "acc"
+    assert config.game_source() == "auto"
 
 
 def test_game_source_comes_from_the_env_file(tmp_path, monkeypatch):

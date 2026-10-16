@@ -4,7 +4,9 @@
     "track": "monza",
     "car": "ferrari_296_gt3",
     "driver": "Alice Martin",
-    "fuel_capacity_l": null
+    "fuel_capacity_l": null,
+    "game": null,
+    "game_version": null
   },
   "samples": [
     {

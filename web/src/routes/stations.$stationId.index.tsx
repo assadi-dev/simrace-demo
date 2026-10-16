@@ -30,6 +30,7 @@ import { PositionCard } from "@/features/direct/position-card"
 import { SpeedCard } from "@/features/direct/speed-card"
 import { directKpis } from "@/features/direct/values"
 import { stationsQueryOptions } from "@/features/stations/queries"
+import { gameLabel } from "@/features/stations/game"
 import { stationStatus } from "@/features/stations/status"
 import { sortStations } from "@/features/stations/summary"
 import { NOT_AVAILABLE } from "@/lib/format"
@@ -101,6 +102,7 @@ function DirectPage() {
     ? [
         session.car,
         session.driver,
+        gameLabel(session),
         ...(station ? [station.machine ?? NOT_AVAILABLE] : []),
       ].join(" · ")
     : undefined

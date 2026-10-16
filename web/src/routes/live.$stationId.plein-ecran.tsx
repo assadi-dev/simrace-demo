@@ -19,6 +19,7 @@ import {
   usePaused,
   VolumeControl,
 } from "@/features/live/video-controls"
+import { gameLabel } from "@/features/stations/game"
 import { stationStatus, type StationStatus } from "@/features/stations/status"
 import { liveValues } from "@/features/stations/summary"
 import { useIdle } from "@/hooks/use-idle"
@@ -185,6 +186,7 @@ function FullscreenOverlays({
               ? [
                   session.track,
                   session.car,
+                  gameLabel(session),
                   entry?.station.machine ?? NOT_AVAILABLE,
                 ].join(" · ")
               : "Poste inconnu"}

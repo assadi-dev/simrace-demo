@@ -35,6 +35,12 @@ export const sessionInfoSchema = z.object({
   car: z.string().max(64),
   driver: z.string().max(128),
   fuel_capacity_l: z.number().min(0).max(1000).nullish(),
+  // jeu lu par l'agent et sa version (decision 0022) ; null pour un ancien agent
+  game: z
+    .string()
+    .regex(/^[a-z0-9_-]{1,16}$/)
+    .nullish(),
+  game_version: z.string().max(15).nullish(),
 })
 export type SessionInfo = z.infer<typeof sessionInfoSchema>
 

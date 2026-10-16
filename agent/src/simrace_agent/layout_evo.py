@@ -18,6 +18,7 @@ from simrace_agent.models import Sample, SessionInfo
 PHYSICS_NAME = "Local\\acevo_pmf_physics"
 GRAPHICS_NAME = "Local\\acevo_pmf_graphics"
 STATIC_NAME = "Local\\acevo_pmf_static"
+GAME = "acevo"  # nom du jeu envoye dans la session
 
 PHYSICS_SIZE = layout.PHYSICS_SIZE
 GRAPHICS_SIZE = 4900  # jusqu'a car_ids[60][2] inclus
@@ -60,6 +61,7 @@ _CAR_IDS_OFFSET = 3940  # car_ids[60][2] (uint64): meme ordre que car_coordinate
 
 # Page statique (SPageFileStaticEvo)
 _TRACK_OFFSET = 136  # char[33]
+_GAME_VERSION_OFFSET = 15  # ac_evo_version, char[15] (0.9.1)
 
 # ACEVO_FLAG_TYPE -> code ACC de `flag` (codes.FLAGS). Sans equivalent ACC: None, jamais invente.
 _FLAG_TO_ACC = {0: 0, 1: 4, 2: 7, 4: 1, 5: 2, 6: 3, 8: 5, 9: 8}
@@ -125,6 +127,8 @@ def decode_session(static: bytes, graphics: bytes) -> SessionInfo:
         car=_cstr(graphics, _CAR_MODEL_OFFSET, 33),
         driver=driver.strip(),
         fuel_capacity_l=_positive(_f32(graphics, _MAX_FUEL_OFFSET), 1),
+        game=GAME,
+        game_version=_cstr(static, _GAME_VERSION_OFFSET, 15) or None,
     )
 
 

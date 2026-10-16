@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card"
 import { WeatherChips } from "@/components/weather-chips"
 import { Progress } from "@/components/ui/progress"
 import type { Station } from "@/contracts/stations"
+import { gameLabel } from "@/features/stations/game"
 import { stationStatus } from "@/features/stations/status"
 import { liveValues } from "@/features/stations/summary"
 import { formatAgo, formatNumber, NOT_AVAILABLE } from "@/lib/format"
@@ -61,7 +62,7 @@ export function StationCard({
           {station.session.track} · {station.session.car}
         </span>
         <span className="text-caption text-muted-foreground">
-          {station.session.driver} ·{" "}
+          {station.session.driver} · {gameLabel(station.session)} ·{" "}
           {seenAt ? `vu ${formatAgo(now - seenAt)}` : "jamais vu"}
         </span>
       </div>

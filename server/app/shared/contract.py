@@ -40,6 +40,10 @@ class SessionInfo(BaseModel):
     car: str = Field(max_length=64)
     driver: str = Field(max_length=128)
     fuel_capacity_l: float | None = Field(default=None, ge=0, le=1000, allow_inf_nan=False)
+    # jeu lu par l'agent (acc, acevo) et sa version (decision 0022); None pour un ancien agent.
+    # Identifiant court en minuscules: il ne peut pas porter de texte arbitraire.
+    game: str | None = Field(default=None, pattern=r"^[a-z0-9_-]{1,16}$")
+    game_version: str | None = Field(default=None, max_length=15)
 
 
 class Sample(BaseModel):

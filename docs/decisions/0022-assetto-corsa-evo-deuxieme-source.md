@@ -107,3 +107,20 @@ EVO dit quand la session est finie : `session_state.phase_name` (page graphique,
 - Utile parce qu'EVO arrête le chrono à la fin de la session alors que la voiture roule encore :
   sans la phase, le front montrait un tour « en cours » bloqué à 0.
 
+## Complément : détection du jeu, nom et version dans la session (2026-10-16)
+
+- `SIMRACE_SOURCE` vaut maintenant `auto` par défaut (remplace le défaut `acc` ci-dessus). L'agent
+  cherche les pages d'EVO (`Local\acevo_pmf_physics`) puis celles d'ACC (`Local\acpmf_physics`) :
+  une page n'existe que tant que le jeu la tient ouverte, l'agent l'ouvre et la referme à chaque
+  lecture. Si le jeu se ferme, la détection recommence : on passe d'un jeu à l'autre sans relancer
+  l'agent. `--source acc` ou `acevo` (ou `SIMRACE_SOURCE`) force le jeu, comme avant.
+- La session porte `game` (`acc` ou `acevo`) et `game_version`. Le jeu est celui de la source qui
+  lit, détectée ou choisie à la main. La version vient de la page statique : `ac_evo_version` (EVO,
+  offset 15, `char[15]`, « 0.9.1 » vu le 2026-10-16) ou `acVersion` (ACC, offset 30, `wchar[15]`,
+  **jamais lu sur un vrai ACC**).
+- Contrat : `SessionInfo.game` est un identifiant court (`^[a-z0-9_-]{1,16}$`, il ne peut pas porter
+  de texte arbitraire), `game_version` 15 caractères au plus ; les deux sont optionnels (anciens
+  agents et anciens enregistrements : `None`). Front : « AC EVO 0.9.1 » sur la carte d'un poste, dans
+  le sous-titre de l'écran Direct et sur la page Live (tuile, vue en grand, plein écran), « Jeu n.d. »
+  sans valeur.
+

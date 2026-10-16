@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.shared.contract import Sample
+from app.shared.contract import Sample, SessionInfo
 from tests.support import sample
 
 
@@ -117,3 +117,17 @@ def test_session_phase_is_optional_and_bounded():
     assert Sample.model_validate(sample(session_phase="Ended")).session_phase == "Ended"
     with pytest.raises(ValidationError):
         Sample.model_validate(sample(session_phase="x" * 34))
+
+
+def test_session_names_the_game_and_its_version():
+    base = {"track": "Monza", "car": "porsche", "driver": "pilote"}
+    old_agent = SessionInfo.model_validate(base)
+    assert (old_agent.game, old_agent.game_version) == (None, None)
+    info = SessionInfo.model_validate({**base, "game": "acevo", "game_version": "0.9.1"})
+    assert (info.game, info.game_version) == ("acevo", "0.9.1")
+
+
+@pytest.mark.parametrize("bad", [{"game": "AC EVO"}, {"game": "x" * 17}, {"game_version": "1" * 16}])
+def test_game_must_be_a_short_identifier(bad):
+    with pytest.raises(ValidationError):
+        SessionInfo.model_validate({"track": "Monza", "car": "c", "driver": "d", **bad})

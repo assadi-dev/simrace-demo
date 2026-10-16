@@ -20,6 +20,7 @@ import { StationThumb } from "@/features/live/station-thumb"
 import { useLiveFeed } from "@/features/live/use-live-feed"
 import { useTopOffset } from "@/features/live/use-top-offset"
 import { liveStats } from "@/features/live/values"
+import { gameLabel } from "@/features/stations/game"
 import { stationStatus } from "@/features/stations/status"
 import { liveValues } from "@/features/stations/summary"
 import { useNow } from "@/hooks/use-now"
@@ -112,6 +113,7 @@ function LiveFocusPage() {
         description={[
           session.track,
           session.car,
+          gameLabel(session),
           station.machine ?? NOT_AVAILABLE,
         ].join(" · ")}
         actions={

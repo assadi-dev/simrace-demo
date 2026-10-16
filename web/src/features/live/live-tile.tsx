@@ -10,6 +10,7 @@ import {
 } from "@/features/live/live-video"
 import type { LiveFeedEntry } from "@/features/live/use-live-feed"
 import { overlayTelemetry } from "@/features/live/values"
+import { gameLabel } from "@/features/stations/game"
 import { stationStatus } from "@/features/stations/status"
 import { formatAgo, NOT_AVAILABLE } from "@/lib/format"
 
@@ -62,7 +63,8 @@ export function LiveTile({
             {session.track} · {session.car}
           </span>
           <span className="text-meta text-muted-foreground">
-            {seenAt ? `Vu ${formatAgo(now - seenAt)}` : "Jamais vu"}
+            {gameLabel(session)} ·{" "}
+            {seenAt ? `vu ${formatAgo(now - seenAt)}` : "jamais vu"}
           </span>
         </div>
         <div className="flex gap-2">

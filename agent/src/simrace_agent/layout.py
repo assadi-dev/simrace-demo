@@ -14,6 +14,7 @@ from simrace_agent.models import Sample, SessionInfo
 PHYSICS_NAME = "Local\\acpmf_physics"
 GRAPHICS_NAME = "Local\\acpmf_graphics"
 STATIC_NAME = "Local\\acpmf_static"
+GAME = "acc"  # nom du jeu envoye dans la session
 
 # On ne mappe que le debut de chaque page: seuls les champs utiles sont lus.
 PHYSICS_SIZE = 772  # jusqu'a discLife[4] inclus
@@ -50,6 +51,7 @@ _TC_LEVEL_OFFSET = 1268
 _ABS_LEVEL_OFFSET = 1280
 _FUEL_PER_LAP_OFFSET = 1284  # fuelXLap, litres par tour (estimation d'ACC)
 _MAX_FUEL_OFFSET = 416  # page statique: capacite du reservoir en litres
+_AC_VERSION_OFFSET = 30  # page statique: acVersion wchar[15] apres smVersion (jamais lu en vrai)
 _MAX_CARS = 60
 # Pneus et freins (page physique), 4 flottants chacun, ordre des roues: avant gauche, avant droit,
 # arriere gauche, arriere droit. Offsets calcules depuis SharedFileOut.h, a verifier avec `probe`.
@@ -139,7 +141,11 @@ def decode_session(static: bytes) -> SessionInfo:
     driver = f"{_wstr(static, 200, 33)} {_wstr(static, 266, 33)}".strip()
     max_fuel = struct.unpack_from("<f", static, _MAX_FUEL_OFFSET)[0]
     capacity = round(max_fuel, 1) if math.isfinite(max_fuel) and max_fuel > 0 else None
-    return SessionInfo(track=track, car=car, driver=driver, fuel_capacity_l=capacity)
+    version = _wstr(static, _AC_VERSION_OFFSET, 15) or None
+    return SessionInfo(
+        track=track, car=car, driver=driver, fuel_capacity_l=capacity, game=GAME,
+        game_version=version,
+    )
 
 
 def decode_physics(physics: bytes) -> dict:
