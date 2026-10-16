@@ -106,7 +106,9 @@ npm run test:e2e     # Playwright : uvicorn (port 8100) et Vite (port 5273) déd
 
 VS Code : `.vscode/launch.json` (à la racine) lance chaque projet dans le terminal intégré avec les
 commandes ci-dessus : `server`, `web`, `web: Chrome`, `agent: replay` (attend
-`recordings/session.jsonl`), `agent: ACC (Windows)`, `agent: probe (Windows)`. Deux ensembles :
+`recordings/session.jsonl`), `agent: ACC (Windows)`, `agent: probe (Windows)`,
+`build agent desktop app (macOS)` (`build_app.sh`), `build agent desktop app (win)`
+(`build_exe.ps1`). Deux ensembles :
 `server + web` et `demo: server + web + agent replay`.
 
 PowerShell : pas de `mkdir -p` ni de `&&` selon la version. Crée `recordings\` avec
