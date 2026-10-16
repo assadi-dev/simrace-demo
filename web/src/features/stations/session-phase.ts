@@ -1,8 +1,15 @@
 import { NOT_AVAILABLE } from "@/lib/format"
 
-/** Phases ecrites par AC EVO (session_state.phase_name, decision 0022). ACC n'en donne pas. */
+/**
+ * Phases ecrites par AC EVO (session_state.phase_name, decision 0022), vues en essais et en course
+ * le 2026-10-16. ACC n'en donne pas.
+ */
 const PHASE_LABEL: Record<string, string> = {
   Waiting_For_Start: "En attente du départ",
+  Start_Spawn_On_Position: "Mise en place sur la grille",
+  Start_Countdown_No_Lights: "Compte à rebours",
+  Start_Countdown_Lights_On: "Feux allumés",
+  Start_Countdown_Lights_Off: "Feux éteints, départ",
   Session: "En cours",
   Ended: "Terminée",
 }

@@ -12,7 +12,8 @@ et envoie son nom et sa version dans la session ; `--source acc` ou `acevo` forc
 sur EVO 0.9.1 (un tour et une entrée aux stands à Monza). EVO ne donne ni secteur ni code de
 pénalité. Voir la [décision 0022](decisions/0022-assetto-corsa-evo-deuxieme-source.md).
 `probe --source acevo` vérifié en direct : physique en roulage, passage de ligne, dernier et
-meilleur tour. Pas encore vus : drapeaux, cartographie moteur.
+meilleur tour, drapeaux vert et orange en course. Pas encore vus : drapeaux bleu, jaune et damier,
+cartographie moteur.
 
 ## Changements depuis le 2026-10-11
 

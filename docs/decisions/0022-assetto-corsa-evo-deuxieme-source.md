@@ -51,8 +51,8 @@ Parabolica) et une entrée aux stands avec ravitaillement.
 | `fuel_estimated_laps` | `fuel_estimated_laps` | 3860 | oui |
 | `tc_level`, `tc_cut_level`, `abs_level` | `electronics` (int8) | 1872, 1873, 1874 | oui (6, 0, 5) |
 | `engine_map` | `electronics.engine_map_level` + 1, `None` si le maximum vaut 0 | 1884, 2140 | voiture sans cartographie seulement |
-| `flag` | `flag` traduit en code ACC | 2404 | jamais vu différent de 0 |
-| `track_flags` | `global_flag` traduit en nom | 2408 | jamais vu différent de 0 |
+| `flag` | `flag` traduit en code ACC | 2404 | oui en course : 2 (vert, environ 20 s après l'extinction des feux) et 9 (orange) ; 0 en essais |
+| `track_flags` | `global_flag` traduit en nom | 2408 | toujours 0, même en course |
 | `pad_life_mm`, `disc_life_mm` | page physique, en **mètres**, multipliés par 1000 | 740, 756 | oui (29 mm et 32 mm) |
 | session : circuit | page statique `track` | 136 | oui (`Monza`) |
 | session : voiture, pilote, réservoir | `car_model`, `driver_name` et `driver_surname`, `max_fuel` | 3086, 3020, 3053, 3928 | oui |
@@ -126,4 +126,22 @@ EVO dit quand la session est finie : `session_state.phase_name` (page graphique,
 - Fenêtre (`gui`, exe) : champ « Jeu » (Automatique, ACC, AC EVO) dans les réglages, gardé dans
   `settings.json` comme les autres champs. Valeur de départ : `SIMRACE_SOURCE` du `.env` posé à côté
   de l'exe, sinon Automatique. Envoyer et Enregistrer lisent le jeu choisi.
+
+## Complément : drapeaux et phases vus en course (2026-10-16)
+
+Course contre l'IA à Monza (session `Race`, type 1 de la page statique), page graphique
+enregistrée à 10 Hz pendant 6 minutes (départ, deux tours et demi, sans arrivée).
+
+- `flag` (drapeau montré au pilote) vaut 2 (vert) pendant environ 20 s après l'extinction des
+  feux, puis 0. Il a valu 9 (orange, problème mécanique) pendant environ 50 s au deuxième tour. En
+  essais libres, il reste à 0. L'agent envoie les codes ACC 7 et 8, et le front les nomme
+  « Drapeau vert » et « Drapeau orange (problème mécanique) ». Avant ce complément, le front
+  n'avait pas ces deux codes et aurait affiché « Drapeau (code 7) ».
+- `global_flag` (drapeau de piste) est resté à 0 toute la course : avec EVO, `track_flags` est
+  vide et l'écran Direct ne montre pas de drapeau vert de piste, contrairement à ACC.
+- Phases vues au départ, dans l'ordre : `Start_Spawn_On_Position`, `Start_Countdown_No_Lights`,
+  `Start_Countdown_Lights_On`, `Start_Countdown_Lights_Off`, puis `Session`. Pendant un
+  redémarrage, la phase est vide. Le front les traduit (« Mise en place sur la grille »,
+  « Compte à rebours », « Feux allumés », « Feux éteints, départ »).
+- Pas encore vus : drapeaux bleu, jaune et damier, phase de fin de course.
 

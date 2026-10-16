@@ -9,6 +9,22 @@ describe("sessionPhaseLabel", () => {
     ).toEqual(["En attente du départ", "En cours", "Terminée"])
   })
 
+  it("traduit les phases du depart d'une course", () => {
+    expect(
+      [
+        "Start_Spawn_On_Position",
+        "Start_Countdown_No_Lights",
+        "Start_Countdown_Lights_On",
+        "Start_Countdown_Lights_Off",
+      ].map(sessionPhaseLabel)
+    ).toEqual([
+      "Mise en place sur la grille",
+      "Compte à rebours",
+      "Feux allumés",
+      "Feux éteints, départ",
+    ])
+  })
+
   it("affiche une phase inconnue telle que le jeu l'ecrit", () => {
     expect(sessionPhaseLabel("Race_Over")).toBe("Race Over")
   })
