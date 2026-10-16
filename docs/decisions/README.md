@@ -30,4 +30,4 @@ Format d'un fichier : Statut, Date, Contexte, Décision, Raisons, Conséquences.
 | [0020](0020-adresses-mediamtx-en-https.md) | Adresses MediaMTX complètes pour un front en https | Acceptée |
 | [0021](0021-temperature-des-pneus-a-la-place-de-la-distance.md) | Température des pneus à la place de la distance et de la vitesse moyenne | Acceptée |
 | [0022](0022-assetto-corsa-evo-deuxieme-source.md) | Assetto Corsa EVO, deuxième source de l'agent (`SIMRACE_SOURCE`, `--source acevo`) | Acceptée |
-| [0023](0023-place-en-course-et-adversaires.md) | Place en course et nombre d'adversaires (`race_position`, `opponents`) | Acceptée, ACC non vérifié |
+| [0023](0023-place-en-course-et-adversaires.md) | Place en course et nombre d'adversaires (`race_position`, `opponents`) | Acceptée |

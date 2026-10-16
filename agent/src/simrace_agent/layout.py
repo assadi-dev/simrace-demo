@@ -231,6 +231,6 @@ def decode_sample(physics: bytes, graphics: bytes, t_ms: int) -> Sample:
             struct.unpack_from("<f", graphics, _FUEL_EST_LAPS_OFFSET)[0], 1
         ),
         track_flags=_track_flags(graphics),
-        race_position=race_position,  # position (offset 136), jamais lue sur un vrai ACC
+        race_position=race_position,  # position (offset 136), verifiee en course sur un vrai ACC
         opponents=opponents,
     )

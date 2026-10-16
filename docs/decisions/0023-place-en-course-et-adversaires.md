@@ -30,7 +30,7 @@ Mesures sur la page graphique d'AC EVO 0.9.1 enregistrée pendant la course cont
 | Jeu | Place | Voitures actives | Vérifié |
 |---|---|---|---|
 | AC EVO | page graphique, offset 2388 (int32) | `active_cars`, offset 3852 (uint8) | oui, sur la course enregistrée |
-| ACC | `position`, offset 136 (int32) | `activeCars`, offset 252 (int32) | **non** : offsets de `SharedFileOut.h`, `activeCars` sert déjà à trouver `x` et `z` |
+| ACC | `position`, offset 136 (int32) | `activeCars`, offset 252 (int32) | oui (2026-10-16, Nürburgring, 7 voitures) : P1 avant le départ, P7 en course, comme le jeu |
 
 - Front : KPI « Position » (P7, avec « Sur 10 voitures ») et « Adversaires » en tête de l'écran
   Direct ; lignes « Position » et « Adversaires » sur la carte d'un poste. `n.d.` si la valeur
@@ -48,7 +48,7 @@ Mesures sur la page graphique d'AC EVO 0.9.1 enregistrée pendant la course cont
 
 ## Conséquences
 
-- À vérifier sur un vrai ACC : lancer `uv run simrace-agent probe` en course contre l'IA et
-  comparer `place` avec l'affichage du jeu.
+- ACC vérifié sur un vrai jeu : 7 voitures actives (6 adversaires), place 1 avant le départ puis
+  7 en course, identique à l'affichage du jeu. `probe` affiche `place` et `adversaires`.
 - Les enregistrements antérieurs n'ont pas ces champs : en rejeu, le front affiche `n.d.`.
 - En essais avec d'autres voitures, EVO n'a pas été observé : la place peut y valoir 0 (`n.d.`).

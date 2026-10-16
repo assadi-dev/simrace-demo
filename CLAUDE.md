@@ -172,7 +172,6 @@ Jamais vus : drapeaux bleu, jaune et damier, cartographie moteur.
 Le front (`web/`) n'a été vérifié qu'avec des lots de test envoyés au serveur (tests Playwright,
 faux agent), pas avec le flux d'un vrai ACC.
 
-**Jamais vu sur un vrai jeu** : la répartition de freinage `brake_bias` (lit 0,75, SimHub affiche 54,0, décision 0016), les valeurs des drapeaux et des pénalités (offsets 1220, 1224, 1228, décision 0016), la valeur des pneus et des freins en roulant (offsets 88, 152, 348, 740, 756 de la page physique, décision 0013 : lus à l'arrêt, plausibles), le champ `sector` d'ACC (déclencheur « secteur » des morceaux), la place en course d'ACC
-(offsets 136 et 252, décision 0023 ; vérifiée sur EVO), un
+**Jamais vu sur un vrai jeu** : la répartition de freinage `brake_bias` (lit 0,75, SimHub affiche 54,0, décision 0016), les valeurs des drapeaux et des pénalités (offsets 1220, 1224, 1228, décision 0016), la valeur des pneus et des freins en roulant (offsets 88, 152, 348, 740, 756 de la page physique, décision 0013 : lus à l'arrêt, plausibles), le champ `sector` d'ACC (déclencheur « secteur » des morceaux), un
 passage aux stands, le temps du dernier et du meilleur tour. Le serveur, le rejeu et l'envoi par lots sont testés de bout en bout avec
 des enregistrements rejoués. Voir le détail dans [docs/HANDOFF.md](docs/HANDOFF.md).
