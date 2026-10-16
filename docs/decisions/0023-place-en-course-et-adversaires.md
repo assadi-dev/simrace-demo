@@ -32,7 +32,7 @@ Mesures sur la page graphique d'AC EVO 0.9.1 enregistrée pendant la course cont
 | AC EVO | page graphique, offset 2388 (int32) | `active_cars`, offset 3852 (uint8) | oui, sur la course enregistrée |
 | ACC | `position`, offset 136 (int32) | `activeCars`, offset 252 (int32) | oui (2026-10-16, Nürburgring, 7 voitures) : P1 avant le départ, P7 en course, comme le jeu |
 
-- Front : KPI « Position » (P7, avec « Sur 10 voitures ») et « Adversaires » en tête de l'écran
+- Front : KPI « Position » (valeur seule, 7, avec « Sur 10 voitures ») et « Adversaires » en tête de l'écran
   Direct ; lignes « Position » et « Adversaires » sur la carte d'un poste. `n.d.` si la valeur
   manque, « Pas de classement, seul en piste » quand la place manque et qu'il n'y a pas
   d'adversaire.

@@ -62,7 +62,7 @@ describe("directKpis", () => {
       EMPTY_HISTORY
     )
     expect(byLabel(racing, "Position")).toMatchObject({
-      value: "P7",
+      value: "7",
       help: "Sur 10 voitures",
     })
     expect(byLabel(racing, "Adversaires")?.value).toBe("9")

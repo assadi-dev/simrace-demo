@@ -3,9 +3,9 @@ import { NOT_AVAILABLE } from "@/lib/format"
 
 type Standing = Pick<Sample, "race_position" | "opponents">
 
-/** Place au classement (decision 0023) : "P7", n.d. si le jeu ne la donne pas. */
+/** Place au classement (decision 0023) : "7", n.d. si le jeu ne la donne pas. */
 export function racePositionLabel(sample: Standing): string {
-  return sample.race_position == null ? NOT_AVAILABLE : `P${sample.race_position}`
+  return sample.race_position == null ? NOT_AVAILABLE : String(sample.race_position)
 }
 
 /** Adversaires en piste : 0 si le joueur est seul, n.d. si le jeu ne les donne pas. */

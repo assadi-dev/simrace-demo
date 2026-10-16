@@ -121,7 +121,7 @@ describe("liveValues", () => {
     const racing = sample({ race_position: 3, opponents: 9 })
 
     expect(liveValues("online", racing)).toMatchObject({
-      racePosition: "P3",
+      racePosition: "3",
       opponents: "9",
     })
     expect(liveValues("offline", racing)).toMatchObject({
