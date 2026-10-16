@@ -47,7 +47,7 @@ export type LiveValues = {
   positionPercent: number
   /** Phase de la session (AC EVO), n.d. si le jeu ne la donne pas (ACC). */
   sessionPhase: string
-  /** Place au classement (P7), n.d. sans classement. */
+  /** Place au classement (7), n.d. sans classement. */
   racePosition: string
   /** Adversaires en piste, 0 si seul. */
   opponents: string

@@ -6,7 +6,7 @@ describe("place en course", () => {
   it("affiche la place et le nombre de voitures en course", () => {
     const sample = { race_position: 7, opponents: 9 }
 
-    expect(racePositionLabel(sample)).toBe("P7")
+    expect(racePositionLabel(sample)).toBe("7")
     expect(opponentsLabel(sample)).toBe("9")
     expect(racePositionHelp(sample)).toBe("Sur 10 voitures")
   })
